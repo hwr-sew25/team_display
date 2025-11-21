@@ -1,6 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}Schoolnavigator{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <img src="{{ url_for('static', filename='images/bear.png') }}" alt="Berlin logo" class="logo-bear" />
+    </div>
+    <div class="top-bar-right">
+      <button class="lang-btn" aria-label="English">
+        <img src="{{ url_for('static', filename='images/flag_eng.png') }}" alt="English" />
+      </button>
+      <button class="lang-btn" aria-label="Deutsch">
+        <img src="{{ url_for('static', filename='images/flag_de.png') }}" alt="Deutsch" />
+      </button>
+    </div>
+  </header>
 
-
-<!doctype html>
-<html lang=en>
-
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+</body>
 </html>
+

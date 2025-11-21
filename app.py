@@ -1,6 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, abort, flash
-from flask_bootstrap import Bootstrap5
-import forms
+from flask import Flask, render_template
 
 app = Flask(__name__)
 
@@ -9,11 +7,11 @@ app.config.from_mapping(
     BOOTSTRAP_BOOTSWATCH_THEME = 'pulse'
 )
 
-from db import db
-
-bootstrap = Bootstrap5(app)
 
 @app.route('/')
 @app.route('/index')
 def index():
-    return redirect(url_for('todos'))
+    return render_template('index.html')
+
+if __name__ == "__main__":
+    app.run(debug=True)
