@@ -3,8 +3,13 @@
 {% block title %}Welcome{% endblock %}
 
 {% block content %}
-  <h1>Welcome to HWR!</h1>
-  <p>I am the Schoolnavigator.</p>
+{% if session.lang == 'en' %}
+    <h1>Welcome to HWR!</h1>
+    <p>I am the Schoolnavigator.</p>
+{% else %}
+    <h1>Willkommen an der HWR!</h1>
+    <p>Ich bin der Schoolnavigator.</p>
+{% endif %}
 
   <a href="{{ url_for('raumwahl') }}" class="start-btn">
     Start

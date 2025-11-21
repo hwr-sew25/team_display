@@ -3,8 +3,13 @@
 {% block title %}Welcome{% endblock %}
 
 {% block content %}
-  <p>Welchen Raum suchen Sie?</p>
-  <p>Sprechen Sie jetzt...</p>
+  {% if session.lang == 'en' %}
+    <p>Which room are you looking for?</p>
+    <p>Please speak now...</p>
+{% else %}
+    <p>Welchen Raum suchen Sie?</p>
+    <p>Sprechen Sie bitte jetzt...</p>
+{% endif %}
 
   <div class="speaker-area">
     <img src="{{ url_for('static', filename='images/speaker.png') }}"

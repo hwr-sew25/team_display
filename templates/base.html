@@ -13,10 +13,14 @@
     </div>
     <div class="top-bar-right">
       <button class="lang-btn" aria-label="English">
-        <img src="{{ url_for('static', filename='images/flag_eng.png') }}" alt="English" />
+        <a href="{{ url_for('set_language', lang='en') }}" class="lang-btn">
+        <img src="{{ url_for('static', filename='images/flag_eng.png') }}" alt="English">
+        </a>
       </button>
       <button class="lang-btn" aria-label="Deutsch">
-        <img src="{{ url_for('static', filename='images/flag_de.png') }}" alt="Deutsch" />
+        <a href="{{ url_for('set_language', lang='de') }}" class="lang-btn">
+        <img src="{{ url_for('static', filename='images/flag_de.png') }}" alt="Deutsch">
+        </a>
       </button>
     </div>
   </header>
