@@ -1,0 +1,5 @@
+CREATE TABLE test (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    complete BOOLEAN DEFAULT FALSE,
+    description TEXT NOT NULL
+);
