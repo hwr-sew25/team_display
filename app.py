@@ -13,5 +13,9 @@ app.config.from_mapping(
 def index():
     return render_template('index.html')
 
+@app.route("/raumwahl")
+def raumwahl():
+    return render_template("raumwahl.html")
+
 if __name__ == "__main__":
     app.run(debug=True)

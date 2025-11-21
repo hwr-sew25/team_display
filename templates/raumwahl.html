@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+  <p>Welchen Raum suchen Sie?</p>
+  <p>Sprechen Sie jetzt...</p>
+
+  <div class="speaker-area">
+    <img src="{{ url_for('static', filename='images/speaker.png') }}"
+         alt="Lautsprecher Symbol"
+         class="speaker-icon">
+  </div>
+
+  <div class="options-row">
+    <a href="#" class="option-btn">Karten<br>Validierung</a>
+    <a href="#" class="option-btn">Wasserspender</a>
+    <a href="#" class="option-btn">Kaffeeautomat</a>
+  </div>
+
+{% endblock %}
