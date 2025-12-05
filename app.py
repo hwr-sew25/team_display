@@ -17,6 +17,10 @@ def index():
 def raumwahl():
     return render_template("raumwahl.html")
 
+@app.route("/karte")
+def karte():
+    return render_template("karte.html")
+
 @app.route("/set_language/<lang>")
 def set_language(lang):
     session['lang'] = lang

@@ -1,0 +1,77 @@
+/* Karten Screen */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  
+  body {
+    min-height: 100vh;
+    background-color: #fde9f9;
+    display: flex;
+    flex-direction: column;
+  }
+
+.karte-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 60px;
+    width: 100%;
+    padding-top: 40px;
+  }
+  
+  .map-container {
+    position: relative;
+    width: 600px;
+  }
+  
+  .map-image {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  .arrow {
+    position: absolute;
+    width: 50%;        
+    height: auto;
+    top: 30%;          
+    left: 55%;         
+    transform: translate(-50%, -50%);
+}
+  
+  /* Pfeilrichtungen */
+  .arrow.right { transform: rotate(0deg); }
+  .arrow.down  { transform: rotate(90deg); transform-origin: 80px 40px; }
+  .arrow.left  { transform: rotate(180deg); transform-origin: 80px 40px; }
+  .arrow.up    { transform: rotate(-90deg); transform-origin: 80px 40px; }
+  
+  .map-info {
+    max-width: 400px;
+    text-align: left;
+  }
+  
+  .map-info h1 {
+    font-size: 40px;
+    margin-bottom: 20px;
+  }
+  
+  .map-info p {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+  
+  .stop-btn {
+    background-color: #d50b2e;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 20px 60px;
+    font-size: 32px;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  
