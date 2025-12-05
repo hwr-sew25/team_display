@@ -27,5 +27,13 @@ def set_language(lang):
     # zurück zur vorherigen Seite
     return redirect(request.referrer or url_for('index'))
 
+@app.route("/error1")
+def error_route():
+    return render_template("error_route.html")
+
+@app.route("/error2")
+def error_tec():
+    return render_template("error_tec.html")
+
 if __name__ == "__main__":
     app.run(debug=True)

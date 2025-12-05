@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Error{% endblock %}
+
+{% block content %}
+
+<h1 class="error-title">Error</h1>
+
+<p class="error-text">
+  Der Roboter hat leider gerade technische Probleme, bitte versuchen Sie es zu einem späteren Zeitpunkt.
+</p>
+
+<img src="{{ url_for('static', filename='images/error.png') }}" alt="Warnsymbol" class="warning-icon">
+
+{% endblock %}
