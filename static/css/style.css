@@ -20,6 +20,14 @@
     align-items: center;
     justify-content: space-between;
   }
+
+  .top-bar-title {
+  color: white;
+  font-size: 24px;
+  font-weight: 500;
+  font-family: "Frutiger", "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: 0.5px;
+  }
   
   .logo-bear {
     height: 40px;          
