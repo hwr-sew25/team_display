@@ -3,43 +3,87 @@
 {% block title %}Welcome{% endblock %}
 
 {% block content %}
+
   {% if session.lang == 'en' %}
     <p>Which room are you looking for?</p>
     <p>Please speak now...</p>
-{% else %}
+  {% else %}
     <p>Welchen Raum suchen Sie?</p>
     <p>Sprechen Sie bitte jetzt...</p>
-{% endif %}
+  {% endif %}
 
   <div class="speaker-area">
     <img src="{{ url_for('static', filename='images/speaker.png') }}"
-         alt="Lautsprecher Symbol"
+         alt="Speaker icon"
          class="speaker-icon">
   </div>
 
   <div class="options-row">
-  <a href="{{ url_for('karten_validierung') }}" class="option-btn">
-  Karten<br>Validierung
-</a>
-  <a href="{{ url_for('karte') }}" class="option-btn">Karte</a> <!-- noch durch 'Spendenbox' ersetzen -->
-  <a href="{{ url_for('kaffeeautomat') }}" class="option-btn">
-  Kaffeeautomat
-</a>
-  <a href="{{ url_for('muelleimer') }}" class="option-btn">
-  Mülleimer
-</a>
 
-  <a href="{{ url_for('bildungsangebote') }}" class="option-btn">
-  Bildungsangebote
-</a>
+    <a href="{{ url_for('karten_validierung') }}" class="option-btn">
+      {% if session.lang == 'en' %}
+        Card<br>Validation
+      {% else %}
+        Karten<br>Validierung
+      {% endif %}
+    </a>
 
-  <a href="#" class="option-btn">Karten Ausgabe</a>
-  <a href="#" class="option-btn">Snackautomat</a>
-  <a href="{{ url_for('geschichte_hwr') }}" class="option-btn">
-  Geschichte HWR
-</a>
+    <a href="{{ url_for('spendenbox') }}" class="option-btn">
+      {% if session.lang == 'en' %}
+        Donation<br>Box
+      {% else %}
+        Spendenbox
+      {% endif %}
+    </a>
+
+    <a href="{{ url_for('kaffeeautomat') }}" class="option-btn">
+      {% if session.lang == 'en' %}
+        Coffee<br>Machine
+      {% else %}
+        Kaffeeautomat
+      {% endif %}
+    </a>
+
+    <a href="{{ url_for('muelleimer') }}" class="option-btn">
+      {% if session.lang == 'en' %}
+        Trash<br>Bins
+      {% else %}
+        Mülleimer
+      {% endif %}
+    </a>
+
+    <a href="{{ url_for('bildungsangebote') }}" class="option-btn">
+      {% if session.lang == 'en' %}
+        Educational<br>Offers
+      {% else %}
+        Bildungsangebote
+      {% endif %}
+    </a>
+
+    <a href="{{ url_for('karten_ausgabe') }}" class="option-btn">
+      {% if session.lang == 'en' %}
+        Card<br>Issuing
+      {% else %}
+        Karten Ausgabe
+      {% endif %}
+    </a>
+
+    <a href="{{ url_for('snackautomat') }}" class="option-btn">
+      {% if session.lang == 'en' %}
+        Snack<br>Machine
+      {% else %}
+        Snackautomat
+      {% endif %}
+    </a>
+
+    <a href="{{ url_for('geschichte_hwr') }}" class="option-btn">
+      {% if session.lang == 'en' %}
+        HWR<br>History
+      {% else %}
+        Geschichte HWR
+      {% endif %}
+    </a>
 
   </div>
-
 
 {% endblock %}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snackautomat</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/snackautomat.css') }}">
+</head>
+
+<body class="snack-body">
+
+  <div class="snack-container">
+
+    <!-- Deutscher Text -->
+    <p class="snack-text">
+      Ziel erreicht. Wählen Sie Ihren Lieblingssnack!
+    </p>
+
+    <!-- Bild -->
+    <img
+      src="{{ url_for('static', filename='images/snackautomat.png') }}"
+      alt="Snackautomat"
+      class="snack-image"
+    >
+
+    <!-- Englischer Text -->
+    <p class="snack-text-en">
+      Destination reached. Choose your favorite snack!
+    </p>
+
+  </div>
+
+</body>
+</html>

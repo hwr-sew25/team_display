@@ -1,15 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}Error{% endblock %}
+{% block title %}
+  {% if session.lang == 'en' %}
+    Error
+  {% else %}
+    Fehler
+  {% endif %}
+{% endblock %}
 
 {% block content %}
 
-<h1 class="error-title">Error</h1>
+<h1 class="error-title">
+  {% if session.lang == 'en' %}
+    Error
+  {% else %}
+    Fehler
+  {% endif %}
+</h1>
 
 <p class="error-text">
-  Der Roboter hat leider gerade Probleme mit der Route, bitte versuchen Sie es zu einem späteren Zeitpunkt.
+  {% if session.lang == 'en' %}
+    The robot is currently having problems with the route. Please try again later.
+  {% else %}
+    Der Roboter hat leider gerade Probleme mit der Route, bitte versuchen Sie es zu einem späteren Zeitpunkt.
+  {% endif %}
 </p>
 
-<img src="{{ url_for('static', filename='images/error.png') }}" alt="Warnsymbol" class="warning-icon">
+<img src="{{ url_for('static', filename='images/error.png') }}"
+     alt="Warning icon"
+     class="warning-icon">
 
 {% endblock %}

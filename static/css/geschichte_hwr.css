@@ -7,36 +7,33 @@
   background-color: #fde9f9;
 
   display: flex;
-  justify-content: flex-start;   
+  justify-content: flex-start;
   align-items: center;
 
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-html, body {
+html,
+body {
   height: 100%;
-  overflow: hidden;   
+  overflow: hidden;
 }
 
-
+/* Container */
 .history-container {
   width: 100%;
   max-width: 1400px;
   padding: 40px;
-
-  margin-top: -80px;   
+  margin-top: -90px;
 }
-
 
 /* Titel */
 .history-title {
   font-size: 56px;
   color: #b3261e;
-
-  margin-top: 0px;     
-  margin-bottom: 250px; 
+  margin-top: 0;
+  margin-bottom: 250px;
 }
-
 
 /* Timeline Grundlinie */
 .timeline {
@@ -49,7 +46,7 @@ html, body {
 .timeline::before {
   content: "";
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 0;
   right: 0;
   height: 2px;
@@ -62,24 +59,24 @@ html, body {
   text-align: center;
 }
 
-/* Linien nach oben / unten */
+/* Vertikale Linien */
 .event-line {
   display: block;
   width: 2px;
-  height: 80px;
+  height: 60px;
   background-color: #1a1a1a;
   margin: 0 auto;
 }
 
 .event.top .event-line {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .event.bottom .event-line {
   margin-top: 12px;
 }
 
-/* Jahre */
+/* Jahreszahlen */
 .event-year {
   display: block;
   font-size: 22px;
@@ -90,12 +87,12 @@ html, body {
 
 /* Texte */
 .event-text {
-  font-size: 16px;
+  font-size: 20px;
   margin-bottom: 6px;
 }
 
 .event-text-en {
-  font-size: 14px;
+  font-size: 16px;
   color: #b3261e;
 }
 
@@ -105,5 +102,5 @@ html, body {
 }
 
 .event.bottom {
-  transform: translateY(120px);
+  transform: translateY(140px);
 }

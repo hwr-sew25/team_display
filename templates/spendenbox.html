@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spendenbox</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/spendenbox.css') }}">
+</head>
+
+<body class="spendenbox-body">
+
+  <div class="spendenbox-container">
+
+    <!-- Deutsch -->
+    <p class="spendenbox-title">
+      Für Social Period
+    </p>
+
+    <p class="spendenbox-text">
+      Ihre Spende zählt! (Hygieneartikel)
+    </p>
+
+    <!-- Bild -->
+    <img
+      src="{{ url_for('static', filename='images/spendenbox.jpg') }}"
+      alt="Spendenbox"
+      class="spendenbox-image"
+    >
+
+    <!-- Englisch -->
+    <p class="spendenbox-title">
+      For Social Period
+    </p>
+
+    <p class="spendenbox-text-en">
+      Your donation matters! (Hygiene items)
+    </p>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,48 @@
+/* =========================
+   Karten-Ausgabe – POI Screen
+   ========================= */
+
+html, body {
+  height: 100%;
+  overflow: hidden;   /* ❌ kein Scrollen */
+}
+
+.karten-ausgabe-body {
+  min-height: 100vh;
+  background-color: #fde9f9;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.karten-ausgabe-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Deutscher Text */
+.karten-ausgabe-text {
+  font-size: 50px;
+  margin-bottom: 22px;
+  color: #1a1a1a;
+  max-width: 800px;
+}
+
+/* Bild */
+.karten-ausgabe-image {
+  width: 300px;
+  max-width: 55vw;
+  height: auto;
+  margin-bottom: 22px;
+}
+
+/* Englischer Text */
+.karten-ausgabe-text-en {
+  font-size: 40px;
+  color: #b3261e;
+}

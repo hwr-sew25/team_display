@@ -1,0 +1,47 @@
+/* =========================
+   Snackautomat – POI Screen
+   ========================= */
+
+html, body {
+  height: 100%;
+  overflow: hidden;   /* ❌ kein Scrollen */
+}
+
+.snack-body {
+  min-height: 100vh;
+  background-color: #fde9f9;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.snack-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Deutscher Text */
+.snack-text {
+  font-size: 50px;
+  margin-bottom: 24px;
+  color: #1a1a1a;
+}
+
+/* Bild */
+.snack-image {
+  width: 460px;
+  max-width: 60vw;
+  height: auto;
+  margin-bottom: 24px;
+}
+
+/* Englischer Text */
+.snack-text-en {
+  font-size: 50px;
+  color: #b3261e;
+}

@@ -39,6 +39,13 @@ def set_language(lang):
     # zurück zur vorherigen Seite
     return redirect(request.referrer or url_for('index'))
 
+ # ROS publish
+ #   language_pub.publish(
+  #      roslibpy.Message({'data': lang})
+   # )
+
+    #return redirect(request.referrer or url_for('index'))
+
 @app.route("/karten_validierung")
 def karten_validierung():
     session["active_screen"] = "karten_validierung"
@@ -71,6 +78,10 @@ def karten_ausgabe():
 def snackautomat():
     session["active_screen"] = "snackautomat"
     return render_template("snackautomat.html")
+
+@app.route("/spendenbox")
+def spendenbox():
+    return render_template("spendenbox.html")
 
 
 @app.route("/geschichte_hwr")

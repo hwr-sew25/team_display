@@ -1,24 +1,45 @@
 {% extends "base.html" %}
 
-{% block title %}Welcome{% endblock %}
+{% block title %}
+  {% if session.lang == 'en' %}
+    Welcome
+  {% else %}
+    Willkommen
+  {% endif %}
+{% endblock %}
 
 {% block content %}
+
 {% if session.lang == 'en' %}
-    <h1>Welcome to HWR!</h1>
-    <p>I am the Schoolnavigator.</p>
+  <h1>Welcome to HWR!</h1>
+  <p>I am the Schoolnavigator.</p>
 {% else %}
-    <h1>Willkommen an der HWR!</h1>
-    <p>Ich bin der Schoolnavigator.</p>
+  <h1>Willkommen an der HWR!</h1>
+  <p>Ich bin der Schoolnavigator.</p>
 {% endif %}
 
-  <a href="{{ url_for('raumwahl') }}" class="start-btn">
+<a href="{{ url_for('raumwahl') }}" class="start-btn">
+  {% if session.lang == 'en' %}
     Start
-  </a>
+  {% else %}
+    Start
+  {% endif %}
+</a>
 
-  <a href="{{ url_for('error_route') }}" class="start-btn error-btn">
-  Fehleranzeige testen
-  </a>
-  <a href="{{ url_for('error_tec') }}" class="start-btn error-btn">
-  2. Fehleranzeige testen
-  </a>
+<a href="{{ url_for('error_route') }}" class="start-btn error-btn">
+  {% if session.lang == 'en' %}
+    Test error display
+  {% else %}
+    Fehleranzeige testen
+  {% endif %}
+</a>
+
+<a href="{{ url_for('error_tec') }}" class="start-btn error-btn">
+  {% if session.lang == 'en' %}
+    Test second error display
+  {% else %}
+    2. Fehleranzeige testen
+  {% endif %}
+</a>
+
 {% endblock %}
