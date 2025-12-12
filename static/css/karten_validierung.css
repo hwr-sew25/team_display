@@ -1,0 +1,41 @@
+/* =========================
+   Karten Validierung – Fullscreen
+   ========================= */
+
+.karten-val-body {
+  min-height: 100vh;
+  background-color: #fde9f9;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Helvetica-World-ähnlicher Font */
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.validation-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Text wie Original-Terminal */
+.validation-text {
+  font-size: 28px;
+  line-height: 1.35;
+  margin-bottom: 24px;
+  max-width: 900px;
+
+  font-weight: 400;              /* ruhig, nicht fett */
+  letter-spacing: 0.2px;         /* sehr nah an Helvetica World */
+  color: #1a1a1a;
+}
+
+/* Bild bewusst klein & ruhig */
+.validation-image img {
+  width: 220px;                  /* nahe am Original */
+  max-width: 50vw;
+  height: auto;
+}

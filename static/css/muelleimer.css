@@ -1,0 +1,76 @@
+/* =========================
+   Mülleimer – POI Screen
+   ========================= */
+
+.muell-body {
+  min-height: 100vh;
+  background-color: #fde9f9;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.muell-container {
+  max-width: 1200px;
+  text-align: center;
+}
+
+/* Titel */
+.muell-title {
+  font-size: 36px;      
+  font-weight: 500;    
+  margin-bottom: 60px;
+}
+
+/* Grid */
+.muell-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 80px;
+}
+
+/* Spalte */
+.muell-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Kreise */
+.muell-circle {
+  width: 300px;
+  height: 300px;
+  border-radius: 200%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 24px;
+}
+
+.muell-circle img {
+  width: 100px;
+  height: auto;
+}
+
+/* Farben */
+.muell-circle.yellow { background-color: #f2d21b; }
+.muell-circle.green  { background-color: #1fa739; }
+.muell-circle.blue   { background-color: #2b6cb0; }
+
+/* Listen */
+.muell-col ul {
+  list-style: disc;
+  padding-left: 20px;
+  text-align: left;
+}
+
+.muell-col li {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}

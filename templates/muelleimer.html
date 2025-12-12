@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mülleimer</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/muelleimer.css') }}">
+</head>
+
+<body class="muell-body">
+
+  <div class="muell-container">
+
+    <!-- Titel -->
+    <p class="muell-title">Mülleimer</p>
+
+    <!-- Kategorien -->
+    <div class="muell-grid">
+
+      <!-- Gelb -->
+      <div class="muell-col">
+        <div class="muell-circle yellow">
+          <img src="{{ url_for('static', filename='images/plastik.png') }}" alt="Plastik">
+        </div>
+        <ul>
+          <li>Plastikflaschen / Plastic bottles</li>
+          <li>Verpackungsmaterial / Packaging material</li>
+          <li>Leere Stifthüllen / Pencil cases</li>
+          <li>To-go-Becher / To-go cups</li>
+        </ul>
+      </div>
+
+      <!-- Grün -->
+      <div class="muell-col">
+        <div class="muell-circle green">
+          <img src="{{ url_for('static', filename='images/reste.png') }}" alt="Bioabfall">
+        </div>
+        <ul>
+          <li>Essensreste / Leftover food</li>
+          <li>Taschentücher / Tissue</li>
+          <li>Verschmutzte Einwegbecher und -verpackungen</li>
+        </ul>
+      </div>
+
+      <!-- Blau -->
+      <div class="muell-col">
+        <div class="muell-circle blue">
+          <img src="{{ url_for('static', filename='images/papier.png') }}" alt="Papier">
+        </div>
+        <ul>
+          <li>Briefe / Letters</li>
+          <li>Druckerzeugnisse / Printed matter</li>
+          <li>Kartons / Cardboard boxes</li>
+          <li>Altpapier / Waste paper</li>
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

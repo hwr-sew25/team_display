@@ -39,6 +39,45 @@ def set_language(lang):
     # zurück zur vorherigen Seite
     return redirect(request.referrer or url_for('index'))
 
+@app.route("/karten_validierung")
+def karten_validierung():
+    session["active_screen"] = "karten_validierung"
+    return render_template("karten_validierung.html")
+
+@app.route("/kaffeeautomat")
+def kaffeeautomat():
+    session["active_screen"] = "kaffeeautomat"
+    return render_template("kaffeeautomat.html")
+
+
+@app.route("/muelleimer")
+def muelleimer():
+    session["active_screen"] = "muelleimer"
+    return render_template("muelleimer.html")
+
+@app.route("/bildungsangebote")
+def bildungsangebote():
+    session["active_screen"] = "bildungsangebote"
+    return render_template("bildungsangebote.html")
+
+
+@app.route("/karten_ausgabe")
+def karten_ausgabe():
+    session["active_screen"] = "karten_ausgabe"
+    return render_template("karten_ausgabe.html")
+
+
+@app.route("/snackautomat")
+def snackautomat():
+    session["active_screen"] = "snackautomat"
+    return render_template("snackautomat.html")
+
+
+@app.route("/geschichte_hwr")
+def geschichte_hwr():
+    session["active_screen"] = "geschichte_hwr"
+    return render_template("geschichte_hwr.html")
+
 @app.route("/error1")
 def error_route():
     session["active_screen"] = "error1"

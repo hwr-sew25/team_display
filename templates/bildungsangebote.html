@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bildungsangebote</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bildungsangebote.css') }}">
+</head>
+
+<body class="bildung-body">
+
+  <div class="bildung-container">
+
+    <!-- Titel -->
+    <div class="bildung-title">
+      <p class="title-de">Entdecken Sie unsere Angebote:</p>
+      <p class="title-en">Explore our Service:</p>
+    </div>
+
+    <!-- Angebote -->
+    <div class="bildung-grid">
+
+      <!-- Nachhilfe -->
+      <div class="bildung-item">
+        <img src="{{ url_for('static', filename='images/nachhilfe.jpg') }}" alt="Nachhilfe">
+        <p class="item-de">Nachhilfe</p>
+        <p class="item-en">Tutoring</p>
+      </div>
+
+      <!-- Schreibberatung -->
+      <div class="bildung-item">
+        <img src="{{ url_for('static', filename='images/schreibberatung.jpg') }}" alt="Schreibberatung">
+        <p class="item-de">Schreibberatung</p>
+        <p class="item-en">Writing Support</p>
+      </div>
+
+      <!-- Workshop -->
+      <div class="bildung-item">
+        <img src="{{ url_for('static', filename='images/workshop.jpg') }}" alt="Workshop">
+        <p class="item-de">Workshop</p>
+        <p class="item-en">Workshop</p>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

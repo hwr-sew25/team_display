@@ -18,9 +18,25 @@
   </div>
 
   <div class="options-row">
-    <a href="#" class="option-btn">Karten<br>Validierung</a>
-    <a href="{{ url_for('karte') }}" class="option-btn">Karte</a>
-    <a href="#" class="option-btn">Kaffeeautomat</a>
+  <a href="{{ url_for('karten_validierung') }}" class="option-btn">
+  Karten<br>Validierung
+</a>
+  <a href="{{ url_for('karte') }}" class="option-btn">Karte</a> <!-- noch durch 'Spendenbox' ersetzen -->
+  <a href="{{ url_for('kaffeeautomat') }}" class="option-btn">
+  Kaffeeautomat
+</a>
+  <a href="{{ url_for('muelleimer') }}" class="option-btn">
+  Mülleimer
+</a>
+
+  <a href="{{ url_for('bildungsangebote') }}" class="option-btn">
+  Bildungsangebote
+</a>
+
+  <a href="#" class="option-btn">Karten Ausgabe</a>
+  <a href="#" class="option-btn">Snackautomat</a>
+  <a href="#" class="option-btn">Geschichte HWR</a>
   </div>
+
 
 {% endblock %}

@@ -1,0 +1,52 @@
+/* =========================
+   Kaffeeautomat – Fullscreen
+   ========================= */
+
+.coffee-body {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.coffee-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Text allgemein */
+.coffee-text {
+  font-size: 28px;
+  line-height: 1.35;
+  max-width: 900px;
+}
+
+/* Text oben */
+.coffee-text-top {
+  color: #1a1a1a;
+  margin-bottom: 30px;
+}
+
+/* Text unten (rot) */
+.coffee-text-bottom {
+  color: #b3261e;
+  margin-top: 24px;
+}
+
+/* Illustration */
+.coffee-image img {
+  width: 260px;        /* bewusst ruhig */
+  max-width: 50vw;
+  height: auto;
+}
+
+.coffee-body {
+ min-height: 100vh;
+  background-color: #fde9f9;
+}

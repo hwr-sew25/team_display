@@ -108,27 +108,36 @@
 }
 
 .options-row {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px 36px;   /* vertikal | horizontal */
+  justify-items: center;
 }
 
 .option-btn {
   background-color: #d50b2e;
   color: #fff;
+
+  width: 230px;
+  height: 95px;
+
   border: none;
-  border-radius: 16px;
-  padding: 26px 90px;
-  font-size: 36px;
-  cursor: pointer;
-  text-decoration: none;
+  border-radius: 18px;
+
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 340px;     
-  height: 140px;
+
+  padding: 12px 16px;
+  cursor: pointer;
+  text-decoration: none;
 }
+
 
  /* Error Screen */
 .error-title {
@@ -162,7 +171,6 @@
   width: 320px;     
   max-width: 80%;   
 }
-
 
 
 

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karten Validierung</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/karten_validierung.css') }}">
+</head>
+
+<body class="karten-val-body">
+
+  <div class="validation-container">
+
+    {% if session.lang == 'en' %}
+      <p class="validation-text">
+        Please insert your card to update the validity
+      </p>
+    {% else %}
+      <p class="validation-text">
+        Bitte führen Sie Ihre Karte ein, um die Gültigkeit zu verlängern
+      </p>
+    {% endif %}
+
+    <div class="validation-image">
+      <img
+        src="{{ url_for('static', filename='images/karten_validierung.png') }}"
+        alt="Kartenvalidierer">
+    </div>
+
+  </div>
+
+</body>
+</html>

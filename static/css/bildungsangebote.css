@@ -1,0 +1,68 @@
+/* =========================
+   Bildungsangebote – POI
+   ========================= */
+
+.bildung-body {
+  min-height: 100vh;
+  background-color: #fde9f9;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.bildung-container {
+  max-width: 1200px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Titel */
+.bildung-title {
+  margin-bottom: 70px;
+}
+
+.title-de {
+  font-size: 34px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.title-en {
+  font-size: 26px;
+  font-weight: 400;
+}
+
+/* Grid */
+.bildung-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 100px;
+}
+
+/* Einzelnes Angebot */
+.bildung-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bildung-item img {
+  width: 90px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+/* Texte */
+.item-de {
+  font-size: 22px;
+  color: #1a3d8f;
+  margin-bottom: 6px;
+}
+
+.item-en {
+  font-size: 18px;
+  color: #b3261e;
+}
