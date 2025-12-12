@@ -1,0 +1,109 @@
+/* =========================
+   Geschichte HWR – Timeline
+   ========================= */
+
+.history-body {
+  min-height: 100vh;
+  background-color: #fde9f9;
+
+  display: flex;
+  justify-content: flex-start;   
+  align-items: center;
+
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;   
+}
+
+
+.history-container {
+  width: 100%;
+  max-width: 1400px;
+  padding: 40px;
+
+  margin-top: -80px;   
+}
+
+
+/* Titel */
+.history-title {
+  font-size: 56px;
+  color: #b3261e;
+
+  margin-top: 0px;     
+  margin-bottom: 250px; 
+}
+
+
+/* Timeline Grundlinie */
+.timeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 40px;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #1a1a1a;
+}
+
+/* Event */
+.event {
+  position: relative;
+  text-align: center;
+}
+
+/* Linien nach oben / unten */
+.event-line {
+  display: block;
+  width: 2px;
+  height: 80px;
+  background-color: #1a1a1a;
+  margin: 0 auto;
+}
+
+.event.top .event-line {
+  margin-bottom: 12px;
+}
+
+.event.bottom .event-line {
+  margin-top: 12px;
+}
+
+/* Jahre */
+.event-year {
+  display: block;
+  font-size: 22px;
+  color: #b3261e;
+  font-weight: 600;
+  margin: 12px 0;
+}
+
+/* Texte */
+.event-text {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.event-text-en {
+  font-size: 14px;
+  color: #b3261e;
+}
+
+/* Positionierung */
+.event.top {
+  transform: translateY(-120px);
+}
+
+.event.bottom {
+  transform: translateY(120px);
+}
