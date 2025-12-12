@@ -38,16 +38,10 @@
     position: absolute;
     width: 50%;        
     height: auto;
-    top: 35%;          
+    top: 40%;          
     left: 50%;         
     transform: translate(-50%, -50%);
 }
-  
-  /* Pfeilrichtungen */
-  .arrow.right { transform: rotate(0deg); }
-  .arrow.down  { transform: rotate(90deg); transform-origin: 80px 40px; }
-  .arrow.left  { transform: rotate(180deg); transform-origin: 80px 40px; }
-  .arrow.up    { transform: rotate(-90deg); transform-origin: 80px 40px; }
   
   .map-info {
     max-width: 400px;

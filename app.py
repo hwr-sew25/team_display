@@ -19,7 +19,7 @@ def raumwahl():
 
 @app.route("/karte")
 def karte():
-    return render_template("karte.html")
+    return render_template("karte.html", direction="left")
 
 @app.route("/set_language/<lang>")
 def set_language(lang):
