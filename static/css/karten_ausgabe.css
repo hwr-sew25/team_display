@@ -4,7 +4,7 @@
 
 html, body {
   height: 100%;
-  overflow: hidden;   /* ❌ kein Scrollen */
+  overflow: hidden;   
 }
 
 .karten-ausgabe-body {
@@ -29,7 +29,7 @@ html, body {
 .karten-ausgabe-text {
   font-size: 50px;
   margin-bottom: 22px;
-  color: #1a1a1a;
+  color: #d50b2e;
   max-width: 800px;
 }
 
@@ -44,5 +44,5 @@ html, body {
 /* Englischer Text */
 .karten-ausgabe-text-en {
   font-size: 40px;
-  color: #b3261e;
+  color: #1a1a1a;
 }

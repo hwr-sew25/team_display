@@ -23,19 +23,19 @@
 
 /* Text wie Original-Terminal */
 .validation-text {
-  font-size: 28px;
+  font-size: 50px;
   line-height: 1.35;
   margin-bottom: 24px;
   max-width: 900px;
 
   font-weight: 400;              /* ruhig, nicht fett */
   letter-spacing: 0.2px;         /* sehr nah an Helvetica World */
-  color: #1a1a1a;
+  color: #d50b2e;
 }
 
 /* Bild bewusst klein & ruhig */
 .validation-image img {
-  width: 220px;                  /* nahe am Original */
+  width: 500px;                  /* nahe am Original */
   max-width: 50vw;
   height: auto;
 }

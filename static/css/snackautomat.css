@@ -4,7 +4,7 @@
 
 html, body {
   height: 100%;
-  overflow: hidden;   /* ❌ kein Scrollen */
+  overflow: hidden;   
 }
 
 .snack-body {
@@ -29,12 +29,12 @@ html, body {
 .snack-text {
   font-size: 50px;
   margin-bottom: 24px;
-  color: #1a1a1a;
+  color: #d50b2e;
 }
 
 /* Bild */
 .snack-image {
-  width: 460px;
+  width: 560px;
   max-width: 60vw;
   height: auto;
   margin-bottom: 24px;
@@ -43,5 +43,5 @@ html, body {
 /* Englischer Text */
 .snack-text-en {
   font-size: 50px;
-  color: #b3261e;
+  color: #1a1a1a;
 }

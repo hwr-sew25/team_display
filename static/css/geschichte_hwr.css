@@ -30,7 +30,7 @@ body {
 /* Titel */
 .history-title {
   font-size: 56px;
-  color: #b3261e;
+  color: #d50b2e;
   margin-top: 0;
   margin-bottom: 250px;
 }
@@ -80,7 +80,7 @@ body {
 .event-year {
   display: block;
   font-size: 22px;
-  color: #b3261e;
+  color: #d50b2e;
   font-weight: 600;
   margin: 12px 0;
 }
@@ -93,7 +93,7 @@ body {
 
 .event-text-en {
   font-size: 16px;
-  color: #b3261e;
+  color: #d50b2e;
 }
 
 /* Positionierung */

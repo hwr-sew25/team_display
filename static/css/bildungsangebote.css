@@ -25,15 +25,18 @@
 }
 
 .title-de {
-  font-size: 34px;
+  font-size: 50px;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 30px;
+  color: #d50b2e;  
 }
 
 .title-en {
-  font-size: 26px;
+  font-size: 40px;
   font-weight: 400;
+  color: #1a1a1a;  
 }
+
 
 /* Grid */
 .bildung-grid {
@@ -50,7 +53,7 @@
 }
 
 .bildung-item img {
-  width: 90px;
+  width: 290px;
   height: auto;
   margin-bottom: 20px;
 }
@@ -58,11 +61,11 @@
 /* Texte */
 .item-de {
   font-size: 22px;
-  color: #1a3d8f;
+  color: #d50b2e;
   margin-bottom: 6px;
 }
 
 .item-en {
   font-size: 18px;
-  color: #b3261e;
+  color:#1a1a1a;
 }

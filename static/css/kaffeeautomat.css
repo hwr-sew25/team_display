@@ -22,26 +22,26 @@
 
 /* Text allgemein */
 .coffee-text {
-  font-size: 28px;
+  font-size: 50px;
   line-height: 1.35;
   max-width: 900px;
 }
 
 /* Text oben */
 .coffee-text-top {
-  color: #1a1a1a;
+  color: #d50b2e;
   margin-bottom: 30px;
 }
 
-/* Text unten (rot) */
+/* EN Text  */
 .coffee-text-bottom {
-  color: #b3261e;
+  color:#1a1a1a;
   margin-top: 24px;
 }
 
 /* Illustration */
 .coffee-image img {
-  width: 260px;        /* bewusst ruhig */
+  width: 300px;        /* bewusst ruhig */
   max-width: 50vw;
   height: auto;
 }
