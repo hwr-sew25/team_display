@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bildungsangebote</title>
+
+  <title>
+    {% if session.lang == 'en' %}
+      Educational Offers
+    {% else %}
+      Bildungsangebote
+    {% endif %}
+  </title>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bildungsangebote.css') }}">
 </head>
@@ -14,8 +21,11 @@
 
     <!-- Titel -->
     <div class="bildung-title">
-      <p class="title-de">Entdecken Sie unsere Angebote:</p>
-      <p class="title-en">Explore our Service:</p>
+      {% if session.lang == 'en' %}
+        <p class="title-en">Explore our services:</p>
+      {% else %}
+        <p class="title-de">Entdecken Sie unsere Angebote:</p>
+      {% endif %}
     </div>
 
     <!-- Angebote -->
@@ -23,23 +33,32 @@
 
       <!-- Nachhilfe -->
       <div class="bildung-item">
-        <img src="{{ url_for('static', filename='images/nachhilfe.jpg') }}" alt="Nachhilfe">
-        <p class="item-de">Nachhilfe</p>
-        <p class="item-en">Tutoring</p>
+        <img src="{{ url_for('static', filename='images/nachhilfe.jpg') }}" alt="Tutoring">
+        {% if session.lang == 'en' %}
+          <p class="item-en">Tutoring</p>
+        {% else %}
+          <p class="item-de">Nachhilfe</p>
+        {% endif %}
       </div>
 
       <!-- Schreibberatung -->
       <div class="bildung-item">
-        <img src="{{ url_for('static', filename='images/schreibberatung.jpg') }}" alt="Schreibberatung">
-        <p class="item-de">Schreibberatung</p>
-        <p class="item-en">Writing Support</p>
+        <img src="{{ url_for('static', filename='images/schreibberatung.jpg') }}" alt="Writing Support">
+        {% if session.lang == 'en' %}
+          <p class="item-en">Writing Support</p>
+        {% else %}
+          <p class="item-de">Schreibberatung</p>
+        {% endif %}
       </div>
 
       <!-- Workshop -->
       <div class="bildung-item">
         <img src="{{ url_for('static', filename='images/workshop.jpg') }}" alt="Workshop">
-        <p class="item-de">Workshop</p>
-        <p class="item-en">Workshop</p>
+        {% if session.lang == 'en' %}
+          <p class="item-en">Workshop</p>
+        {% else %}
+          <p class="item-de">Workshop</p>
+        {% endif %}
       </div>
 
     </div>

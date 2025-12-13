@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Karten Ausgabe</title>
+
+  <title>
+    {% if session.lang == 'en' %}
+      Card Issuing
+    {% else %}
+      Karten Ausgabe
+    {% endif %}
+  </title>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/karten_ausgabe.css') }}">
 </head>
@@ -12,22 +19,22 @@
 
   <div class="karten-ausgabe-container">
 
-    <!-- Deutscher Text -->
-    <p class="karten-ausgabe-text">
-      Drücken Sie den grünen Knopf, um eine Karte zu erstellen
-    </p>
+    {% if session.lang == 'en' %}
+      <p class="karten-ausgabe-text">
+        Press the green button to create your card
+      </p>
+    {% else %}
+      <p class="karten-ausgabe-text">
+        Drücken Sie den grünen Knopf, um eine Karte zu erstellen
+      </p>
+    {% endif %}
 
     <!-- Icon / Bild -->
     <img
       src="{{ url_for('static', filename='images/karten_ausgabe.png') }}"
-      alt="Karten Ausgabe"
+      alt="Card issuing machine"
       class="karten-ausgabe-image"
     >
-
-    <!-- Englischer Text -->
-    <p class="karten-ausgabe-text-en">
-      Press the green button to create your card
-    </p>
 
   </div>
 

@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spendenbox</title>
+
+  <title>
+    {% if session.lang == 'en' %}
+      Donation Box
+    {% else %}
+      Spendenbox
+    {% endif %}
+  </title>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/spendenbox.css') }}">
 </head>
@@ -12,30 +19,22 @@
 
   <div class="spendenbox-container">
 
-    <!-- Deutsch -->
-    <p class="spendenbox-title">
-      Für Social Period
-    </p>
-
-    <p class="spendenbox-text">
-      Ihre Spende zählt! (Hygieneartikel)
-    </p>
+    {% if session.lang == 'en' %}
+      <p class="spendenbox-text">
+        Your donation matters! (Hygiene items)
+      </p>
+    {% else %}
+      <p class="spendenbox-text">
+        Ihre Spende zählt! (Hygieneartikel)
+      </p>
+    {% endif %}
 
     <!-- Bild -->
     <img
       src="{{ url_for('static', filename='images/spendenbox.jpg') }}"
-      alt="Spendenbox"
+      alt="{% if session.lang == 'en' %}Donation box{% else %}Spendenbox{% endif %}"
       class="spendenbox-image"
     >
-
-    <!-- Englisch -->
-    <p class="spendenbox-title">
-      For Social Period
-    </p>
-
-    <p class="spendenbox-text-en">
-      Your donation matters! (Hygiene items)
-    </p>
 
   </div>
 

@@ -4,7 +4,7 @@
 
 html, body {
   height: 100%;
-  overflow: hidden;  
+  overflow: hidden;
 }
 
 .spendenbox-body {
@@ -25,27 +25,27 @@ html, body {
   text-align: center;
 }
 
-/* Titel */
+/* Überschrift  */
 .spendenbox-title {
   font-size: 28px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 24px;   
   color: #1a1a1a;
 }
 
-/* Deutscher Text */
+/* Haupttext */
 .spendenbox-text {
   font-size: 50px;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
   color: #d50b2e;
 }
 
-/* Bild */
+/* Bild  */
 .spendenbox-image {
-  width: 360px;
-  max-width: 60vw;
+  width: 460px;          
+  max-width: 70vw;      
   height: auto;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 
 /* Englischer Text */

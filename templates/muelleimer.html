@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mülleimer</title>
+
+  <title>
+    {% if session.lang == 'en' %}
+      Waste Bin
+    {% else %}
+      Mülleimer
+    {% endif %}
+  </title>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/muelleimer.css') }}">
 </head>
@@ -13,7 +20,13 @@
   <div class="muell-container">
 
     <!-- Titel -->
-    <p class="muell-title">Mülleimer</p>
+    <p class="muell-title">
+      {% if session.lang == 'en' %}
+        Waste Separation
+      {% else %}
+        Mülltrennung
+      {% endif %}
+    </p>
 
     <!-- Kategorien -->
     <div class="muell-grid">
@@ -21,38 +34,61 @@
       <!-- Gelb -->
       <div class="muell-col">
         <div class="muell-circle yellow">
-          <img src="{{ url_for('static', filename='images/plastik.png') }}" alt="Plastik">
+          <img src="{{ url_for('static', filename='images/plastik.png') }}" alt="Plastic">
         </div>
+
         <ul>
-          <li>Plastikflaschen / Plastic bottles</li>
-          <li>Verpackungsmaterial / Packaging material</li>
-          <li>Leere Stifthüllen / Pencil cases</li>
-          <li>To-go-Becher / To-go cups</li>
+          {% if session.lang == 'en' %}
+            <li>Plastic bottles</li>
+            <li>Packaging material</li>
+            <li>Empty pen cases</li>
+            <li>To-go cups</li>
+          {% else %}
+            <li>Plastikflaschen</li>
+            <li>Verpackungsmaterial</li>
+            <li>Leere Stifthüllen</li>
+            <li>To-go-Becher</li>
+          {% endif %}
         </ul>
       </div>
 
       <!-- Grün -->
       <div class="muell-col">
         <div class="muell-circle green">
-          <img src="{{ url_for('static', filename='images/reste.png') }}" alt="Bioabfall">
+          <img src="{{ url_for('static', filename='images/reste.png') }}" alt="Organic waste">
         </div>
+
         <ul>
-          <li>Essensreste / Leftover food</li>
-          <li>Taschentücher / Tissue</li>
-          <li>Verschmutzte Einwegbecher und -verpackungen</li>
+          {% if session.lang == 'en' %}
+            <li>Leftover food</li>
+            <li>Tissues</li>
+            <li>Soiled disposable cups and packaging</li>
+          {% else %}
+            <li>Essensreste</li>
+            <li>Taschentücher</li>
+            <li>Verschmutzte Einwegbecher und Verpackungen</li>
+          {% endif %}
         </ul>
       </div>
 
       <!-- Blau -->
       <div class="muell-col">
         <div class="muell-circle blue">
-          <img src="{{ url_for('static', filename='images/papier.png') }}" alt="Papier">
+          <img src="{{ url_for('static', filename='images/papier.png') }}" alt="Paper">
         </div>
+
         <ul>
-          <li>Briefe / Letters</li>
-          <li>Druckerzeugnisse / Printed matter</li>
-          <li>Kartons / Cardboard boxes</li>
-          <li>Altpapier / Waste paper</li>
+          {% if session.lang == 'en' %}
+            <li>Letters</li>
+            <li>Printed matter</li>
+            <li>Cardboard boxes</li>
+            <li>Waste paper</li>
+          {% else %}
+            <li>Briefe</li>
+            <li>Druckerzeugnisse</li>
+            <li>Kartons</li>
+            <li>Altpapier</li>
+          {% endif %}
         </ul>
       </div>
 

@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Karten Validierung</title>
+
+  <title>
+    {% if session.lang == 'en' %}
+      Card Validation
+    {% else %}
+      Karten Validierung
+    {% endif %}
+  </title>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/karten_validierung.css') }}">
 </head>
@@ -25,7 +32,7 @@
     <div class="validation-image">
       <img
         src="{{ url_for('static', filename='images/karten_validierung.png') }}"
-        alt="Kartenvalidierer">
+        alt="{% if session.lang == 'en' %}Card validator{% else %}Kartenvalidierer{% endif %}">
     </div>
 
   </div>

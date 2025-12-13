@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kaffeeautomat</title>
+
+  <title>
+    {% if session.lang == 'en' %}
+      Coffee Machine
+    {% else %}
+      Kaffeeautomat
+    {% endif %}
+  </title>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/kaffeeautomat.css') }}">
 </head>
@@ -12,22 +19,23 @@
 
   <div class="coffee-container">
 
-    <!-- Deutscher Text oben -->
-    <p class="coffee-text coffee-text-top">
-      Ziel erreicht. Lassen Sie es sich schmecken!
-    </p>
+    <!-- Text oben -->
+    {% if session.lang == 'en' %}
+      <p class="coffee-text coffee-text-top">
+        Destination reached. Enjoy your drink!
+      </p>
+    {% else %}
+      <p class="coffee-text coffee-text-top">
+        Ziel erreicht. Lassen Sie es sich schmecken!
+      </p>
+    {% endif %}
 
     <!-- Illustration -->
     <div class="coffee-image">
       <img
         src="{{ url_for('static', filename='images/kaffeeautomat.png') }}"
-        alt="Kaffee Illustration">
+        alt="Coffee machine illustration">
     </div>
-
-    <!-- Englischer Text unten -->
-    <p class="coffee-text coffee-text-bottom">
-      Destination reached. Enjoy your drink!
-    </p>
 
   </div>
 
