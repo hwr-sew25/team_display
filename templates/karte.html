@@ -38,17 +38,72 @@
 
     <!-- Anweisungen -->
     <div class="map-info">
-        <h1>1. OG</h1>
-        <p>• Gehen Sie in den 1. OG</p>
-        <p>• Biegen Sie rechts ab</p>
-        <p>• Der Raum befindet sich auf der rechten Seite</p>
+        <h1>
+        <!--Übersetzungen-->
+        {% if session.lang == 'en' %}
+            {% if floor == "EG" %}
+                Ground Floor
+            {% else %}
+                {{ floor }}. Floor
+            {% endif %}
+        {% else %}
+            {% if floor == "EG" %}
+                EG
+            {% else %}
+                {{ floor }}. OG
+            {% endif %}
+        {% endif %}
+        </h1>
 
-        <button class="stop-btn">Stopp</button>
+        <p>
+        • {% if session.lang == 'en' %}
+            {% if floor == "EG" %}
+                Go to the ground floor
+            {% else %}
+                Go to the {{ floor }}. floor
+            {% endif %}
+        {% else %}
+            {% if floor == "EG" %}
+                Gehen Sie in den EG
+            {% else %}
+                Gehen Sie in den {{ floor }}. OG
+            {% endif %}
+        {% endif %}
+        </p>
+
+        <p>
+        • {% if session.lang == 'en' %}
+            {% if side|lower == "mittelgang" %}
+                Go to the main corridor
+            {% elif side|lower == "links" %}
+                Turn left
+            {% elif side|lower == "rechts" %}
+                Turn right
+            {% else %}
+                Continue straight ahead
+            {% endif %}
+        {% else %}
+            {% if side|lower == "mittelgang" %}
+                Gehen Sie in den Mittelgang
+            {% else %}
+                Biegen Sie {{ side }} ab
+            {% endif %}
+        {% endif %}
+        </p>
+
+        <a href="{{ url_for('index') }}" class="stop-btn">
+        {% if session.lang == 'en' %}
+            Stop
+        {% else %}
+            Stopp
+        {% endif %}
+        </a>
+
     </div>
 
 </div>
 
-<!-- Pfeil-JavaScript -->
+<!-- Pfeil -->
 <script src="{{ url_for('static', filename='js/karte.js') }}"></script>
 <script>
     setArrow("{{ direction }}");

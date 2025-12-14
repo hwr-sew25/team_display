@@ -47,25 +47,26 @@
     max-width: 400px;
     text-align: left;
   }
-  
   .map-info h1 {
     font-size: 40px;
-    margin-bottom: 20px;
+    margin-bottom: 40px;
   }
   
   .map-info p {
-    font-size: 24px;
-    margin-bottom: 12px;
+    font-size: 32px;
+    margin-bottom: 40px;
   }
   
   .stop-btn {
     background-color: #d50b2e;
     color: white;
-    border: none;
+    text-decoration: none;       
     border-radius: 16px;
+    display: inline-flex;         
+    align-items: center;          
+    justify-content: center;     
     padding: 20px 60px;
     font-size: 32px;
     cursor: pointer;
-    margin-top: 20px;
   }
   

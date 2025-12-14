@@ -71,7 +71,7 @@ def karte():
 
     map_file = get_map(floor, wing)
     direction = get_arrow_direction(side)
-    return render_template("karte.html", direction=direction, map_file=map_file)
+    return render_template("karte.html", direction=direction, map_file=map_file, floor=floor, side=side)
 
 @app.route("/set_language/<lang>")
 def set_language(lang):
