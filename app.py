@@ -16,6 +16,38 @@ app.config.from_mapping(
 #def publish_screen(screen_name):
 #    screen_pub.publish(roslibpy.Message({'data': screen_name}))
 
+def get_arrow_direction(side: str) -> str:
+    side = side.lower()
+
+    if side == "mittelgang":
+        return "down"
+    
+    if side == "links":
+        return "left"
+    
+    if side == "rechts":
+        return "right"
+
+    # fallback fehlt
+    
+    
+def get_map(floor: str, wing: str) -> str:
+    floor = floor.upper()      
+    wing = wing.lower()        
+
+    if wing == "ost":
+        wing = "links"
+    elif wing == "west":
+        wing = "rechts"
+
+    if floor == "EG":
+        filename = f"EG_{wing}.svg" 
+    else:   filename = f"{floor}OG_{wing}.svg"
+
+    # fallback fehlt
+
+    return f"images/karten/{filename}"
+
 
 @app.route('/')
 @app.route('/index')
@@ -31,7 +63,15 @@ def raumwahl():
 @app.route("/karte")
 def karte():
     session["active_screen"] = "karte"
-    return render_template("karte.html", direction="left")
+
+    # später Werte von Directions
+    floor = "5"
+    wing = "Ost"
+    side = "Mittelgang"
+
+    map_file = get_map(floor, wing)
+    direction = get_arrow_direction(side)
+    return render_template("karte.html", direction=direction, map_file=map_file)
 
 @app.route("/set_language/<lang>")
 def set_language(lang):
@@ -56,7 +96,6 @@ def kaffeeautomat():
     session["active_screen"] = "kaffeeautomat"
     return render_template("kaffeeautomat.html")
 
-
 @app.route("/muelleimer")
 def muelleimer():
     session["active_screen"] = "muelleimer"
@@ -67,12 +106,10 @@ def bildungsangebote():
     session["active_screen"] = "bildungsangebote"
     return render_template("bildungsangebote.html")
 
-
 @app.route("/karten_ausgabe")
 def karten_ausgabe():
     session["active_screen"] = "karten_ausgabe"
     return render_template("karten_ausgabe.html")
-
 
 @app.route("/snackautomat")
 def snackautomat():
@@ -82,7 +119,6 @@ def snackautomat():
 @app.route("/spendenbox")
 def spendenbox():
     return render_template("spendenbox.html")
-
 
 @app.route("/geschichte_hwr")
 def geschichte_hwr():

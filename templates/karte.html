@@ -14,9 +14,7 @@
     <!--  Karte -->
     <div class="map-container">
         
-        <img src="{{ url_for('static', filename='images/karten/1OG_rechts.svg') }}"
-            alt="Karte 1. OG"
-            class="map-image">
+        <img src="{{ url_for('static', filename=map_file) }}" alt="Karte" class="map-image">
 
         <!-- Pfeil + Linie als SVG -->
         <svg id="arrow" class="arrow" width="180" height="300" viewBox="0 0 160 160">
