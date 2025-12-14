@@ -26,20 +26,4 @@
   {% endif %}
 </a>
 
-<a href="{{ url_for('error_route') }}" class="start-btn error-btn">
-  {% if session.lang == 'en' %}
-    Test error display
-  {% else %}
-    Fehleranzeige testen
-  {% endif %}
-</a>
-
-<a href="{{ url_for('error_tec') }}" class="start-btn error-btn">
-  {% if session.lang == 'en' %}
-    Test second error display
-  {% else %}
-    2. Fehleranzeige testen
-  {% endif %}
-</a>
-
 {% endblock %}
