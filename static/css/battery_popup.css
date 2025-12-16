@@ -1,0 +1,21 @@
+.battery-popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #f8d7da;
+    color: #721c24;
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 9999;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    font-family: Arial, sans-serif;
+}
+
+.battery-popup.critical {
+    background: #721c24;
+    color: white;
+}
+
+.battery-popup h2 {
+    margin-top: 0;
+}

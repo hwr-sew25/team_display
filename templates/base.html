@@ -4,34 +4,35 @@
   <meta charset="UTF-8" />
   <title>{% block title %}Schoolnavigator{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/battery_popup.css') }}">
 </head>
 <body>
   <header class="top-bar">
     <div class="top-bar-left">
       <img src="{{ url_for('static', filename='images/bear.png') }}" alt="Berlin logo" class="logo-bear" />
     </div>
-     <div class="top-bar-center">
-    <span class="top-bar-title">HWR Berlin</span>
+
+    <div class="top-bar-center">
+      <span class="top-bar-title">HWR Berlin</span>
     </div>
 
     <div class="top-bar-right">
-      <button class="lang-btn" aria-label="English">
-        <a href="{{ url_for('set_language', lang='en') }}" class="lang-btn">
+      <a href="{{ url_for('set_language', lang='en') }}" class="lang-btn">
         <img src="{{ url_for('static', filename='images/flag_eng.png') }}" alt="English">
-        </a>
-      </button>
-      <button class="lang-btn" aria-label="Deutsch">
-        <a href="{{ url_for('set_language', lang='de') }}" class="lang-btn">
+      </a>
+      <a href="{{ url_for('set_language', lang='de') }}" class="lang-btn">
         <img src="{{ url_for('static', filename='images/flag_de.png') }}" alt="Deutsch">
-        </a>
-      </button>
+      </a>
     </div>
   </header>
 
   <main class="main">
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Akku Warnung -->
+  <script src="{{ url_for('static', filename='js/battery_warning.js') }}"></script>
 </body>
 </html>
-
