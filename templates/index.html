@@ -13,9 +13,11 @@
 {% if session.lang == 'en' %}
   <h1>Welcome to HWR!</h1>
   <p>I am the Schoolnavigator.</p>
+  <p>Press "Start" and tell me which room you are looking for or select a point of interest.</p>
 {% else %}
   <h1>Willkommen an der HWR!</h1>
   <p>Ich bin der Schoolnavigator.</p>
+  <p>Drücken Sie "Start" und nennen Sie mir den Raum den Sie suchen oder wählen sie einen Point of Interest.</p>
 {% endif %}
 
 <a href="{{ url_for('raumwahl') }}" class="start-btn">
