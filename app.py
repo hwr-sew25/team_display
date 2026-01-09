@@ -8,13 +8,19 @@ app.config.from_mapping(
     BOOTSTRAP_BOOTSWATCH_THEME = 'pulse'
 )
 
-#client = roslibpy.Ros(host='10.20.128.225', port=9090)
-#client.run()
+client = roslibpy.Ros(host='10.20.128.225', port=9090)
 
-#screen_pub = roslibpy.Topic(client, '/current_screen', 'std_msgs/String')
+try:
+    client.run()
+    print("ROS connected successfully!")
+except Exception as e:
+    print(f"Failed to connect to ROS: {e}")
 
-#def publish_screen(screen_name):
-#    screen_pub.publish(roslibpy.Message({'data': screen_name}))
+# Verwendete Topics
+screen_pub = roslibpy.Topic(client, '/current_screen', 'std_msgs/String')
+
+def publish_screen(screen_name):
+    screen_pub.publish(roslibpy.Message({'data': screen_name}))
 
 def get_arrow_direction(side: str) -> str:
     side = side.lower()
@@ -65,7 +71,7 @@ def karte():
     session["active_screen"] = "karte"
 
     # später Werte von Directions
-    floor = "5"
+    floor = "3"
     wing = "Ost"
     side = "Mittelgang"
 
