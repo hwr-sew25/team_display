@@ -10,11 +10,24 @@ app.config.from_mapping(
 
 client = roslibpy.Ros(host='10.20.128.225', port=9090)
 
-try:
-    client.run()
-    print("ROS connected successfully!")
-except Exception as e:
-    print(f"Failed to connect to ROS: {e}")
+def connect_ros():
+    try:
+        client.run()
+        print("ROS connected successfully!")
+    except Exception as e:
+        print(f"Failed to connect to ROS: {e}")
+
+connect_ros()
+
+def publish_screen(screen_name: str):
+    try:
+        if not client.is_connected:
+            connect_ros()
+
+        screen_pub.publish(roslibpy.Message({'data': screen_name}))
+
+    except Exception as e:
+        print(f" Failed to publish screen: {e}")
 
 # Verwendete Topics
 screen_pub = roslibpy.Topic(client, '/current_screen', 'std_msgs/String')
@@ -124,6 +137,7 @@ def snackautomat():
 
 @app.route("/spendenbox")
 def spendenbox():
+    session["active_screen"] = "spendenbox"
     return render_template("spendenbox.html")
 
 @app.route("/geschichte_hwr")
