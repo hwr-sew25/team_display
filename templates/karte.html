@@ -9,6 +9,13 @@
 </head>
 <body>
 
+
+<!-- Countdown Progress Bar -->
+<div id="progress-container">
+    <div id="progress-bar"></div>
+    <span id="progress-count">5</span>
+</div>
+
 <div class="karte-wrapper">
 
     <!--  Karte -->
@@ -109,6 +116,19 @@
     setArrow("{{ direction }}");
 </script>
 
+<!-- Countdown Logic -->
+<script>
+    let seconds = 5;
+    const countEl = document.getElementById("progress-count");
+    const container = document.getElementById("progress-container");
 
-</body>
-</html>
+    const interval = setInterval(() => {
+        seconds--;
+        countEl.textContent = seconds;
+
+        if (seconds <= 0) {
+            clearInterval(interval);
+            container.style.display = "none";
+        }
+    }, 1000);
+</script>

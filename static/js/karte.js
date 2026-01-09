@@ -65,6 +65,8 @@ function setArrow(direction) {
         tip.setAttribute("d", "M73 200 L87 200 L80 210 Z");
 
     }
+
+    
     
     
 }
