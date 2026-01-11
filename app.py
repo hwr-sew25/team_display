@@ -8,7 +8,7 @@ app.config.from_mapping(
     BOOTSTRAP_BOOTSWATCH_THEME = 'pulse'
 )
 
-client = roslibpy.Ros(host='10.20.128.225', port=9090)
+client = roslibpy.Ros(host='localhost', port=9090)
 
 def connect_ros():
     try:
@@ -71,17 +71,17 @@ def get_map(floor: str, wing: str) -> str:
 @app.route('/')
 @app.route('/index')
 def index():
-    session["active_screen"] = "start"
+    publish_screen("start")
     return render_template('index.html')
 
 @app.route("/raumwahl")
 def raumwahl():
-    session["active_screen"] = "raumwahl"
+    publish_screen("raumwahl")
     return render_template("raumwahl.html")
 
 @app.route("/karte")
 def karte():
-    session["active_screen"] = "karte"
+    publish_screen("karte")
 
     # später Werte von Directions
     floor = "3"
@@ -107,52 +107,52 @@ def set_language(lang):
 
 @app.route("/karten_validierung")
 def karten_validierung():
-    session["active_screen"] = "karten_validierung"
+    publish_screen("karten_validierung")
     return render_template("karten_validierung.html")
 
 @app.route("/kaffeeautomat")
 def kaffeeautomat():
-    session["active_screen"] = "kaffeeautomat"
+    publish_screen("kaffeeautomat")
     return render_template("kaffeeautomat.html")
 
 @app.route("/muelleimer")
 def muelleimer():
-    session["active_screen"] = "muelleimer"
+    publish_screen("muelleimer")
     return render_template("muelleimer.html")
 
 @app.route("/bildungsangebote")
 def bildungsangebote():
-    session["active_screen"] = "bildungsangebote"
+    publish_screen("bildungsangebote")
     return render_template("bildungsangebote.html")
 
 @app.route("/karten_ausgabe")
 def karten_ausgabe():
-    session["active_screen"] = "karten_ausgabe"
+    publish_screen("karten_ausgabe")
     return render_template("karten_ausgabe.html")
 
 @app.route("/snackautomat")
 def snackautomat():
-    session["active_screen"] = "snackautomat"
+    publish_screen("snackautomat")
     return render_template("snackautomat.html")
 
 @app.route("/spendenbox")
 def spendenbox():
-    session["active_screen"] = "spendenbox"
+    publish_screen("spendenbox")
     return render_template("spendenbox.html")
 
 @app.route("/geschichte_hwr")
 def geschichte_hwr():
-    session["active_screen"] = "geschichte_hwr"
+    publish_screen("geschichte_hwr")
     return render_template("geschichte_hwr.html")
 
 @app.route("/error1")
 def error_route():
-    session["active_screen"] = "error1"
+    publish_screen("error1")
     return render_template("error_route.html")
 
 @app.route("/error2")
 def error_tec():
-    session["active_screen"] = "error2"
+    publish_screen("error2")
     return render_template("error_tec.html")
 
 if __name__ == "__main__":
