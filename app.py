@@ -24,6 +24,7 @@ screen_pub = roslibpy.Topic(client, '/current_screen', 'std_msgs/String')
 language_pub = roslibpy.Topic(client, '/language', 'std_msgs/String')
 start_pub = roslibpy.Topic(client, '/display/start_druecken', 'std_msgs/Bool')
 stop_pub = roslibpy.Topic(client, '/display/stop_druecken', 'std_msgs/Bool')
+#poi_pub = roslibpy.Topic(client, '/display/poi', 'std_msgs/String')
 
 def publish_screen(screen_name: str):
     try:
@@ -57,7 +58,6 @@ def publish_start():
     except Exception as e:
         print(f"Failed to publish start:", e)
 
-
 def publish_stop():
     try:
         if not client.is_connected:
@@ -67,6 +67,18 @@ def publish_stop():
         print("Published STOP = True")
     except Exception as e:
         print(f"Failed to publish stop:", e)
+
+#def publish_poi(poi: str):
+#    try:
+#        if not client.is_connected:
+#            connect_ros()
+
+#        language_pub.publish(roslibpy.Message({'data': poi}))
+
+#        print(f"Published language: {poi}")
+
+#    except Exception as e:
+#        print(f"Failed to publish language: {e}")
 
 #def publish_screen(screen_name):
 #    screen_pub.publish(roslibpy.Message({'data': screen_name}))
@@ -116,7 +128,7 @@ def index():
 @app.route("/raumwahl")
 def raumwahl():
     publish_screen("raumwahl")
-    publish_start(True)
+    publish_start()
     return render_template("raumwahl.html")
 
 @app.route("/karte")
