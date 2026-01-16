@@ -115,6 +115,7 @@ def karte():
 
 @app.route("/set_language/<lang>")
 def set_language(lang):
+    session['lang'] = lang
     publish_language(lang)
     return redirect(request.referrer or url_for('index'))
 
