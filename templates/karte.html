@@ -106,13 +106,14 @@
         {% endif %}
         </p>
 
-        <a href="{{ url_for('index') }}" class="stop-btn">
+        <a href="{{ url_for('index') }}" class="stop-btn" id="stop-btn">
         {% if session.lang == 'en' %}
             Stop
         {% else %}
             Stopp
         {% endif %}
         </a>
+
 
     </div>
 
@@ -129,6 +130,7 @@
     let seconds = 5;
     const countEl = document.getElementById("progress-count");
     const container = document.getElementById("progress-container");
+    const stopBtn = document.getElementById("stop-btn");
 
     const interval = setInterval(() => {
         seconds--;
@@ -136,7 +138,13 @@
 
         if (seconds <= 0) {
             clearInterval(interval);
+
+            // Progress-Bar ausblenden
             container.style.display = "none";
+
+            // Stopp-Button entfernen
+            stopBtn.style.display = "none";
         }
     }, 1000);
 </script>
+
