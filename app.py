@@ -35,15 +35,17 @@ def publish_screen(screen_name: str):
     except Exception as e:
         print(f" Failed to publish screen: {e}")
 
-def publish_language(language: str):
+def publish_language(lang: str):
     try:
         if not client.is_connected:
             connect_ros()
 
-        screen_pub.publish(roslibpy.Message({'data': language}))
+        language_pub.publish(roslibpy.Message({'data': lang}))
+
+        print(f"Published language: {lang}")
 
     except Exception as e:
-        print(f" Failed to publish language: {e}")
+        print(f"Failed to publish language: {e}")
 
 
 
@@ -113,10 +115,9 @@ def karte():
 
 @app.route("/set_language/<lang>")
 def set_language(lang):
-    session['lang'] = lang
     publish_language(lang)
-    # zurück zur vorherigen Seite
     return redirect(request.referrer or url_for('index'))
+
 
 
 @app.route("/karten_validierung")
