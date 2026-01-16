@@ -116,6 +116,7 @@ def index():
 @app.route("/raumwahl")
 def raumwahl():
     publish_screen("raumwahl")
+    publish_start(True)
     return render_template("raumwahl.html")
 
 @app.route("/karte")
@@ -137,8 +138,6 @@ def set_language(lang):
     session['lang'] = lang
     publish_language(lang)
     return redirect(request.referrer or url_for('index'))
-
-
 
 @app.route("/karten_validierung")
 def karten_validierung():
