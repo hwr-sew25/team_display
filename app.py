@@ -20,10 +20,10 @@ def connect_ros():
 connect_ros()
 
 # Verwendete Topics
-# display/start_druecken
-# display/stop_druecken
 screen_pub = roslibpy.Topic(client, '/current_screen', 'std_msgs/String')
 language_pub = roslibpy.Topic(client, '/language', 'std_msgs/String')
+start_pub = roslibpy.Topic(client, '/display/start_druecken', 'std_msgs/Bool')
+stop_pub = roslibpy.Topic(client, '/display/stop_druecken', 'std_msgs/Bool')
 
 def publish_screen(screen_name: str):
     try:
@@ -47,7 +47,26 @@ def publish_language(lang: str):
     except Exception as e:
         print(f"Failed to publish language: {e}")
 
+def publish_start():
+    try:
+        if not client.is_connected:
+            connect_ros()
+        msg = roslibpy.Message({'data': True})
+        start_pub.publish(msg)
+        print("Published START = True")
+    except Exception as e:
+        print(f"Failed to publish start:", e)
 
+
+def publish_stop():
+    try:
+        if not client.is_connected:
+            connect_ros()
+        msg = roslibpy.Message({'data': True})
+        stop_pub.publish(msg)
+        print("Published STOP = True")
+    except Exception as e:
+        print(f"Failed to publish stop:", e)
 
 #def publish_screen(screen_name):
 #    screen_pub.publish(roslibpy.Message({'data': screen_name}))
