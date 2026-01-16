@@ -19,6 +19,12 @@ def connect_ros():
 
 connect_ros()
 
+# Verwendete Topics
+# display/start_druecken
+# display/stop_druecken
+screen_pub = roslibpy.Topic(client, '/current_screen', 'std_msgs/String')
+language_pub = roslibpy.Topic(client, '/language', 'std_msgs/String')
+
 def publish_screen(screen_name: str):
     try:
         if not client.is_connected:
@@ -29,11 +35,23 @@ def publish_screen(screen_name: str):
     except Exception as e:
         print(f" Failed to publish screen: {e}")
 
-# Verwendete Topics
-screen_pub = roslibpy.Topic(client, '/current_screen', 'std_msgs/String')
+def publish_language(language: str):
+    try:
+        if not client.is_connected:
+            connect_ros()
 
-def publish_screen(screen_name):
-    screen_pub.publish(roslibpy.Message({'data': screen_name}))
+        screen_pub.publish(roslibpy.Message({'data': language}))
+
+    except Exception as e:
+        print(f" Failed to publish language: {e}")
+
+
+
+#def publish_screen(screen_name):
+#    screen_pub.publish(roslibpy.Message({'data': screen_name}))
+
+#def publish_language(laguage):
+#    screen_pub.publish(roslibpy.Message({'data': language}))
 
 def get_arrow_direction(side: str) -> str:
     side = side.lower()
@@ -87,23 +105,19 @@ def karte():
     floor = "3"
     wing = "Ost"
     side = "Mittelgang"
+    room = " 1.29"
 
     map_file = get_map(floor, wing)
     direction = get_arrow_direction(side)
-    return render_template("karte.html", direction=direction, map_file=map_file, floor=floor, side=side)
+    return render_template("karte.html", direction=direction, map_file=map_file, floor=floor, side=side, room=room)
 
 @app.route("/set_language/<lang>")
 def set_language(lang):
     session['lang'] = lang
+    publish_language(lang)
     # zurück zur vorherigen Seite
     return redirect(request.referrer or url_for('index'))
 
- # ROS publish
- #   language_pub.publish(
-  #      roslibpy.Message({'data': lang})
-   # )
-
-    #return redirect(request.referrer or url_for('index'))
 
 @app.route("/karten_validierung")
 def karten_validierung():
@@ -145,6 +159,7 @@ def geschichte_hwr():
     publish_screen("geschichte_hwr")
     return render_template("geschichte_hwr.html")
 
+# status = error (von directions)
 @app.route("/error1")
 def error_route():
     publish_screen("error1")

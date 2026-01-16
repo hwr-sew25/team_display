@@ -62,6 +62,14 @@
         {% endif %}
         </h1>
 
+        <h1>
+        {% if session.lang == 'en' %}
+            Room B{{ room }}
+        {% else %}
+            Raum B{{ room }}
+        {% endif %}
+        </h1>
+
         <p>
         • {% if session.lang == 'en' %}
             {% if floor == "EG" %}
