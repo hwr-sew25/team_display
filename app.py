@@ -151,6 +151,11 @@ def set_language(lang):
     publish_language(lang)
     return redirect(request.referrer or url_for('index'))
 
+@app.route("/stop", methods=["POST"])
+def stop_action():
+    publish_stop()
+    return redirect(url_for("index"))
+
 @app.route("/karten_validierung")
 def karten_validierung():
     publish_screen("karten_validierung")

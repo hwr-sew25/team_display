@@ -106,15 +106,15 @@
         {% endif %}
         </p>
 
-        <a href="{{ url_for('index') }}" class="stop-btn" id="stop-btn">
-        {% if session.lang == 'en' %}
-            Stop
-        {% else %}
-            Stopp
-        {% endif %}
-        </a>
-
-
+        <form action="{{ url_for('stop_action') }}" method="POST">
+            <button type="submit" class="stop-btn" id="stop-btn">
+                {% if session.lang == 'en' %}
+                    Stop
+                {% else %}
+                    Stopp
+                {% endif %}
+            </button>
+        </form>
     </div>
 
 </div>
