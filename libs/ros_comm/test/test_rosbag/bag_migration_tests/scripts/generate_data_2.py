@@ -37,6 +37,7 @@ from test_rosbag.msg import *
 import genpy
 import rosbag
 
+
 def generate_data():
     bag = rosbag.Bag("test/migrated_explicit_gen2.bag", "w")
     m = MigratedExplicit(None, 17, 58.2, "aldfkja", 82)
@@ -44,12 +45,19 @@ def generate_data():
     bag.close()
 
     bag = rosbag.Bag("test/migrated_implicit_gen2.bag", "w")
-    m = MigratedImplicit(None, 34, 16.32, "kljene", MigratedExplicit(None, 17, 58.2, "aldfkja", 82))
+    m = MigratedImplicit(
+        None, 34, 16.32, "kljene", MigratedExplicit(None, 17, 58.2, "aldfkja", 82)
+    )
     bag.write("migrated_implicit", m, genpy.Time())
     bag.close()
 
     bag = rosbag.Bag("test/migrated_mixed_gen2.bag", "w")
-    m = MigratedMixed(None, MigratedImplicit(None, 34, 16.32, "kljene", MigratedExplicit(None, 17, 58.2, "aldfkja", 82)))
+    m = MigratedMixed(
+        None,
+        MigratedImplicit(
+            None, 34, 16.32, "kljene", MigratedExplicit(None, 17, 58.2, "aldfkja", 82)
+        ),
+    )
     bag.write("migrated_mixed", m, genpy.Time())
     bag.close()
 
@@ -64,12 +72,29 @@ def generate_data():
     bag.close()
 
     bag = rosbag.Bag("test/convergent_gen2.bag", "w")
-    m = Convergent(1.2, 3.4, 5.6, 7.8, SimpleMigrated(11), SimpleMigrated(22), SimpleMigrated(33), SimpleMigrated(44))
+    m = Convergent(
+        1.2,
+        3.4,
+        5.6,
+        7.8,
+        SimpleMigrated(11),
+        SimpleMigrated(22),
+        SimpleMigrated(33),
+        SimpleMigrated(44),
+    )
     bag.write("convergent", m, genpy.Time())
     bag.close()
 
     bag = rosbag.Bag("test/converged_gen2.bag", "w")
-    m = Converged([1.2, 3.4, 5.6, 7.8], [SimpleMigrated(11), SimpleMigrated(22), SimpleMigrated(33), SimpleMigrated(44)])
+    m = Converged(
+        [1.2, 3.4, 5.6, 7.8],
+        [
+            SimpleMigrated(11),
+            SimpleMigrated(22),
+            SimpleMigrated(33),
+            SimpleMigrated(44),
+        ],
+    )
     bag.write("converged", m, genpy.Time())
     bag.close()
 
@@ -77,6 +102,7 @@ def generate_data():
     m = Constants(Constants.CONSTANT)
     bag.write("constants", m, genpy.Time())
     bag.close()
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     generate_data()

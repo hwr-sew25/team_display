@@ -38,14 +38,15 @@ Dumps parameters from ROSLaunch files to stdout as YAML.
 import sys
 
 import roslaunch.config
-import roslaunch.xmlloader 
+import roslaunch.xmlloader
 
 import yaml
+
 
 def dump_params(files):
     """
     Dumps ROS parameters of a list of files to STDOUT in YAML
-    
+
     @param files: List of ROSLaunch files to load
     @type  files: [ str ]
     @return: True if loaded parameters successfully
@@ -56,7 +57,7 @@ def dump_params(files):
 
     for f in files:
         try:
-            loader.load(f, config, verbose = False)
+            loader.load(f, config, verbose=False)
         except Exception as e:
             sys.stderr.write("Unable to load file %s: %s" % (f, e))
             return False
@@ -65,5 +66,5 @@ def dump_params(files):
     params_dict = {}
     for k, v in config.params.items():
         params_dict[str(k)] = v.value
-    sys.stdout.write(yaml.safe_dump(params_dict)+'\n')
+    sys.stdout.write(yaml.safe_dump(params_dict) + "\n")
     return True

@@ -41,6 +41,7 @@ from __future__ import print_function
 
 import errno
 import os
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -62,7 +63,7 @@ from .core import printlog_bold
 from .core import rostest_name_from_path  # noqa: F401
 from .core import xml_results_file
 
-BARE_TIME_LIMIT = 60.
+BARE_TIME_LIMIT = 60.0
 TIMEOUT_SIGINT = 15.0  # seconds
 TIMEOUT_SIGTERM = 2.0  # seconds
 
@@ -72,8 +73,16 @@ class TestTimeoutException(Exception):
 
 
 class BareTestCase(unittest.TestCase):
-
-    def __init__(self, exe, args, retry=0, time_limit=None, test_name=None, text_mode=False, package_name=None):
+    def __init__(
+        self,
+        exe,
+        args,
+        retry=0,
+        time_limit=None,
+        test_name=None,
+        text_mode=False,
+        package_name=None,
+    ):
         """
         @param exe: path to executable to run
         @type  exe: str
@@ -100,12 +109,12 @@ class BareTestCase(unittest.TestCase):
             self.test_name = test_name
 
         # invoke pyunit tests with python executable
-        if self.exe.endswith('.py'):
-            self.args = ['python', self.exe] + args
+        if self.exe.endswith(".py"):
+            self.args = ["python", self.exe] + args
         else:
             self.args = [self.exe] + args
         if text_mode:
-            self.args = self.args + ['--text']
+            self.args = self.args + ["--text"]
 
         self.retry = retry
         self.time_limit = time_limit or BARE_TIME_LIMIT
@@ -121,35 +130,44 @@ class BareTestCase(unittest.TestCase):
             self.pmon = None
 
     def runTest(self):
-        self.failIf(self.package is None, 'unable to determine package of executable')
+        self.failIf(self.package is None, "unable to determine package of executable")
 
         done = False
         while not done:
             test_name = self.test_name
 
-            printlog('Running test [%s]', test_name)
+            printlog("Running test [%s]", test_name)
 
             # setup the test
             # - we pass in the output test_file name so we can scrape it
             test_file = xml_results_file(self.package, test_name, False)
             if os.path.exists(test_file):
-                printlog('removing previous test results file [%s]', test_file)
+                printlog("removing previous test results file [%s]", test_file)
                 os.remove(test_file)
 
-            self.args.append('--gtest_output=xml:%s' % test_file)
+            self.args.append("--gtest_output=xml:%s" % test_file)
 
             # run the test, blocks until completion
-            printlog('running test %s' % test_name)
+            printlog("running test %s" % test_name)
             timeout_failure = False
 
             run_id = None
             # TODO: really need different, non-node version of LocalProcess instead of these extra args
-            process = LocalProcess(run_id, self.package, self.test_name, self.args, os.environ, False, cwd='cwd', is_node=False)
+            process = LocalProcess(
+                run_id,
+                self.package,
+                self.test_name,
+                self.args,
+                os.environ,
+                False,
+                cwd="cwd",
+                is_node=False,
+            )
 
             pm = self.pmon
             pm.register(process)
             success = process.start()
-            self.assert_(success, 'test failed to start')
+            self.assert_(success, "test failed to start")
 
             # poll until test terminates or allotted time exceed
             timeout_t = time.time() + self.time_limit
@@ -157,7 +175,7 @@ class BareTestCase(unittest.TestCase):
                 while process.is_alive():
                     # test fails on timeout
                     if time.time() > timeout_t:
-                        raise TestTimeoutException('test max time allotted')
+                        raise TestTimeoutException("test max time allotted")
                     time.sleep(0.1)
 
             except TestTimeoutException:
@@ -167,17 +185,20 @@ class BareTestCase(unittest.TestCase):
                     raise
 
             if not timeout_failure:
-                printlog('test [%s] finished' % test_name)
+                printlog("test [%s] finished" % test_name)
             else:
-                printerrlog('test [%s] timed out' % test_name)
+                printerrlog("test [%s] timed out" % test_name)
 
             if self.text_mode:
                 results = self.results
             elif not self.text_mode:
                 # load in test_file
                 if not timeout_failure:
-                    self.assert_(os.path.isfile(test_file), 'test [%s] did not generate test results' % test_name)
-                    printlog('test [%s] results are in [%s]', test_name, test_file)
+                    self.assert_(
+                        os.path.isfile(test_file),
+                        "test [%s] did not generate test results" % test_name,
+                    )
+                    printlog("test [%s] results are in [%s]", test_name, test_file)
                     results = junitxml.read(test_file, test_name)
                     test_fail = results.num_errors or results.num_failures
                 else:
@@ -185,14 +206,22 @@ class BareTestCase(unittest.TestCase):
 
             if self.retry > 0 and test_fail:
                 self.retry -= 1
-                printlog('test [%s] failed, retrying. Retries left: %s' % (test_name, self.retry))
+                printlog(
+                    "test [%s] failed, retrying. Retries left: %s"
+                    % (test_name, self.retry)
+                )
             else:
                 done = True
                 self.results = results
-                printlog('test [%s] results summary: %s errors, %s failures, %s tests',
-                         test_name, results.num_errors, results.num_failures, results.num_tests)
+                printlog(
+                    "test [%s] results summary: %s errors, %s failures, %s tests",
+                    test_name,
+                    results.num_errors,
+                    results.num_failures,
+                    results.num_tests,
+                )
 
-        printlog('[ROSTEST] test [%s] done', test_name)
+        printlog("[ROSTEST] test [%s] done", test_name)
 
 
 # TODO: this is a straight copy from roslaunch. Need to reduce, refactor
@@ -201,7 +230,19 @@ class LocalProcess(pmon.Process):
     Process launched on local machine
     """
 
-    def __init__(self, run_id, package, name, args, env, log_output, respawn=False, required=False, cwd=None, is_node=True):
+    def __init__(
+        self,
+        run_id,
+        package,
+        name,
+        args,
+        env,
+        log_output,
+        respawn=False,
+        required=False,
+        cwd=None,
+        is_node=True,
+    ):
         """
         @param run_id: unique run ID for this roslaunch. Used to
           generate log directory location. run_id may be None if this
@@ -241,12 +282,12 @@ class LocalProcess(pmon.Process):
         Get all data about this process in dictionary form
         """
         info = super(LocalProcess, self).get_info()
-        info['pid'] = self.pid
+        info["pid"] = self.pid
         if self.run_id:
-            info['run_id'] = self.run_id
-        info['log_output'] = self.log_output
+            info["run_id"] = self.run_id
+        info["log_output"] = self.log_output
         if self.cwd is not None:
-            info['cwd'] = self.cwd
+            info["cwd"] = self.cwd
         return info
 
     def _configure_logging(self):
@@ -264,9 +305,15 @@ class LocalProcess(pmon.Process):
                 os.makedirs(log_dir)
             except OSError as e:
                 if e.errno == errno.EACCES:
-                    raise RLException('unable to create directory for log file [%s].\nPlease check permissions.' % log_dir)
+                    raise RLException(
+                        "unable to create directory for log file [%s].\nPlease check permissions."
+                        % log_dir
+                    )
                 else:
-                    raise RLException('unable to create directory for log file [%s]: %s' % (log_dir, e.strerror))
+                    raise RLException(
+                        "unable to create directory for log file [%s]: %s"
+                        % (log_dir, e.strerror)
+                    )
         # #973: save log dir for error messages
         self.log_dir = log_dir
 
@@ -277,11 +324,14 @@ class LocalProcess(pmon.Process):
         logfileout = logfileerr = None
 
         if self.log_output:
-            outf, errf = [os.path.join(log_dir, '%s-%s.log' % (self.name, n)) for n in ['stdout', 'stderr']]
+            outf, errf = [
+                os.path.join(log_dir, "%s-%s.log" % (self.name, n))
+                for n in ["stdout", "stderr"]
+            ]
             if self.respawn:
-                mode = 'a'
+                mode = "a"
             else:
-                mode = 'w'
+                mode = "w"
             logfileout = open(outf, mode)
             if is_child_mode():
                 logfileerr = open(errf, mode)
@@ -289,8 +339,8 @@ class LocalProcess(pmon.Process):
         # #986: pass in logfile name to node
         if self.is_node:
             # #1595: on respawn, these keep appending
-            self.args = _cleanup_remappings(self.args, '__log:=')
-            self.args.append('__log:=%s' % os.path.join(log_dir, '%s.log' % self.name))
+            self.args = _cleanup_remappings(self.args, "__log:=")
+            self.args.append("__log:=%s" % os.path.join(log_dir, "%s.log" % self.name))
 
         return logfileout, logfileerr
 
@@ -312,18 +362,21 @@ class LocalProcess(pmon.Process):
             try:
                 logfileout, logfileerr = self._configure_logging()
             except Exception as e:
-                printerrlog('[%s] ERROR: unable to configure logging [%s]' % (self.name, str(e)))
+                printerrlog(
+                    "[%s] ERROR: unable to configure logging [%s]" % (self.name, str(e))
+                )
                 # it's not safe to inherit from this process as
                 # rostest changes stdout to a StringIO, which is not a
                 # proper file.
                 logfileout, logfileerr = subprocess.PIPE, subprocess.PIPE
 
-            if self.cwd == 'node':
+            if self.cwd == "node":
                 cwd = os.path.dirname(self.args[0])
-            elif self.cwd == 'cwd':
+            elif self.cwd == "cwd":
                 cwd = os.getcwd()
-            elif self.cwd == 'ros-root':
+            elif self.cwd == "ros-root":
                 from roslib.rosenv import get_ros_root
+
                 cwd = get_ros_root()
             else:
                 cwd = rospkg.get_ros_home()
@@ -335,20 +388,36 @@ class LocalProcess(pmon.Process):
                     pass
 
             try:
-                self.popen = subprocess.Popen(self.args, cwd=cwd, stdout=logfileout, stderr=logfileerr, env=full_env, close_fds=True, preexec_fn=os.setsid)
+                self.popen = subprocess.Popen(
+                    self.args,
+                    cwd=cwd,
+                    stdout=logfileout,
+                    stderr=logfileerr,
+                    env=full_env,
+                    close_fds=True,
+                    preexec_fn=os.setsid,
+                )
             except OSError as e:
                 self.started = True  # must set so is_alive state is correct
                 if e.errno == errno.ENOEXEC:  # Exec format error
-                    raise pmon.FatalProcessLaunch("Unable to launch [%s]. \nIf it is a script, you may be missing a '#!' declaration at the top." % self.name)
+                    raise pmon.FatalProcessLaunch(
+                        "Unable to launch [%s]. \nIf it is a script, you may be missing a '#!' declaration at the top."
+                        % self.name
+                    )
                 elif e.errno == errno.ENOENT:  # no such file or directory
-                    raise pmon.FatalProcessLaunch("""Roslaunch got a '%s' error while attempting to run:
+                    raise pmon.FatalProcessLaunch(
+                        """Roslaunch got a '%s' error while attempting to run:
 
 %s
 
 Please make sure that all the executables in this command exist and have
-executable permission. This is often caused by a bad launch-prefix.""" % (msg, ' '.join(self.args)))
+executable permission. This is often caused by a bad launch-prefix."""
+                        % (msg, " ".join(self.args))
+                    )
                 else:
-                    raise pmon.FatalProcessLaunch('unable to launch [%s]: %s' % (' '.join(self.args), msg))
+                    raise pmon.FatalProcessLaunch(
+                        "unable to launch [%s]: %s" % (" ".join(self.args), msg)
+                    )
 
             self.started = True
             # Check that the process is either still running (poll returns
@@ -357,10 +426,12 @@ executable permission. This is often caused by a bad launch-prefix.""" % (msg, '
             poll_result = self.popen.poll()
             if poll_result is None or poll_result == 0:
                 self.pid = self.popen.pid
-                printlog_bold('process[%s]: started with pid [%s]' % (self.name, self.pid))
+                printlog_bold(
+                    "process[%s]: started with pid [%s]" % (self.name, self.pid)
+                )
                 return True
             else:
-                printerrlog('failed to start local process: %s' % (' '.join(self.args)))
+                printerrlog("failed to start local process: %s" % (" ".join(self.args)))
                 return False
         finally:
             self.lock.release()
@@ -388,16 +459,28 @@ executable permission. This is often caused by a bad launch-prefix.""" % (msg, '
         if self.exit_code is not None:
             if self.exit_code:
                 if self.log_dir:
-                    return 'process has died [pid %s, exit code %s].\nlog files: %s*.log' % (self.pid, self.exit_code, os.path.join(self.log_dir, self.name))
+                    return (
+                        "process has died [pid %s, exit code %s].\nlog files: %s*.log"
+                        % (
+                            self.pid,
+                            self.exit_code,
+                            os.path.join(self.log_dir, self.name),
+                        )
+                    )
                 else:
-                    return 'process has died [pid %s, exit code %s]' % (self.pid, self.exit_code)
+                    return "process has died [pid %s, exit code %s]" % (
+                        self.pid,
+                        self.exit_code,
+                    )
             else:
                 if self.log_dir:
-                    return 'process has finished cleanly.\nlog file: %s*.log' % (os.path.join(self.log_dir, self.name))
+                    return "process has finished cleanly.\nlog file: %s*.log" % (
+                        os.path.join(self.log_dir, self.name)
+                    )
                 else:
-                    return 'process has finished cleanly'
+                    return "process has finished cleanly"
         else:
-            return 'process has died'
+            return "process has died"
 
     def _stop_unix(self, errors):
         """
@@ -426,7 +509,7 @@ executable permission. This is often caused by a bad launch-prefix.""" % (msg, '
                 retcode = self.popen.poll()
             # Escalate non-responsive process
             if retcode is None:
-                printerrlog('[%s] escalating to SIGTERM' % self.name)
+                printerrlog("[%s] escalating to SIGTERM" % self.name)
                 timeout_t = time.time() + TIMEOUT_SIGTERM
                 os.killpg(pgid, signal.SIGTERM)
                 retcode = self.popen.poll()
@@ -434,16 +517,23 @@ executable permission. This is often caused by a bad launch-prefix.""" % (msg, '
                     time.sleep(0.2)
                     retcode = self.popen.poll()
                 if retcode is None:
-                    printerrlog('[%s] escalating to SIGKILL' % self.name)
-                    errors.append('process[%s, pid %s]: required SIGKILL. May still be running.' % (self.name, pid))
+                    printerrlog("[%s] escalating to SIGKILL" % self.name)
+                    errors.append(
+                        "process[%s, pid %s]: required SIGKILL. May still be running."
+                        % (self.name, pid)
+                    )
                     try:
                         os.killpg(pgid, signal.SIGKILL)
                         # #2096: don't block on SIGKILL, because this results in more orphaned processes overall
                     except OSError as e:
                         if e.args[0] == 3:
-                            printerrlog('no [%s] process with pid [%s]' % (self.name, pid))
+                            printerrlog(
+                                "no [%s] process with pid [%s]" % (self.name, pid)
+                            )
                         else:
-                            printerrlog('errors shutting down [%s]: %s' % (self.name, e))
+                            printerrlog(
+                                "errors shutting down [%s]: %s" % (self.name, e)
+                            )
         finally:
             self.popen = None
 
@@ -464,13 +554,13 @@ executable permission. This is often caused by a bad launch-prefix.""" % (msg, '
                 # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/347462
                 self._stop_unix(errors)
             except Exception:
-                printerrlog('[%s] EXCEPTION %s' % (self.name, traceback.format_exc()))
+                printerrlog("[%s] EXCEPTION %s" % (self.name, traceback.format_exc()))
         finally:
             self.stopped = True
             self.lock.release()
 
 
-def print_runner_summary(runner_results, junit_results, runner_name='ROSUNIT'):
+def print_runner_summary(runner_results, junit_results, runner_name="ROSUNIT"):
     """
     Print summary of runner results and actual test results to
     stdout. For rosunit and rostest, the test is wrapped in an
@@ -489,38 +579,41 @@ def print_runner_summary(runner_results, junit_results, runner_name='ROSUNIT'):
 
     buff = StringIO()
 
-    buff.write('[%s]' % (runner_name) + '-' * 71 + '\n\n')
+    buff.write("[%s]" % (runner_name) + "-" * 71 + "\n\n")
     for tc_result in junit_results.test_case_results:
         buff.write(tc_result.description)
     for tc_result in runner_results.failures:
-        buff.write('[%s][failed]\n' % tc_result[0]._testMethodName)
+        buff.write("[%s][failed]\n" % tc_result[0]._testMethodName)
 
-    buff.write('\nSUMMARY\n')
-    if runner_results.wasSuccessful() and (junit_results.num_errors + junit_results.num_failures) == 0:
-        buff.write('\033[32m * RESULT: SUCCESS\033[0m\n')
+    buff.write("\nSUMMARY\n")
+    if (
+        runner_results.wasSuccessful()
+        and (junit_results.num_errors + junit_results.num_failures) == 0
+    ):
+        buff.write("\033[32m * RESULT: SUCCESS\033[0m\n")
     else:
-        buff.write('\033[1;31m * RESULT: FAIL\033[0m\n')
+        buff.write("\033[1;31m * RESULT: FAIL\033[0m\n")
 
     # TODO: still some issues with the numbers adding up if tests fail to launch
 
     # number of errors from the inner tests, plus add in count for tests
     # that didn't run properly ('result' object).
-    buff.write(' * TESTS: %s\n' % junit_results.num_tests)
-    num_errors = junit_results.num_errors+len(runner_results.errors)
+    buff.write(" * TESTS: %s\n" % junit_results.num_tests)
+    num_errors = junit_results.num_errors + len(runner_results.errors)
     if num_errors:
-        buff.write('\033[1;31m * ERRORS: %s\033[0m\n' % num_errors)
+        buff.write("\033[1;31m * ERRORS: %s\033[0m\n" % num_errors)
     else:
-        buff.write(' * ERRORS: 0\n')
-    num_failures = junit_results.num_failures+len(runner_results.failures)
+        buff.write(" * ERRORS: 0\n")
+    num_failures = junit_results.num_failures + len(runner_results.failures)
     if num_failures:
-        buff.write('\033[1;31m * FAILURES: %s\033[0m\n' % num_failures)
+        buff.write("\033[1;31m * FAILURES: %s\033[0m\n" % num_failures)
     else:
-        buff.write(' * FAILURES: 0\n')
+        buff.write(" * FAILURES: 0\n")
 
     if runner_results.failures:
-        buff.write('\nERROR: The following tests failed to run:\n')
+        buff.write("\nERROR: The following tests failed to run:\n")
         for tc_result in runner_results.failures:
-            buff.write(' * ' + tc_result[0]._testMethodName + '\n')
+            buff.write(" * " + tc_result[0]._testMethodName + "\n")
 
     print(buff.getvalue())
 
@@ -528,10 +621,10 @@ def print_runner_summary(runner_results, junit_results, runner_name='ROSUNIT'):
 def _format_errors(errors):
     formatted = []
     for e in errors:
-        if '_testMethodName' in e[0].__dict__:
+        if "_testMethodName" in e[0].__dict__:
             formatted.append(e[0]._testMethodName)
-        elif 'description' in e[0].__dict__:
-            formatted.append('%s: %s\n' % (str(e[0].description), str(e[1])))
+        elif "description" in e[0].__dict__:
+            formatted.append("%s: %s\n" % (str(e[0].description), str(e[1])))
         else:
             formatted.append(str(e[0].__dict__))
     return formatted
@@ -543,12 +636,20 @@ def print_unittest_summary(result):
     @param result: test results
     """
     buff = StringIO()
-    buff.write('-------------------------------------------------------------\nSUMMARY:\n')
+    buff.write(
+        "-------------------------------------------------------------\nSUMMARY:\n"
+    )
     if result.wasSuccessful():
-        buff.write('\033[32m * RESULT: SUCCESS\033[0m\n')
+        buff.write("\033[32m * RESULT: SUCCESS\033[0m\n")
     else:
-        buff.write(' * RESULT: FAIL\n')
-    buff.write(' * TESTS: %s\n' % result.testsRun)
-    buff.write(' * ERRORS: %s [%s]\n' % (len(result.errors), ', '.join(_format_errors(result.errors))))
-    buff.write(' * FAILURES: %s [%s]\n' % (len(result.failures), ', '.join(_format_errors(result.failures))))
+        buff.write(" * RESULT: FAIL\n")
+    buff.write(" * TESTS: %s\n" % result.testsRun)
+    buff.write(
+        " * ERRORS: %s [%s]\n"
+        % (len(result.errors), ", ".join(_format_errors(result.errors)))
+    )
+    buff.write(
+        " * FAILURES: %s [%s]\n"
+        % (len(result.failures), ", ".join(_format_errors(result.failures)))
+    )
     print(buff.getvalue())

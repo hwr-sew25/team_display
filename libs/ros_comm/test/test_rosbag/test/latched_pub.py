@@ -37,20 +37,20 @@ import rostest
 import sys
 from std_msgs.msg import *
 
+
 class LatchedPub(unittest.TestCase):
+    def test_latched_pub(self):
+        rospy.init_node("latched_pub")
 
-  def test_latched_pub(self):
-    rospy.init_node('latched_pub')
+        # Wait a while before publishing
+        rospy.sleep(rospy.Duration.from_sec(5.0))
 
-    # Wait a while before publishing
-    rospy.sleep(rospy.Duration.from_sec(5.0))
+        pub = rospy.Publisher("chatter", String, latch=True)
 
-    pub= rospy.Publisher("chatter", String, latch=True)
+        pub.publish(String("hello"))
 
-    pub.publish(String("hello"))
+        rospy.sleep(rospy.Duration.from_sec(5.0))
 
-    rospy.sleep(rospy.Duration.from_sec(5.0))
-    
 
-if __name__ == '__main__':
-  rostest.rosrun('test_rosbag', 'latched_pub', LatchedPub, sys.argv)
+if __name__ == "__main__":
+    rostest.rosrun("test_rosbag", "latched_pub", LatchedPub, sys.argv)

@@ -35,48 +35,50 @@ import sys
 import unittest
 import time
 
-class TestRosmasterValidators(unittest.TestCase):
 
+class TestRosmasterValidators(unittest.TestCase):
     def test_ParameterInvalid(self):
         # not really testing anything here other than typos
         from rosmaster.validators import ParameterInvalid
-        self.assertTrue(isinstance(ParameterInvalid('param'), Exception))
-        
+
+        self.assertTrue(isinstance(ParameterInvalid("param"), Exception))
+
     def test_validators(self):
         from rosmaster.validators import ParameterInvalid
         from rosmaster.validators import non_empty
-        contexts = ['', '/', '/foo']
+
+        contexts = ["", "/", "/foo"]
         for context in contexts:
-            valid = ['foo', 1, [1]]
+            valid = ["foo", 1, [1]]
             for v in valid:
-                non_empty('param-name')(v, context)
-            invalid = ['', 0, []]
+                non_empty("param-name")(v, context)
+            invalid = ["", 0, []]
             for i in invalid:
                 try:
-                    non_empty('param-name-foo')(i, context)
+                    non_empty("param-name-foo")(i, context)
                 except ParameterInvalid as e:
-                    self.assertTrue('param-name-foo' in str(e))
+                    self.assertTrue("param-name-foo" in str(e))
 
             from rosmaster.validators import non_empty_str
-            valid = ['foo', 'f', u'f']
+
+            valid = ["foo", "f", "f"]
             for v in valid:
-                non_empty_str('param-name')(v, context)
-            invalid = ['', 1, ['foo']]
+                non_empty_str("param-name")(v, context)
+            invalid = ["", 1, ["foo"]]
             for i in invalid:
                 try:
-                    non_empty_str('param-name-bar')(i, context)
+                    non_empty_str("param-name-bar")(i, context)
                 except ParameterInvalid as e:
-                    self.assertTrue('param-name-bar' in str(e))
-                    
+                    self.assertTrue("param-name-bar" in str(e))
+
             from rosmaster.validators import not_none
 
-            valid = ['foo', 'f', 1, False, 0, '']
+            valid = ["foo", "f", 1, False, 0, ""]
             for v in valid:
-                not_none('param-name')(v, context)
+                not_none("param-name")(v, context)
             invalid = [None]
             for i in invalid:
                 try:
-                    not_none('param-name-charlie')(i, context)
+                    not_none("param-name-charlie")(i, context)
                 except ParameterInvalid as e:
-                    self.assertTrue('param-name-charlie' in str(e))
-                
+                    self.assertTrue("param-name-charlie" in str(e))

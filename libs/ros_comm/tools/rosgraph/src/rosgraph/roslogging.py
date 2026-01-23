@@ -47,7 +47,10 @@ import yaml
 import rospkg
 from rospkg.environment import ROS_LOG_DIR
 
-class LoggingException(Exception): pass
+
+class LoggingException(Exception):
+    pass
+
 
 class RospyLogger(logging.getLoggerClass()):
     def findCaller(self, *args, **kwargs):
@@ -55,7 +58,9 @@ class RospyLogger(logging.getLoggerClass()):
         Find the stack frame of the caller so that we can note the source
         file name, line number, and function name with class name if possible.
         """
-        file_name, lineno, func_name = super(RospyLogger, self).findCaller(*args, **kwargs)[:3]
+        file_name, lineno, func_name = super(RospyLogger, self).findCaller(
+            *args, **kwargs
+        )[:3]
         file_name = os.path.normcase(file_name)
 
         f = inspect.currentframe()
@@ -63,21 +68,34 @@ class RospyLogger(logging.getLoggerClass()):
             f = f.f_back
         while hasattr(f, "f_code"):
             # Search for the right frame using the data already found by parent class.
-            if sys.version_info.major > 3 or (sys.version_info.major == 3 and sys.version_info.minor >= 11):
-                if f.f_code.co_name == '_base_logger':
+            if sys.version_info.major > 3 or (
+                sys.version_info.major == 3 and sys.version_info.minor >= 11
+            ):
+                if f.f_code.co_name == "_base_logger":
                     break
             else:
                 co = f.f_code
                 filename = os.path.normcase(co.co_filename)
-                if filename == file_name and f.f_lineno == lineno and co.co_name == func_name:
+                if (
+                    filename == file_name
+                    and f.f_lineno == lineno
+                    and co.co_name == func_name
+                ):
                     break
             if f.f_back:
                 f = f.f_back
-            elif sys.version_info.major > 3 or (sys.version_info.major == 3 and sys.version_info.minor >= 11):
+            elif sys.version_info.major > 3 or (
+                sys.version_info.major == 3 and sys.version_info.minor >= 11
+            ):
                 break
 
         # Jump up two more frames, as the logger methods have been double wrapped.
-        if f is not None and f.f_back and f.f_code and f.f_code.co_name == '_base_logger':
+        if (
+            f is not None
+            and f.f_back
+            and f.f_code
+            and f.f_code.co_name == "_base_logger"
+        ):
             f = f.f_back
             if f.f_back:
                 f = f.f_back
@@ -86,8 +104,8 @@ class RospyLogger(logging.getLoggerClass()):
 
         # Now extend the function name with class name, if available.
         try:
-            class_name = f.f_locals['self'].__class__.__name__
-            func_name = '%s.%s' % (class_name, func_name)
+            class_name = f.f_locals["self"].__class__.__name__
+            func_name = "%s.%s" % (class_name, func_name)
         except KeyError:  # if the function is unbound, there is no self.
             pass
 
@@ -97,17 +115,20 @@ class RospyLogger(logging.getLoggerClass()):
         else:
             return co.co_filename, f.f_lineno, func_name
 
+
 logging.setLoggerClass(RospyLogger)
+
 
 def renew_latest_logdir(logfile_dir):
     log_dir = os.path.dirname(logfile_dir)
-    latest_dir = os.path.join(log_dir, 'latest')
+    latest_dir = os.path.join(log_dir, "latest")
     if os.path.lexists(latest_dir):
         if not os.path.islink(latest_dir):
             return False
         os.remove(latest_dir)
     os.symlink(logfile_dir, latest_dir)
     return True
+
 
 def configure_logging(logname, level=logging.INFO, filename=None, env=None):
     """
@@ -122,12 +143,12 @@ def configure_logging(logname, level=logging.INFO, filename=None, env=None):
     if env is None:
         env = os.environ
 
-    logname = logname or 'unknown'
+    logname = logname or "unknown"
     log_dir = rospkg.get_log_dir(env=env)
-    
+
     # if filename is not explicitly provided, generate one using logname
     if not filename:
-        log_filename = os.path.join(log_dir, '%s-%s.log'%(logname, os.getpid()))
+        log_filename = os.path.join(log_dir, "%s-%s.log" % (logname, os.getpid()))
     else:
         log_filename = os.path.join(log_dir, filename)
 
@@ -140,40 +161,55 @@ def configure_logging(logname, level=logging.INFO, filename=None, env=None):
             if os.path.exists(logfile_dir):
                 # We successfully created the logging folder, but could not change
                 # permissions of the new folder to the same as the parent folder
-                sys.stderr.write("WARNING: Could not change permissions for folder [%s], make sure that the parent folder has correct permissions.\n"%logfile_dir)
+                sys.stderr.write(
+                    "WARNING: Could not change permissions for folder [%s], make sure that the parent folder has correct permissions.\n"
+                    % logfile_dir
+                )
             else:
                 # Could not create folder
-                sys.stderr.write("WARNING: cannot create log directory [%s]. Please set %s to a writable location.\n"%(logfile_dir, ROS_LOG_DIR))
+                sys.stderr.write(
+                    "WARNING: cannot create log directory [%s]. Please set %s to a writable location.\n"
+                    % (logfile_dir, ROS_LOG_DIR)
+                )
             return None
     elif os.path.isfile(logfile_dir):
-        raise LoggingException("Cannot save log files: file [%s] is in the way"%logfile_dir)
+        raise LoggingException(
+            "Cannot save log files: file [%s] is in the way" % logfile_dir
+        )
 
     # the log dir itself should not be symlinked as latest
     if logfile_dir != log_dir:
-        if sys.platform not in ['win32']:
+        if sys.platform not in ["win32"]:
             try:
                 success = renew_latest_logdir(logfile_dir)
                 if not success:
-                    sys.stderr.write("INFO: cannot create a symlink to latest log directory\n")
+                    sys.stderr.write(
+                        "INFO: cannot create a symlink to latest log directory\n"
+                    )
             except OSError as e:
-                sys.stderr.write("INFO: cannot create a symlink to latest log directory: %s\n" % e)
+                sys.stderr.write(
+                    "INFO: cannot create a symlink to latest log directory: %s\n" % e
+                )
 
-    config_file = os.environ.get('ROS_PYTHON_LOG_CONFIG_FILE')
+    config_file = os.environ.get("ROS_PYTHON_LOG_CONFIG_FILE")
     if not config_file:
         # search for logging config file in ROS_HOME, ROS_ETC_DIR or relative
         # to the rosgraph package directory.
-        config_dirs = [os.path.join(rospkg.get_ros_home(), 'config'),
-                       rospkg.get_etc_ros_dir()]
+        config_dirs = [
+            os.path.join(rospkg.get_ros_home(), "config"),
+            rospkg.get_etc_ros_dir(),
+        ]
         try:
-            config_dirs.append(os.path.join(
-                rospkg.RosPack().get_path('rosgraph'), 'conf'))
+            config_dirs.append(
+                os.path.join(rospkg.RosPack().get_path("rosgraph"), "conf")
+            )
         except rospkg.common.ResourceNotFound:
             pass
         for config_dir in config_dirs:
-            for extension in ('conf', 'yaml'):
-                f = os.path.join(config_dir,
-                                 'python_logging{}{}'.format(os.path.extsep,
-                                                             extension))
+            for extension in ("conf", "yaml"):
+                f = os.path.join(
+                    config_dir, "python_logging{}{}".format(os.path.extsep, extension)
+                )
                 if os.path.isfile(f):
                     config_file = f
                     break
@@ -182,16 +218,18 @@ def configure_logging(logname, level=logging.INFO, filename=None, env=None):
 
     if config_file is None or not os.path.isfile(config_file):
         # logging is considered soft-fail
-        sys.stderr.write("WARNING: cannot load logging configuration file, logging is disabled\n")
+        sys.stderr.write(
+            "WARNING: cannot load logging configuration file, logging is disabled\n"
+        )
         logging.getLogger(logname).setLevel(logging.CRITICAL)
         return log_filename
-    
+
     # pass in log_filename as argument to pylogging.conf
-    os.environ['ROS_LOG_FILENAME'] = log_filename
-    if config_file.endswith(('.yaml', '.yml')):
+    os.environ["ROS_LOG_FILENAME"] = log_filename
+    if config_file.endswith((".yaml", ".yml")):
         with open(config_file) as f:
             dict_conf = yaml.safe_load(f)
-        dict_conf.setdefault('version', 1)
+        dict_conf.setdefault("version", 1)
         logging.config.dictConfig(dict_conf)
     else:
         # #3625: disabling_existing_loggers=False
@@ -206,7 +244,7 @@ def makedirs_with_parent_perms(p):
     (existing) parent directory. This is useful for logging, where a
     root process sometimes has to log in the user's space.
     :param p: directory to create, ``str``
-    """    
+    """
     p = os.path.abspath(p)
     parent = os.path.dirname(p)
     # recurse upwards, checking to make sure we haven't reached the
@@ -221,17 +259,19 @@ def makedirs_with_parent_perms(p):
         if s.st_uid != s2.st_uid or s.st_gid != s2.st_gid:
             os.chown(p, s.st_uid, s.st_gid)
         if s.st_mode != s2.st_mode:
-            os.chmod(p, s.st_mode)    
+            os.chmod(p, s.st_mode)
+
 
 _logging_to_rospy_names = {
-    'DEBUG': ('DEBUG', '\033[32m'),
-    'INFO': ('INFO', None),
-    'WARNING': ('WARN', '\033[33m'),
-    'ERROR': ('ERROR', '\033[31m'),
-    'CRITICAL': ('FATAL', '\033[31m')
+    "DEBUG": ("DEBUG", "\033[32m"),
+    "INFO": ("INFO", None),
+    "WARNING": ("WARN", "\033[33m"),
+    "ERROR": ("ERROR", "\033[31m"),
+    "CRITICAL": ("FATAL", "\033[31m"),
 }
-_color_reset = '\033[0m'
+_color_reset = "\033[0m"
 _defaultFormatter = logging.Formatter()
+
 
 class RosStreamHandler(logging.Handler):
     def __init__(self, colorize=True, stdout=None, stderr=None):
@@ -241,6 +281,7 @@ class RosStreamHandler(logging.Handler):
         self._colorize = colorize
         try:
             from rospy.rostime import get_time, is_wallclock
+
             self._get_time = get_time
             self._is_wallclock = is_wallclock
         except ImportError:
@@ -250,55 +291,55 @@ class RosStreamHandler(logging.Handler):
     def emit(self, record):
         level, color = _logging_to_rospy_names[record.levelname]
         record_message = _defaultFormatter.format(record)
-        msg = os.environ.get(
-            'ROSCONSOLE_FORMAT', '[${severity}] [${time}]: ${message}')
-        msg = msg.replace('${severity}', level)
-        msg = msg.replace('${message}', str(record_message))
+        msg = os.environ.get("ROSCONSOLE_FORMAT", "[${severity}] [${time}]: ${message}")
+        msg = msg.replace("${severity}", level)
+        msg = msg.replace("${message}", str(record_message))
 
         # walltime tag
-        msg = msg.replace('${walltime}', '%f' % time.time())  # for performance reasons
+        msg = msg.replace("${walltime}", "%f" % time.time())  # for performance reasons
 
-        while '${walltime:' in msg:
-            tag_end_index = msg.index('${walltime:') + len('${walltime:')
-            time_format = msg[tag_end_index: msg.index('}', tag_end_index)]
+        while "${walltime:" in msg:
+            tag_end_index = msg.index("${walltime:") + len("${walltime:")
+            time_format = msg[tag_end_index : msg.index("}", tag_end_index)]
             time_str = datetime.datetime.now().strftime(time_format)
-            msg = msg.replace('${walltime:' + time_format + '}', time_str)
+            msg = msg.replace("${walltime:" + time_format + "}", time_str)
 
-        msg = msg.replace('${thread}', str(record.thread))
-        msg = msg.replace('${logger}', str(record.name))
-        msg = msg.replace('${file}', str(record.pathname))
-        msg = msg.replace('${line}', str(record.lineno))
-        msg = msg.replace('${function}', str(record.funcName))
+        msg = msg.replace("${thread}", str(record.thread))
+        msg = msg.replace("${logger}", str(record.name))
+        msg = msg.replace("${file}", str(record.pathname))
+        msg = msg.replace("${line}", str(record.lineno))
+        msg = msg.replace("${function}", str(record.funcName))
         try:
             from rospy import get_name
+
             node_name = get_name()
         except ImportError:
-            node_name = '<unknown_node_name>'
-        msg = msg.replace('${node}', node_name)
+            node_name = "<unknown_node_name>"
+        msg = msg.replace("${node}", node_name)
 
         # time tag
-        time_str = '%f' % time.time()
+        time_str = "%f" % time.time()
         if self._get_time is not None and not self._is_wallclock():
-            time_str += ', %f' % self._get_time()
-        msg = msg.replace('${time}', time_str)   # for performance reasons
+            time_str += ", %f" % self._get_time()
+        msg = msg.replace("${time}", time_str)  # for performance reasons
 
-        while '${time:' in msg:
-            tag_end_index = msg.index('${time:') + len('${time:')
-            time_format = msg[tag_end_index: msg.index('}', tag_end_index)]
+        while "${time:" in msg:
+            tag_end_index = msg.index("${time:") + len("${time:")
+            time_format = msg[tag_end_index : msg.index("}", tag_end_index)]
             time_str = datetime.datetime.now().strftime(time_format)
 
             if self._get_time is not None and not self._is_wallclock():
-                time_str += ', %f' % self._get_time()
+                time_str += ", %f" % self._get_time()
 
-            msg = msg.replace('${time:' + time_format + '}', time_str)
+            msg = msg.replace("${time:" + time_format + "}", time_str)
 
-        msg += '\n'
+        msg += "\n"
         if record.levelno < logging.WARNING:
             self._write(self._stdout, msg, color)
         else:
             self._write(self._stderr, msg, color)
 
     def _write(self, fd, msg, color):
-        if self._colorize and color and hasattr(fd, 'isatty') and fd.isatty():
+        if self._colorize and color and hasattr(fd, "isatty") and fd.isatty():
             msg = color + msg + _color_reset
         fd.write(msg)

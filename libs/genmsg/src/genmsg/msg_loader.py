@@ -44,24 +44,48 @@ import os
 import sys
 
 try:
-    from cStringIO import StringIO # Python 2.x
+    from cStringIO import StringIO  # Python 2.x
 except ImportError:
-    from io import StringIO # Python 3.x
+    from io import StringIO  # Python 3.x
 
-from . base import InvalidMsgSpec, log, SEP, COMMENTCHAR, CONSTCHAR, IODELIM, EXT_MSG, EXT_SRV
-from . msgs import MsgSpec, TIME, TIME_MSG, DURATION, DURATION_MSG, HEADER, HEADER_FULL_NAME, \
-     is_builtin, is_valid_msg_field_name, is_valid_msg_type, bare_msg_type, is_valid_constant_type, \
-     Field, Constant, resolve_type
-from . names import normalize_package_context, package_resource_name
-from . srvs import SrvSpec
+from .base import (
+    InvalidMsgSpec,
+    log,
+    SEP,
+    COMMENTCHAR,
+    CONSTCHAR,
+    IODELIM,
+    EXT_MSG,
+    EXT_SRV,
+)
+from .msgs import (
+    MsgSpec,
+    TIME,
+    TIME_MSG,
+    DURATION,
+    DURATION_MSG,
+    HEADER,
+    HEADER_FULL_NAME,
+    is_builtin,
+    is_valid_msg_field_name,
+    is_valid_msg_type,
+    bare_msg_type,
+    is_valid_constant_type,
+    Field,
+    Constant,
+    resolve_type,
+)
+from .names import normalize_package_context, package_resource_name
+from .srvs import SrvSpec
+
 
 class MsgNotFound(Exception):
-
     def __init__(self, message, base_type=None, package=None, search_path=None):
         super(MsgNotFound, self).__init__(message)
         self.base_type = base_type
         self.package = package
         self.search_path = search_path
+
 
 def get_msg_file(package, base_type, search_path, ext=EXT_MSG):
     """
@@ -80,21 +104,32 @@ def get_msg_file(package, base_type, search_path, ext=EXT_MSG):
     if not isinstance(search_path, dict):
         raise ValueError("search_path must be a dictionary of {namespace: dirpath}")
     if not package in search_path:
-        raise MsgNotFound("Cannot locate message [%s]: unknown package [%s] on search path [%s]" \
-                          % (base_type, package, search_path), base_type, package, search_path)
+        raise MsgNotFound(
+            "Cannot locate message [%s]: unknown package [%s] on search path [%s]"
+            % (base_type, package, search_path),
+            base_type,
+            package,
+            search_path,
+        )
     else:
         for path_tmp in search_path[package]:
-            path = os.path.join(path_tmp, "%s%s"%(base_type, ext))
+            path = os.path.join(path_tmp, "%s%s" % (base_type, ext))
             if os.path.isfile(path):
                 return path
-        raise MsgNotFound("Cannot locate message [%s] in package [%s] with paths [%s]"%
-                                                (base_type, package, str(search_path[package])), base_type, package, search_path)
+        raise MsgNotFound(
+            "Cannot locate message [%s] in package [%s] with paths [%s]"
+            % (base_type, package, str(search_path[package])),
+            base_type,
+            package,
+            search_path,
+        )
+
 
 def get_srv_file(package, base_type, search_path):
     """
     Determine the file system path for the specified .srv on path.
 
-    :param package: name of package ``.srv`` file is in, ``str`` 
+    :param package: name of package ``.srv`` file is in, ``str``
     :param base_type: type name of service, e.g. 'Empty', ``str``
     :param search_path: dictionary mapping message namespaces to a directory locations
 
@@ -103,12 +138,13 @@ def get_srv_file(package, base_type, search_path):
     """
     return get_msg_file(package, base_type, search_path, ext=EXT_SRV)
 
+
 def load_msg_by_type(msg_context, msg_type, search_path):
     """
     Load message specification for specified type.
 
     NOTE: this will register the message in the *msg_context*.
-    
+
     :param msg_context: :class:`MsgContext` for finding loaded dependencies
     :param msg_type: relative or full message type.
     :param search_path: dictionary mapping message namespaces to a directory locations
@@ -129,12 +165,13 @@ def load_msg_by_type(msg_context, msg_type, search_path):
     msg_context.set_file(msg_type, file_path)
     return spec
 
+
 def load_srv_by_type(msg_context, srv_type, search_path):
     """
     Load service specification for specified type.
 
     NOTE: services are *never* registered in a :class:`MsgContext`.
-    
+
     :param msg_context: :class:`MsgContext` for finding loaded dependencies
     :param srv_type: relative or full message type.
     :param search_path: dictionary mapping message namespaces to a directory locations
@@ -150,102 +187,136 @@ def load_srv_by_type(msg_context, srv_type, search_path):
     log("file_path", file_path)
     return load_srv_from_file(msg_context, file_path, srv_type)
 
+
 def convert_constant_value(field_type, val):
     """
     Convert constant value declaration to python value. Does not do
     type-checking, so ValueError or other exceptions may be raised.
-    
+
     :param field_type: ROS field type, ``str``
     :param val: string representation of constant, ``str``
     :raises: :exc:`ValueError` If unable to convert to python representation
     :raises: :exc:`InvalidMsgSpec` If value exceeds specified integer width
     """
-    if field_type in ['float32','float64']:
+    if field_type in ["float32", "float64"]:
         return float(val)
-    elif field_type in ['string']:
-        return val.strip() #string constants are always stripped 
-    elif field_type in ['int8', 'uint8', 'int16','uint16','int32','uint32','int64','uint64', 'char', 'byte']:
+    elif field_type in ["string"]:
+        return val.strip()  # string constants are always stripped
+    elif field_type in [
+        "int8",
+        "uint8",
+        "int16",
+        "uint16",
+        "int32",
+        "uint32",
+        "int64",
+        "uint64",
+        "char",
+        "byte",
+    ]:
         # bounds checking
-        bits = [('int8', 8), ('uint8', 8), ('int16', 16),('uint16', 16),\
-                ('int32', 32),('uint32', 32), ('int64', 64),('uint64', 64),\
-                ('byte', 8), ('char', 8)]
+        bits = [
+            ("int8", 8),
+            ("uint8", 8),
+            ("int16", 16),
+            ("uint16", 16),
+            ("int32", 32),
+            ("uint32", 32),
+            ("int64", 64),
+            ("uint64", 64),
+            ("byte", 8),
+            ("char", 8),
+        ]
         b = [b for t, b in bits if t == field_type][0]
         import math
-        if field_type[0] == 'u' or field_type == 'char':
+
+        if field_type[0] == "u" or field_type == "char":
             lower = 0
-            upper = int(math.pow(2, b)-1)
+            upper = int(math.pow(2, b) - 1)
         else:
-            upper = int(math.pow(2, b-1)-1)   
-            lower = -upper - 1 #two's complement min
-        val = int(val) #python will autocast to long if necessary
+            upper = int(math.pow(2, b - 1) - 1)
+            lower = -upper - 1  # two's complement min
+        val = int(val)  # python will autocast to long if necessary
         if val > upper or val < lower:
-            raise InvalidMsgSpec("cannot coerce [%s] to %s (out of bounds)"%(val, field_type))
+            raise InvalidMsgSpec(
+                "cannot coerce [%s] to %s (out of bounds)" % (val, field_type)
+            )
         return val
-    elif field_type == 'bool':
+    elif field_type == "bool":
         return True if ast.literal_eval(val) else False
-    raise InvalidMsgSpec("invalid constant type: [%s]"%field_type)
+    raise InvalidMsgSpec("invalid constant type: [%s]" % field_type)
+
 
 def _load_constant_line(orig_line):
     """
     :raises: :exc:`InvalidMsgSpec`
     """
     clean_line = _strip_comments(orig_line)
-    line_splits = [s for s in [x.strip() for x in clean_line.split(" ")] if s] #split type/name, filter out empties
+    line_splits = [
+        s for s in [x.strip() for x in clean_line.split(" ")] if s
+    ]  # split type/name, filter out empties
     field_type = line_splits[0]
     if not is_valid_constant_type(field_type):
-        raise InvalidMsgSpec("%s is not a legal constant type"%field_type)
+        raise InvalidMsgSpec("%s is not a legal constant type" % field_type)
 
-    if field_type == 'string':
+    if field_type == "string":
         # strings contain anything to the right of the equals sign, there are no comments allowed
         idx = orig_line.find(CONSTCHAR)
-        name = orig_line[orig_line.find(' ')+1:idx]
-        val = orig_line[idx+1:]
+        name = orig_line[orig_line.find(" ") + 1 : idx]
+        val = orig_line[idx + 1 :]
     else:
-        line_splits = [x.strip() for x in ' '.join(line_splits[1:]).split(CONSTCHAR)] #resplit on '='
+        line_splits = [
+            x.strip() for x in " ".join(line_splits[1:]).split(CONSTCHAR)
+        ]  # resplit on '='
         if len(line_splits) != 2:
-            raise InvalidMsgSpec("Invalid constant declaration: %s"%orig_line)
+            raise InvalidMsgSpec("Invalid constant declaration: %s" % orig_line)
         name = line_splits[0]
         val = line_splits[1]
 
     try:
         val_converted = convert_constant_value(field_type, val)
     except Exception as e:
-        raise InvalidMsgSpec("Invalid constant value: %s"%e)
+        raise InvalidMsgSpec("Invalid constant value: %s" % e)
     return Constant(field_type, name, val_converted, val.strip())
+
 
 def _load_field_line(orig_line, package_context):
     """
     :returns: (field_type, name) tuple, ``(str, str)``
     :raises: :exc:`InvalidMsgSpec`
     """
-    #log("_load_field_line", orig_line, package_context)
+    # log("_load_field_line", orig_line, package_context)
     clean_line = _strip_comments(orig_line)
-    line_splits = [s for s in [x.strip() for x in clean_line.split(" ")] if s] #split type/name, filter out empties
+    line_splits = [
+        s for s in [x.strip() for x in clean_line.split(" ")] if s
+    ]  # split type/name, filter out empties
     if len(line_splits) != 2:
-        raise InvalidMsgSpec("Invalid declaration: %s"%(orig_line))
+        raise InvalidMsgSpec("Invalid declaration: %s" % (orig_line))
     field_type, name = line_splits
     if not is_valid_msg_field_name(name):
-        raise InvalidMsgSpec("%s is not a legal message field name"%name)
+        raise InvalidMsgSpec("%s is not a legal message field name" % name)
     if not is_valid_msg_type(field_type):
-        raise InvalidMsgSpec("%s is not a legal message field type"%field_type)
+        raise InvalidMsgSpec("%s is not a legal message field type" % field_type)
     if package_context and not SEP in field_type:
         if field_type == HEADER:
             field_type = HEADER_FULL_NAME
         elif not is_builtin(bare_msg_type(field_type)):
-            field_type = "%s/%s"%(package_context, field_type)
+            field_type = "%s/%s" % (package_context, field_type)
     elif field_type == HEADER:
         field_type = HEADER_FULL_NAME
     return field_type, name
 
+
 def _strip_comments(line):
-    return line.split(COMMENTCHAR)[0].strip() #strip comments
-    
+    return line.split(COMMENTCHAR)[0].strip()  # strip comments
+
+
 def load_msg_from_string(msg_context, text, full_name):
     """
     Load message specification from a string.
 
     NOTE: this will register the message in the *msg_context*.
-    
+
     :param msg_context: :class:`MsgContext` for finding loaded dependencies
     :param text: .msg text , ``str``
     :returns: :class:`MsgSpec` specification
@@ -256,10 +327,10 @@ def load_msg_from_string(msg_context, text, full_name):
     types = []
     names = []
     constants = []
-    for orig_line in text.split('\n'):
+    for orig_line in text.split("\n"):
         clean_line = _strip_comments(orig_line)
         if not clean_line:
-            continue #ignore empty lines
+            continue  # ignore empty lines
         if CONSTCHAR in clean_line:
             constants.append(_load_constant_line(orig_line))
         else:
@@ -270,23 +341,25 @@ def load_msg_from_string(msg_context, text, full_name):
     msg_context.register(full_name, spec)
     return spec
 
+
 def load_msg_from_file(msg_context, file_path, full_name):
     """
     Convert the .msg representation in the file to a :class:`MsgSpec` instance.
 
     NOTE: this will register the message in the *msg_context*.
-    
+
     :param file_path: path of file to load from, ``str``
     :returns: :class:`MsgSpec` instance
     :raises: :exc:`InvalidMsgSpec`: if syntax errors or other problems are detected in file
     """
     log("Load spec from", file_path)
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         text = f.read()
     try:
         return load_msg_from_string(msg_context, text, full_name)
     except InvalidMsgSpec as e:
-        raise InvalidMsgSpec('%s: %s'%(file_path, e))
+        raise InvalidMsgSpec("%s: %s" % (file_path, e))
+
 
 def load_msg_depends(msg_context, spec, search_path):
     """
@@ -329,7 +402,8 @@ def load_msg_depends(msg_context, spec, search_path):
     msg_context.set_depends(spec.full_name, depends)
     # have to copy array in order to prevent inadvertent mutation (we've stored this list in set_dependencies)
     return depends[:]
-            
+
+
 def load_depends(msg_context, spec, msg_search_path):
     """
     Compute dependencies of *spec* and load their MsgSpec dependencies
@@ -354,6 +428,7 @@ def load_depends(msg_context, spec, msg_search_path):
     else:
         raise ValueError("spec does not appear to be a message or service")
 
+
 class MsgContext(object):
     """
     Context object for storing :class:`MsgSpec` instances and related
@@ -372,7 +447,7 @@ class MsgContext(object):
 
     def set_file(self, full_msg_type, file_path):
         self._files[full_msg_type] = file_path
-        
+
     def get_file(self, full_msg_type):
         return self._files.get(full_msg_type, None)
 
@@ -383,7 +458,7 @@ class MsgContext(object):
         """
         log("set_depends", full_msg_type, dependencies)
         self._dependencies[full_msg_type] = dependencies
-    
+
     def get_depends(self, full_msg_type):
         """
         :returns: List of dependencies for *full_msg_type*,
@@ -408,7 +483,7 @@ class MsgContext(object):
         load_msg_from_string(msg_context, TIME_MSG, TIME)
         load_msg_from_string(msg_context, DURATION_MSG, DURATION)
         return msg_context
-        
+
     def register(self, full_msg_type, msgspec):
         full_msg_type = bare_msg_type(full_msg_type)
         package, base_type = package_resource_name(full_msg_type)
@@ -421,7 +496,7 @@ class MsgContext(object):
         :param full_msg_type: Fully resolve message type
         :param default_package: default package namespace to resolve
           in.  May be ignored by special types (e.g. time/duration).
-          
+
         :returns: ``True`` if :class:`MsgSpec` instance has been loaded for the requested type.
         """
         full_msg_type = bare_msg_type(full_msg_type)
@@ -445,10 +520,11 @@ class MsgContext(object):
     def __str__(self):
         return str(self._registered_packages)
 
+
 def load_srv_from_string(msg_context, text, full_name):
     """
     Load :class:`SrvSpec` from the .srv file.
-    
+
     :param msg_context: :class:`MsgContext` instance to load request/response messages into.
     :param text: .msg text , ``str``
     :param package_name: context to use for msg type name, i.e. the package name,
@@ -456,19 +532,24 @@ def load_srv_from_string(msg_context, text, full_name):
     :returns: :class:`SrvSpec` instance
     :raises :exc:`InvalidMsgSpec` If syntax errors or other problems are detected in file
     """
-    text_in  = StringIO()
+    text_in = StringIO()
     text_out = StringIO()
     accum = text_in
-    for l in text.split('\n'):
-        if l.startswith(IODELIM): #lenient, by request
+    for l in text.split("\n"):
+        if l.startswith(IODELIM):  # lenient, by request
             accum = text_out
         else:
-            accum.write(l+'\n')
+            accum.write(l + "\n")
 
     # create separate MsgSpec objects for each half of file
-    msg_in = load_msg_from_string(msg_context, text_in.getvalue(), '%sRequest'%(full_name))
-    msg_out = load_msg_from_string(msg_context, text_out.getvalue(), '%sResponse'%(full_name))
+    msg_in = load_msg_from_string(
+        msg_context, text_in.getvalue(), "%sRequest" % (full_name)
+    )
+    msg_out = load_msg_from_string(
+        msg_context, text_out.getvalue(), "%sResponse" % (full_name)
+    )
     return SrvSpec(msg_in, msg_out, text, full_name)
+
 
 def load_srv_from_file(msg_context, file_path, full_name):
     """
@@ -479,10 +560,10 @@ def load_srv_from_file(msg_context, file_path, full_name):
     :returns: :class:`SrvSpec` instance
     :raise: :exc:`InvalidMsgSpec` If syntax errors or other problems are detected in file
     """
-    log("Load spec from %s %s\n"%(file_path, full_name))
-    with open(file_path, 'r') as f:
+    log("Load spec from %s %s\n" % (file_path, full_name))
+    with open(file_path, "r") as f:
         text = f.read()
     spec = load_srv_from_string(msg_context, text, full_name)
-    msg_context.set_file('%sRequest'%(full_name), file_path)
-    msg_context.set_file('%sResponse'%(full_name), file_path)
+    msg_context.set_file("%sRequest" % (full_name), file_path)
+    msg_context.set_file("%sResponse" % (full_name), file_path)
     return spec

@@ -39,15 +39,15 @@ from std_msgs.msg import String
 
 def callback(data):
     print(rospy.get_caller_id(), "I heard %s" % data.data)
-    rospy.signal_shutdown("Received %s, exiting now"  % data.data)
+    rospy.signal_shutdown("Received %s, exiting now" % data.data)
 
 
 def listener():
-    rospy.init_node('listener', anonymous=True)
-    rospy.sleep(rospy.get_param('delay', 0.0))
+    rospy.init_node("listener", anonymous=True)
+    rospy.sleep(rospy.get_param("delay", 0.0))
     rospy.Subscriber("chatter", String, callback)
     rospy.spin()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     listener()

@@ -35,6 +35,7 @@ import os
 import sys
 import struct
 import unittest
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -44,9 +45,9 @@ import random
 import math
 
 from genpy import SerializationError
-        
-class TestGensrvPy(unittest.TestCase):
 
+
+class TestGensrvPy(unittest.TestCase):
     ## Utility for testing roundtrip serialization
     ## @param orig Message to test roundtrip serialization of
     ## @param blank Uninitialized instance of message to deserialize into
@@ -58,16 +59,17 @@ class TestGensrvPy(unittest.TestCase):
         orig.serialize(b)
         blank.deserialize(b.getvalue())
         if not float:
-            self.assertEqual(orig, blank, str(orig)+" != "+str(blank))
+            self.assertEqual(orig, blank, str(orig) + " != " + str(blank))
         else:
             self.assertAlmostEqual(orig.data, blank.data, 5)
 
     ## #2133/2139
     def test_test_rospy_TransitiveImport(self):
         from test_rospy.srv import TransitiveSrvRequest
+
         m = TransitiveSrvRequest()
         # invoking serialize should be enough to expose issue. The bug
         # was that genmsg_py was failing to include the imports of
         # embedded messages. Because messages are flattened, this
         # causes ImportErrors.
-        self._test_ser_deser(m, TransitiveSrvRequest())        
+        self._test_ser_deser(m, TransitiveSrvRequest())

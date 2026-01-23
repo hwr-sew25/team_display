@@ -44,23 +44,31 @@ from test_rospy.msg import EmbedTest
 
 _publishing = False
 _pub = None
+
+
 def start_publishing():
     global _pub
     if _pub is not None:
         return
     print("registering onto listenerpublisher")
     _pub = rospy.Publisher("listenerpublisher", EmbedTest, queue_size=0)
-    
+
+
 def callback(data):
-    print(rospy.get_caller_id(), "I heard %s, %s, %s"%(data.str1.data, data.int1.data, data.val.val))
+    print(
+        rospy.get_caller_id(),
+        "I heard %s, %s, %s" % (data.str1.data, data.int1.data, data.val.val),
+    )
     start_publishing()
     print("re-publishing")
     _pub.publish(data)
-    
+
+
 def listener():
     rospy.init_node("listenerpublisher_embed")
     rospy.Subscriber("chatter", EmbedTest, callback)
     rospy.spin()
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     listener()

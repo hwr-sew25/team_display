@@ -41,11 +41,14 @@ from __future__ import print_function
 
 import codecs
 import os
+
 try:
     from cStringIO import StringIO
+
     python2 = True
 except ImportError:
     from io import StringIO
+
     python2 = False
 import re
 import xml.etree.ElementTree as ET
@@ -55,16 +58,18 @@ from xml.dom.minidom import parseString
 
 import rospkg
 
-pattern = r'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\xFF\u0100-\uD7FF\uE000-\uFDCF\uFDE0-\uFFFD]'
+pattern = (
+    r"[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\xFF\u0100-\uD7FF\uE000-\uFDCF\uFDE0-\uFFFD]"
+)
 if python2:
-    pattern = pattern.decode('unicode_escape')
+    pattern = pattern.decode("unicode_escape")
 else:
-    pattern = codecs.decode(pattern, 'unicode_escape')
+    pattern = codecs.decode(pattern, "unicode_escape")
 invalid_chars = re.compile(pattern)
 
 
 def invalid_char_replacer(m):
-    return '&#x' + ('%04X' % ord(m.group(0))) + ';'
+    return "&#x" + ("%04X" % ord(m.group(0))) + ";"
 
 
 def filter_nonprintable_text(text):
@@ -72,7 +77,7 @@ def filter_nonprintable_text(text):
 
 
 def cdata(cdata_text):
-    return '<![CDATA[\n{}\n]]>'.format(cdata_text)
+    return "<![CDATA[\n{}\n]]>".format(cdata_text)
 
 
 class TestInfo(object):
@@ -95,20 +100,21 @@ class TestError(TestInfo):
     """
     'error' result container
     """
+
     def xml(self):
         """
         @return XML tag representing the object, with non-XML text filtered out
         @rtype: str
         """
-        return ET.tostring(self.xml_element(), encoding='utf-8', method='xml')
+        return ET.tostring(self.xml_element(), encoding="utf-8", method="xml")
 
     def xml_element(self):
         """
         @return XML tag representing the object, with non-XML text filtered out
         @rtype: xml.etree.ElementTree.Element
         """
-        error = ET.Element('error')
-        error.set('type', self.type)
+        error = ET.Element("error")
+        error.set("type", self.type)
         error.text = cdata(filter_nonprintable_text(self.text))
         return error
 
@@ -117,20 +123,21 @@ class TestFailure(TestInfo):
     """
     'failure' result container
     """
+
     def xml(self):
         """
         @return XML tag representing the object, with non-XML text filtered out
         @rtype: str
         """
-        return ET.tostring(self.xml_element(), encoding='utf-8', method='xml')
+        return ET.tostring(self.xml_element(), encoding="utf-8", method="xml")
 
     def xml_element(self):
         """
         @return XML tag representing the object, with non-XML text filtered out
         @rtype: xml.etree.ElementTree.Element
         """
-        error = ET.Element('failure')
-        error.set('type', self.type)
+        error = ET.Element("failure")
+        error.set("type", self.type)
         error.text = cdata(filter_nonprintable_text(self.text))
         return error
 
@@ -149,7 +156,7 @@ class TestCaseResult(object):
         self.failures = []
         self.errors = []
         self.time = 0.0
-        self.classname = ''
+        self.classname = ""
 
     def _passed(self):
         """
@@ -157,6 +164,7 @@ class TestCaseResult(object):
         @rtype: bool
         """
         return not self.errors and not self.failures
+
     # bool: True if test passed without errors or failures
     passed = property(_passed)
 
@@ -166,11 +174,11 @@ class TestCaseResult(object):
         @rtype: str
         """
         if self.failures:
-            tmpl = '[%s][FAILURE]' % self.name
-            tmpl = tmpl + '-'*(80 - len(tmpl))
-            tmpl = tmpl+'\n%s\n' + '-' * 80 + '\n\n'
-            return '\n'.join(tmpl % x.text for x in self.failures)
-        return ''
+            tmpl = "[%s][FAILURE]" % self.name
+            tmpl = tmpl + "-" * (80 - len(tmpl))
+            tmpl = tmpl + "\n%s\n" + "-" * 80 + "\n\n"
+            return "\n".join(tmpl % x.text for x in self.failures)
+        return ""
 
     def _error_description(self):
         """
@@ -178,11 +186,11 @@ class TestCaseResult(object):
         @rtype: str
         """
         if self.errors:
-            tmpl = '[%s][ERROR]' % self.name
-            tmpl = tmpl + '-' * (80 - len(tmpl))
-            tmpl = tmpl+'\n%s\n' + '-' * 80 + '\n\n'
-            return '\n'.join(tmpl % x.text for x in self.errors)
-        return ''
+            tmpl = "[%s][ERROR]" % self.name
+            tmpl = tmpl + "-" * (80 - len(tmpl))
+            tmpl = tmpl + "\n%s\n" + "-" * 80 + "\n\n"
+            return "\n".join(tmpl % x.text for x in self.errors)
+        return ""
 
     def _description(self):
         """
@@ -190,10 +198,10 @@ class TestCaseResult(object):
         @rtype: str
         """
         if self.passed:
-            return '[%s][passed]\n' % self.name
+            return "[%s][passed]\n" % self.name
         else:
-            return self._failure_description() + \
-                   self._error_description()
+            return self._failure_description() + self._error_description()
+
     # str: printable description of testcase result
     description = property(_description)
 
@@ -214,17 +222,17 @@ class TestCaseResult(object):
         @return XML tag representing the object, with non-XML text filtered out
         @rtype: str
         """
-        return ET.tostring(self.xml_element(), encoding='utf-8', method='xml')
+        return ET.tostring(self.xml_element(), encoding="utf-8", method="xml")
 
     def xml_element(self):
         """
         @return XML tag representing the object, with non-XML text filtered out
         @rtype: xml.etree.ElementTree.Element
         """
-        testcase = ET.Element('testcase')
-        testcase.set('classname', self.classname)
-        testcase.set('name', self.name)
-        testcase.set('time', str(self.time))
+        testcase = ET.Element("testcase")
+        testcase.set("classname", self.classname)
+        testcase.set("name", self.name)
+        testcase.set("time", str(self.time))
         for f in self.failures:
             testcase.append(f.xml_element())
         for e in self.errors:
@@ -233,8 +241,16 @@ class TestCaseResult(object):
 
 
 class Result(object):
-    __slots__ = ['name', 'num_errors', 'num_failures', 'num_tests',
-                 'test_case_results', 'system_out', 'system_err', 'time']
+    __slots__ = [
+        "name",
+        "num_errors",
+        "num_failures",
+        "num_tests",
+        "test_case_results",
+        "system_out",
+        "system_err",
+        "time",
+    ]
 
     def __init__(self, name, num_errors=0, num_failures=0, num_tests=0):
         self.name = name
@@ -242,8 +258,8 @@ class Result(object):
         self.num_failures = num_failures
         self.num_tests = num_tests
         self.test_case_results = []
-        self.system_out = ''
-        self.system_err = ''
+        self.system_out = ""
+        self.system_err = ""
         self.time = 0.0
 
     def accumulate(self, r):
@@ -258,9 +274,9 @@ class Result(object):
         self.time += r.time
         self.test_case_results.extend(r.test_case_results)
         if r.system_out:
-            self.system_out += '\n'+r.system_out
+            self.system_out += "\n" + r.system_out
         if r.system_err:
-            self.system_err += '\n'+r.system_err
+            self.system_err += "\n" + r.system_err
 
     def add_test_case_result(self, r):
         """
@@ -274,77 +290,87 @@ class Result(object):
         """
         @return: document as unicode (UTF-8 declared) XML according to Ant JUnit spec
         """
-        testsuite = ET.Element('testsuite')
-        testsuite.set('tests', str(self.num_tests))
-        testsuite.set('failures', str(self.num_failures))
-        testsuite.set('time', str(self.time))
-        testsuite.set('errors', str(self.num_errors))
-        testsuite.set('name', self.name)
+        testsuite = ET.Element("testsuite")
+        testsuite.set("tests", str(self.num_tests))
+        testsuite.set("failures", str(self.num_failures))
+        testsuite.set("time", str(self.time))
+        testsuite.set("errors", str(self.num_errors))
+        testsuite.set("name", self.name)
         for tc in self.test_case_results:
             tc.xml(testsuite)
-        system_out = ET.SubElement(testsuite, 'system-out')
+        system_out = ET.SubElement(testsuite, "system-out")
         system_out.text = cdata(filter_nonprintable_text(self.system_out))
-        system_err = ET.SubElement(testsuite, 'system-err')
+        system_err = ET.SubElement(testsuite, "system-err")
         system_err.text = cdata(filter_nonprintable_text(self.system_err))
-        return ET.tostring(testsuite, encoding='utf-8', method='xml')
+        return ET.tostring(testsuite, encoding="utf-8", method="xml")
 
 
 def _text(tag):
-    return reduce(lambda x, y: x + y, [c.data for c in tag.childNodes if c.nodeType in [DomNode.TEXT_NODE, DomNode.CDATA_SECTION_NODE]], '').strip()
+    return reduce(
+        lambda x, y: x + y,
+        [
+            c.data
+            for c in tag.childNodes
+            if c.nodeType in [DomNode.TEXT_NODE, DomNode.CDATA_SECTION_NODE]
+        ],
+        "",
+    ).strip()
 
 
 def _load_suite_results(test_suite_name, test_suite, result):
-    nodes = [n for n in test_suite.childNodes
-             if n.nodeType == DomNode.ELEMENT_NODE]
+    nodes = [n for n in test_suite.childNodes if n.nodeType == DomNode.ELEMENT_NODE]
     for node in nodes:
         name = node.tagName
-        if name == 'testsuite':
+        if name == "testsuite":
             # for now we flatten this hierarchy
             _load_suite_results(test_suite_name, node, result)
-        elif name == 'system-out':
+        elif name == "system-out":
             if _text(node):
-                system_out = '[%s] stdout' % test_suite_name + '-' * (71 - len(test_suite_name))
-                system_out += '\n'+_text(node)
+                system_out = "[%s] stdout" % test_suite_name + "-" * (
+                    71 - len(test_suite_name)
+                )
+                system_out += "\n" + _text(node)
                 result.system_out += system_out
-        elif name == 'system-err':
+        elif name == "system-err":
             if _text(node):
-                system_err = '[%s] stderr' % test_suite_name + '-' * (71 - len(test_suite_name))
-                system_err += '\n'+_text(node)
+                system_err = "[%s] stderr" % test_suite_name + "-" * (
+                    71 - len(test_suite_name)
+                )
+                system_err += "\n" + _text(node)
                 result.system_err += system_err
-        elif name == 'testcase':
-            name = node.getAttribute('name') or 'unknown'
-            classname = node.getAttribute('classname') or 'unknown'
+        elif name == "testcase":
+            name = node.getAttribute("name") or "unknown"
+            classname = node.getAttribute("classname") or "unknown"
 
             # mangle the classname for some sense of uniformity
             # between rostest/unittest/gtest
-            if '__main__.' in classname:
-                classname = classname[classname.find('__main__.') + 9:]
-            if classname == 'rostest.rostest.RosTest':
-                classname = 'rostest'
+            if "__main__." in classname:
+                classname = classname[classname.find("__main__.") + 9 :]
+            if classname == "rostest.rostest.RosTest":
+                classname = "rostest"
             elif not classname.startswith(result.name):
-                classname = '%s.%s' % (result.name, classname)
+                classname = "%s.%s" % (result.name, classname)
 
             try:
-                time = float(node.getAttribute('time'))
+                time = float(node.getAttribute("time"))
             except ValueError:
                 time = 0.0
-            tc_result = TestCaseResult('%s/%s' % (test_suite_name, name))
+            tc_result = TestCaseResult("%s/%s" % (test_suite_name, name))
             tc_result.classname = classname
             tc_result.time = time
             result.add_test_case_result(tc_result)
-            for d in [n for n in node.childNodes
-                      if n.nodeType == DomNode.ELEMENT_NODE]:
+            for d in [n for n in node.childNodes if n.nodeType == DomNode.ELEMENT_NODE]:
                 # convert 'message' attributes to text elements to keep
                 # python unittest and gtest consistent
-                if d.tagName == 'failure':
-                    message = d.getAttribute('message') or ''
+                if d.tagName == "failure":
+                    message = d.getAttribute("message") or ""
                     text = _text(d) or message
-                    x = TestFailure(d.getAttribute('type') or '', text)
+                    x = TestFailure(d.getAttribute("type") or "", text)
                     tc_result.add_failure(x)
-                elif d.tagName == 'error':
-                    message = d.getAttribute('message') or ''
+                elif d.tagName == "error":
+                    message = d.getAttribute("message") or ""
                     text = _text(d) or message
-                    x = TestError(d.getAttribute('type') or '', text)
+                    x = TestError(d.getAttribute("type") or "", text)
                     tc_result.add_error(x)
 
 
@@ -355,19 +381,37 @@ try:
     char = unichr
 except NameError:
     char = chr
-RE_XML_ILLEGAL = '([%s-%s%s-%s%s-%s%s-%s])' + \
-                 '|' + \
-                 '([%s-%s][^%s-%s])|([^%s-%s][%s-%s])|([%s-%s]$)|(^[%s-%s])'
+RE_XML_ILLEGAL = (
+    "([%s-%s%s-%s%s-%s%s-%s])"
+    + "|"
+    + "([%s-%s][^%s-%s])|([^%s-%s][%s-%s])|([%s-%s]$)|(^[%s-%s])"
+)
 try:
     RE_XML_ILLEGAL = unicode(RE_XML_ILLEGAL)
 except NameError:
     pass
-RE_XML_ILLEGAL = RE_XML_ILLEGAL % \
-                 (char(0x0000), char(0x0008), char(0x000b), char(0x000c),
-                  char(0x000e), char(0x001f), char(0xfffe), char(0xffff),
-                  char(0xd800), char(0xdbff), char(0xdc00), char(0xdfff),
-                  char(0xd800), char(0xdbff), char(0xdc00), char(0xdfff),
-                  char(0xd800), char(0xdbff), char(0xdc00), char(0xdfff))
+RE_XML_ILLEGAL = RE_XML_ILLEGAL % (
+    char(0x0000),
+    char(0x0008),
+    char(0x000B),
+    char(0x000C),
+    char(0x000E),
+    char(0x001F),
+    char(0xFFFE),
+    char(0xFFFF),
+    char(0xD800),
+    char(0xDBFF),
+    char(0xDC00),
+    char(0xDFFF),
+    char(0xD800),
+    char(0xDBFF),
+    char(0xDC00),
+    char(0xDFFF),
+    char(0xD800),
+    char(0xDBFF),
+    char(0xDC00),
+    char(0xDFFF),
+)
 _safe_xml_regex = re.compile(RE_XML_ILLEGAL)
 
 
@@ -380,21 +424,21 @@ def _read_file_safe_xml(test_file, write_back_sanitized=True):
         # this is ugly, but the files in question that are problematic
         # do not declare unicode type.
         if not os.path.isfile(test_file):
-            raise Exception('test file does not exist')
+            raise Exception("test file does not exist")
         try:
-            f = codecs.open(test_file, 'r', 'utf-8')
+            f = codecs.open(test_file, "r", "utf-8")
             x = f.read()
         except Exception:
             if f is not None:
                 f.close()
-            f = codecs.open(test_file, 'r', 'iso8859-1')
+            f = codecs.open(test_file, "r", "iso8859-1")
             x = f.read()
 
         for match in _safe_xml_regex.finditer(x):
-            x = x[:match.start()] + '?' + x[match.end():]
-        x = x.encode('utf-8')
+            x = x[: match.start()] + "?" + x[match.end() :]
+        x = x.encode("utf-8")
         if write_back_sanitized:
-            with open(test_file, 'wb') as h:
+            with open(test_file, "wb") as h:
                 h.write(x)
         return x
     finally:
@@ -415,14 +459,14 @@ def read(test_file, test_name):
     try:
         xml_str = _read_file_safe_xml(test_file)
         if not xml_str.strip():
-            print('WARN: test result file is empty [%s]' % (test_file))
+            print("WARN: test result file is empty [%s]" % (test_file))
             return Result(test_name, 0, 0, 0)
-        test_suites = parseString(xml_str).getElementsByTagName('testsuite')
+        test_suites = parseString(xml_str).getElementsByTagName("testsuite")
     except Exception as e:
-        print('WARN: cannot read test result file [%s]: %s' % (test_file, str(e)))
+        print("WARN: cannot read test result file [%s]: %s" % (test_file, str(e)))
         return Result(test_name, 0, 0, 0)
     if not test_suites:
-        print('WARN: test result file [%s] contains no results' % (test_file))
+        print("WARN: test result file [%s] contains no results" % (test_file))
         return Result(test_name, 0, 0, 0)
 
     results = Result(test_name, 0, 0, 0)
@@ -432,23 +476,29 @@ def read(test_file, test_name):
             continue
 
         # test_suite = test_suite[0]
-        vals = [test_suite.getAttribute(attr) for attr in ['errors', 'failures', 'tests']]
+        vals = [
+            test_suite.getAttribute(attr) for attr in ["errors", "failures", "tests"]
+        ]
         vals = [v or 0 for v in vals]
         err, fail, tests = [int(val) for val in vals]
 
         result = Result(test_name, err, fail, tests)
-        result.time = 0.0 if not len(test_suite.getAttribute('time')) else float(test_suite.getAttribute('time'))
+        result.time = (
+            0.0
+            if not len(test_suite.getAttribute("time"))
+            else float(test_suite.getAttribute("time"))
+        )
 
         # Create a prefix based on the test result filename. The idea is to
         # disambiguate the case when tests of the same name are provided in
         # different .xml files.  We use the name of the parent directory
         test_file_base = os.path.basename(os.path.dirname(os.path.abspath(test_file)))
         fname = os.path.basename(test_file)
-        if fname.startswith('TEST-'):
+        if fname.startswith("TEST-"):
             fname = fname[5:]
-        if fname.endswith('.xml'):
+        if fname.endswith(".xml"):
             fname = fname[:-4]
-        test_file_base = '%s.%s' % (test_file_base, fname)
+        test_file_base = "%s.%s" % (test_file_base, fname)
         _load_suite_results(test_file_base, test_suite, result)
         results.accumulate(result)
     return results
@@ -463,7 +513,7 @@ def read_all(filter_=[]):
     @rtype: L{Result}
     """
     dir_ = rospkg.get_test_results_dir()
-    root_result = Result('ros', 0, 0, 0)
+    root_result = Result("ros", 0, 0, 0)
     if not os.path.exists(dir_):
         return root_result
     for d in os.listdir(dir_):
@@ -472,14 +522,16 @@ def read_all(filter_=[]):
         subdir = os.path.join(dir_, d)
         if os.path.isdir(subdir):
             for filename in os.listdir(subdir):
-                if filename.endswith('.xml'):
+                if filename.endswith(".xml"):
                     filename = os.path.join(subdir, filename)
                     result = read(filename, os.path.basename(subdir))
                     root_result.accumulate(result)
     return root_result
 
 
-def test_failure_junit_xml(test_name, message, stdout=None, class_name='Results', testcase_name='test_ran'):
+def test_failure_junit_xml(
+    test_name, message, stdout=None, class_name="Results", testcase_name="test_ran"
+):
     """
     Generate JUnit XML file for a unary test suite where the test failed
 
@@ -490,48 +542,48 @@ def test_failure_junit_xml(test_name, message, stdout=None, class_name='Results'
     @param stdout: stdout data to include in report
     @type  stdout: str
     """
-    testsuite = ET.Element('testsuite')
-    testsuite.set('tests', '1')
-    testsuite.set('failures', '1')
-    testsuite.set('time', '1')
-    testsuite.set('errors', '0')
-    testsuite.set('name', test_name)
-    testcase = ET.SubElement(testsuite, 'testcase')
-    testcase.set('name', testcase_name)
-    testcase.set('status', 'run')
-    testcase.set('time', '1')
-    testcase.set('classname', class_name)
-    failure = ET.SubElement(testcase, 'failure')
-    failure.set('message', message)
-    failure.set('type', '')
+    testsuite = ET.Element("testsuite")
+    testsuite.set("tests", "1")
+    testsuite.set("failures", "1")
+    testsuite.set("time", "1")
+    testsuite.set("errors", "0")
+    testsuite.set("name", test_name)
+    testcase = ET.SubElement(testsuite, "testcase")
+    testcase.set("name", testcase_name)
+    testcase.set("status", "run")
+    testcase.set("time", "1")
+    testcase.set("classname", class_name)
+    failure = ET.SubElement(testcase, "failure")
+    failure.set("message", message)
+    failure.set("type", "")
     if stdout:
-        system_out = ET.SubElement(testsuite, 'system-out')
+        system_out = ET.SubElement(testsuite, "system-out")
         system_out.text = cdata(filter_nonprintable_text(stdout))
-    return ET.tostring(testsuite, encoding='utf-8', method='xml')
+    return ET.tostring(testsuite, encoding="utf-8", method="xml")
 
 
-def test_success_junit_xml(test_name, class_name='Results', testcase_name='test_ran'):
+def test_success_junit_xml(test_name, class_name="Results", testcase_name="test_ran"):
     """
     Generate JUnit XML file for a unary test suite where the test succeeded.
 
     @param test_name: Name of test that passed
     @type  test_name: str
     """
-    testsuite = ET.Element('testsuite')
-    testsuite.set('tests', '1')
-    testsuite.set('failures', '0')
-    testsuite.set('time', '1')
-    testsuite.set('errors', '0')
-    testsuite.set('name', test_name)
-    testcase = ET.SubElement(testsuite, 'testcase')
-    testcase.set('name', testcase_name)
-    testcase.set('status', 'run')
-    testcase.set('time', '1')
-    testcase.set('classname', class_name)
-    return ET.tostring(testsuite, encoding='utf-8', method='xml')
+    testsuite = ET.Element("testsuite")
+    testsuite.set("tests", "1")
+    testsuite.set("failures", "0")
+    testsuite.set("time", "1")
+    testsuite.set("errors", "0")
+    testsuite.set("name", test_name)
+    testcase = ET.SubElement(testsuite, "testcase")
+    testcase.set("name", testcase_name)
+    testcase.set("status", "run")
+    testcase.set("time", "1")
+    testcase.set("classname", class_name)
+    return ET.tostring(testsuite, encoding="utf-8", method="xml")
 
 
-def print_summary(junit_results, runner_name='ROSUNIT'):
+def print_summary(junit_results, runner_name="ROSUNIT"):
     """
     Print summary of junitxml results to stdout.
     """
@@ -541,30 +593,30 @@ def print_summary(junit_results, runner_name='ROSUNIT'):
     # object contains results of the actual tests.
 
     buff = StringIO()
-    buff.write('[%s]' % runner_name + '-' * 71 + '\n\n')
+    buff.write("[%s]" % runner_name + "-" * 71 + "\n\n")
     for tc_result in junit_results.test_case_results:
         buff.write(tc_result.description)
 
-    buff.write('\nSUMMARY\n')
+    buff.write("\nSUMMARY\n")
     if (junit_results.num_errors + junit_results.num_failures) == 0:
-        buff.write('\033[32m * RESULT: SUCCESS\033[0m\n')
+        buff.write("\033[32m * RESULT: SUCCESS\033[0m\n")
     else:
-        buff.write('\033[1;31m * RESULT: FAIL\033[0m\n')
+        buff.write("\033[1;31m * RESULT: FAIL\033[0m\n")
 
     # TODO: still some issues with the numbers adding up if tests fail to launch
 
     # number of errors from the inner tests, plus add in count for tests
     # that didn't run properly ('result' object).
-    buff.write(' * TESTS: %s\n' % junit_results.num_tests)
+    buff.write(" * TESTS: %s\n" % junit_results.num_tests)
     num_errors = junit_results.num_errors
     if num_errors:
-        buff.write('\033[1;31m * ERRORS: %s\033[0m\n' % num_errors)
+        buff.write("\033[1;31m * ERRORS: %s\033[0m\n" % num_errors)
     else:
-        buff.write(' * ERRORS: 0\n')
+        buff.write(" * ERRORS: 0\n")
     num_failures = junit_results.num_failures
     if num_failures:
-        buff.write('\033[1;31m * FAILURES: %s\033[0m\n' % num_failures)
+        buff.write("\033[1;31m * FAILURES: %s\033[0m\n" % num_failures)
     else:
-        buff.write(' * FAILURES: 0\n')
+        buff.write(" * FAILURES: 0\n")
 
     print(buff.getvalue())

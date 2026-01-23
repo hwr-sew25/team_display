@@ -32,30 +32,30 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys 
+import sys
 import unittest
 import time
-        
+
 from subprocess import Popen, PIPE, check_call, call
 
-class TestRosgraphOffline(unittest.TestCase):
 
+class TestRosgraphOffline(unittest.TestCase):
     def setUp(self):
         pass
 
     ## test that the rosmsg command works
     def test_cmd_help(self):
-        cmd = 'rosgraph'
-        output = Popen([cmd, '-h'], stdout=PIPE).communicate()[0]
-        self.assertTrue('Usage' in output.decode())
-            
+        cmd = "rosgraph"
+        output = Popen([cmd, "-h"], stdout=PIPE).communicate()[0]
+        self.assertTrue("Usage" in output.decode())
+
     def test_offline(self):
-        cmd = 'rosgraph'
+        cmd = "rosgraph"
 
         # point at a different 'master'
         env = os.environ.copy()
-        env['ROS_MASTER_URI'] = 'http://localhost:11312'
-        kwds = { 'env': env, 'stdout': PIPE, 'stderr': PIPE}
+        env["ROS_MASTER_URI"] = "http://localhost:11312"
+        kwds = {"env": env, "stdout": PIPE, "stderr": PIPE}
 
         msg = "ERROR: Unable to communicate with master!" + os.linesep
 

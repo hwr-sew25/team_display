@@ -33,7 +33,7 @@
 
 import os
 import signal
-import sys 
+import sys
 import time
 import unittest
 
@@ -43,15 +43,16 @@ import rostest
 
 from subprocess import Popen, PIPE, check_call, call
 
+
 def run_for(cmd, secs):
     popen = Popen(cmd, stdout=PIPE, stderr=PIPE, close_fds=True)
     timeout_t = time.time() + secs
     while time.time() < timeout_t:
         time.sleep(0.1)
     os.kill(popen.pid, signal.SIGKILL)
-    
-class TestRosnodeOnline(unittest.TestCase):
 
+
+class TestRosnodeOnline(unittest.TestCase):
     def setUp(self):
         self.vals = set()
         self.msgs = {}
@@ -59,36 +60,35 @@ class TestRosnodeOnline(unittest.TestCase):
     def callback(self, msg, val):
         self.vals.add(val)
         self.msgs[val] = msg
-        
+
     def test_rosnode(self):
-        topics = ['/chatter', '/foo/chatter', '/bar/chatter']
-        
+        topics = ["/chatter", "/foo/chatter", "/bar/chatter"]
+
         # wait for network to initialize
-        rospy.init_node('test')
-        nodes = ['/talker', '/foo/talker', '/bar/talker', rospy.get_caller_id()]
-        
+        rospy.init_node("test")
+        nodes = ["/talker", "/foo/talker", "/bar/talker", rospy.get_caller_id()]
+
         for i, t in enumerate(topics):
             rospy.Subscriber(t, std_msgs.msg.String, self.callback, i)
         all = set(range(0, len(topics)))
 
-        timeout_t = time.time() + 10.
+        timeout_t = time.time() + 10.0
         while time.time() < timeout_t and self.vals != all:
             time.sleep(0.1)
         self.assertEqual(self.vals, all, "failed to initialize graph correctly")
-            
 
         # network is initialized
-        cmd = 'rosnode'
+        cmd = "rosnode"
 
         # list
         # - we aren't matching against the core services as those can make the test suites brittle
-        output = Popen([cmd, 'list'], stdout=PIPE).communicate()[0]
+        output = Popen([cmd, "list"], stdout=PIPE).communicate()[0]
         output = output.decode()
         l = set(output.split())
         for t in nodes:
-            self.assertTrue(t in l, "%s not in %s"%(t, l))
+            self.assertTrue(t in l, "%s not in %s" % (t, l))
 
-        output = Popen([cmd, 'list', '-a'], stdout=PIPE).communicate()[0]
+        output = Popen([cmd, "list", "-a"], stdout=PIPE).communicate()[0]
         output = output.decode()
         l = set(output.split())
         for t in nodes:
@@ -96,30 +96,31 @@ class TestRosnodeOnline(unittest.TestCase):
                 if t in e:
                     break
             else:
-                self.fail("did not find [%s] in list [%s]"%(t, l))
+                self.fail("did not find [%s] in list [%s]" % (t, l))
 
-        output = Popen([cmd, 'list', '-u'], stdout=PIPE).communicate()[0]
-        output = output.decode() 
+        output = Popen([cmd, "list", "-u"], stdout=PIPE).communicate()[0]
+        output = output.decode()
         l = set(output.split())
         self.assertTrue(len(l), "list -u is empty")
         for e in l:
-            self.assertTrue(e.startswith('http://'))
+            self.assertTrue(e.startswith("http://"))
 
         for name in nodes:
             # type
-            output = Popen([cmd, 'info', name], stdout=PIPE).communicate()[0]
+            output = Popen([cmd, "info", name], stdout=PIPE).communicate()[0]
             output = output.decode()
             # not really validating output as much as making sure it's not broken
             self.assertTrue(name in output)
-            self.assertTrue('chatter' in output)
-            self.assertTrue('Publications' in output)
-            self.assertTrue('Subscriptions' in output)                        
+            self.assertTrue("chatter" in output)
+            self.assertTrue("Publications" in output)
+            self.assertTrue("Subscriptions" in output)
 
             if 0:
-                #ping
-                stdout, stderr = run_for([cmd, 'ping', name], 3.)
+                # ping
+                stdout, stderr = run_for([cmd, "ping", name], 3.0)
 
-PKG = 'test_rosnode'
-NAME = 'test_rosnode_command_line_online'
-if __name__ == '__main__':
+
+PKG = "test_rosnode"
+NAME = "test_rosnode_command_line_online"
+if __name__ == "__main__":
     rostest.run(PKG, NAME, TestRosnodeOnline, sys.argv)

@@ -34,23 +34,30 @@
 
 """rospy exception types"""
 
-class ROSException(Exception): 
+
+class ROSException(Exception):
     """
     Base exception class for ROS clients
     """
-    pass    
+
+    pass
+
 
 class ROSSerializationException(ROSException):
     """
     Exception for message serialization errors
-    """    
+    """
+
     pass
+
 
 class ROSInitException(ROSException):
     """
     Exception for errors initializing ROS state
-    """    
+    """
+
     pass
+
 
 class ROSInterruptException(ROSException, KeyboardInterrupt):
     """
@@ -58,40 +65,50 @@ class ROSInterruptException(ROSException, KeyboardInterrupt):
 
     This is a subclass of both L{ROSException} and KeyboardInterrupt
     so that it can be used in logic tht expects either.
-    """    
+    """
+
     pass
 
-class ROSTimeMovedBackwardsException(ROSInterruptException): 
+
+class ROSTimeMovedBackwardsException(ROSInterruptException):
     """
     Exception if time moved backwards
     """
+
     def __init__(self, time):
         self.time = time
         """The amount of time in seconds."""
         super(ROSTimeMovedBackwardsException, self).__init__("ROS time moved backwards")
 
+
 class ROSInternalException(Exception):
     """
     Base class for exceptions that are internal to the ROS system
-    """    
+    """
+
     pass
+
 
 class TransportException(ROSInternalException):
     """
     Base class for transport-related exceptions
-    """    
+    """
+
     pass
+
 
 class TransportTerminated(TransportException):
     """
     Internal class for representing broken connections
-    """    
+    """
+
     pass
+
 
 class TransportInitError(TransportException):
     """
     Internal exception for representing exceptions that occur
     establishing transports
     """
-    pass
 
+    pass

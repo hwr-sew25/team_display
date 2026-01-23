@@ -43,27 +43,44 @@ import rosgraph.network
 
 from roswtf.rules import warning_rule, error_rule
 
+
 # #1220
 def ip_check(ctx):
     # best we can do is compare roslib's routine against socket resolution and make sure they agree
     local_addrs = rosgraph.network.get_local_addresses()
 
     if rosgraph.network.use_ipv6():
-        resolved_ips = [host[4][0] for host in socket.getaddrinfo(socket.gethostname(), 0, 0, 0, socket.SOL_TCP)]
+        resolved_ips = [
+            host[4][0]
+            for host in socket.getaddrinfo(
+                socket.gethostname(), 0, 0, 0, socket.SOL_TCP
+            )
+        ]
     else:
-        resolved_ips = [host[4][0] for host in socket.getaddrinfo(socket.gethostname(), 0, socket.AF_INET, 0, socket.SOL_TCP)]
+        resolved_ips = [
+            host[4][0]
+            for host in socket.getaddrinfo(
+                socket.gethostname(), 0, socket.AF_INET, 0, socket.SOL_TCP
+            )
+        ]
 
-    global_ips = [ ip for ip in resolved_ips if not ip.startswith('127.') and not ip == '::1']
+    global_ips = [
+        ip for ip in resolved_ips if not ip.startswith("127.") and not ip == "::1"
+    ]
 
     remote_ips = list(set(global_ips) - set(local_addrs))
     if remote_ips:
-        retval = "Local hostname [%s] resolves to [%s], which does not appear to be a local IP address %s." % (socket.gethostname(), ','.join(remote_ips), str(local_addrs))
+        retval = (
+            "Local hostname [%s] resolves to [%s], which does not appear to be a local IP address %s."
+            % (socket.gethostname(), ",".join(remote_ips), str(local_addrs))
+        )
         # IPv6 support % to denote zone/scope ids. The value is expanded
         # in other functions, this is why we are using replace command in
         # the return. For more info https://github.com/ros/ros_comm/pull/598
-        return retval.replace('%', '%%')
+        return retval.replace("%", "%%")
 
-# suggestion by mquigley based on laptop dhcp issues    
+
+# suggestion by mquigley based on laptop dhcp issues
 def ros_hostname_check(ctx):
     """Make sure that ROS_HOSTNAME resolves to a local IP address"""
     if not rosgraph.ROS_HOSTNAME in ctx.env:
@@ -71,16 +88,22 @@ def ros_hostname_check(ctx):
 
     hostname = ctx.env[rosgraph.ROS_HOSTNAME]
     try:
-        resolved_ips = [host[4][0] for host in socket.getaddrinfo(hostname, 0, 0, 0, socket.SOL_TCP)]
+        resolved_ips = [
+            host[4][0] for host in socket.getaddrinfo(hostname, 0, 0, 0, socket.SOL_TCP)
+        ]
     except socket.gaierror:
-        return "ROS_HOSTNAME [%s] cannot be resolved to an IP address"%(hostname)
-    
+        return "ROS_HOSTNAME [%s] cannot be resolved to an IP address" % (hostname)
+
     # best we can do is compare roslib's routine against socket resolution and make sure they agree
     local_addrs = rosgraph.network.get_local_addresses()
 
     remote_ips = list(set(resolved_ips) - set(local_addrs))
     if remote_ips:
-        return "ROS_HOSTNAME [%s] resolves to [%s], which does not appear to be a local IP address %s."%(hostname, ','.join(remote_ips), str(local_addrs))
+        return (
+            "ROS_HOSTNAME [%s] resolves to [%s], which does not appear to be a local IP address %s."
+            % (hostname, ",".join(remote_ips), str(local_addrs))
+        )
+
 
 def ros_ip_check(ctx):
     """Make sure that ROS_IP is a local IP address"""
@@ -88,34 +111,34 @@ def ros_ip_check(ctx):
         return
 
     ip = ctx.env[rosgraph.ROS_IP]
-    
+
     # best we can do is compare roslib's routine against socket resolution and make sure they agree
     addrs = rosgraph.network.get_local_addresses()
 
     if " " in ip:
-        return "ROS_IP [%s] contains whitespace. This is not a valid IP."%ip
+        return "ROS_IP [%s] contains whitespace. This is not a valid IP." % ip
 
     if ip not in addrs:
-        return "ROS_IP [%s] does not appear to be an IP address of a local network interface (one of %s)."%(ip, str(addrs))
-    
+        return (
+            "ROS_IP [%s] does not appear to be an IP address of a local network interface (one of %s)."
+            % (ip, str(addrs))
+        )
+
+
 # Error/Warning Rules
 
 warnings = [
-    (ros_hostname_check,
-     "ROS_HOSTNAME may be incorrect: "),
-    (ros_ip_check,
-     "ROS_IP may be incorrect: "),
-
-    ]
+    (ros_hostname_check, "ROS_HOSTNAME may be incorrect: "),
+    (ros_ip_check, "ROS_IP may be incorrect: "),
+]
 
 errors = [
-    (ip_check,
-     "Local network configuration is invalid: "),
-    ]
+    (ip_check, "Local network configuration is invalid: "),
+]
+
 
 def wtf_check(ctx):
     for r in warnings:
         warning_rule(r, r[0](ctx), ctx)
     for r in errors:
         error_rule(r, r[0](ctx), ctx)
-        

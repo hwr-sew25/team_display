@@ -13,12 +13,14 @@ class AbstractUnstableTest(AbstractCatkinWorkspaceTest):
         # for ROS core integration tests, we reuse the same sources
         # (to save download time), keep in test folder
         super(AbstractUnstableTest, self).__init__(
-            testCaseName, os.path.join(TEMP_DIR, name))
+            testCaseName, os.path.join(TEMP_DIR, name)
+        )
 
     def setupWorkspaceContents(self):
-        rosinstall(self.workspacedir,
-                   os.path.join(os.path.dirname(__file__),
-                                'test.rosinstall'))
+        rosinstall(
+            self.workspacedir,
+            os.path.join(os.path.dirname(__file__), "test.rosinstall"),
+        )
         create_catkin_workspace(self.workspacedir)
 
     def tearDown(self):

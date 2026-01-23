@@ -14,6 +14,7 @@ from __future__ import print_function
 import re
 import sys
 import unittest
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -23,7 +24,6 @@ from rosunit.xmlrunner import XMLTestRunner
 
 
 class XMLTestRunnerTest(unittest.TestCase):
-
     def setUp(self):
         self._stream = StringIO()
 
@@ -43,8 +43,10 @@ class XMLTestRunnerTest(unittest.TestCase):
         got = re.sub(r'time="\d+\.\d+"', 'time="0.000"', got)
         # Likewise, replace all failure and error messages by a simple "Foobar"
         # string.
-        got = re.sub(r'(?s)<failure (.*?)>.*?</failure>', r'<failure \1>Foobar</failure>', got)
-        got = re.sub(r'(?s)<error (.*?)>.*?</error>', r'<error \1>Foobar</error>', got)
+        got = re.sub(
+            r"(?s)<failure (.*?)>.*?</failure>", r"<failure \1>Foobar</failure>", got
+        )
+        got = re.sub(r"(?s)<error (.*?)>.*?</error>", r"<error \1>Foobar</error>", got)
 
         self.assertIn(got, expected)
 
@@ -53,21 +55,31 @@ class XMLTestRunnerTest(unittest.TestCase):
         matches a previous run.
 
         """
+
         class TestTest(unittest.TestCase):
             pass
-        self._try_test_run(TestTest, ["""<testsuite errors="0" failures="0" name="unittest.suite.TestSuite" tests="0" time="0.000"><system-out>&lt;![CDATA[\n\n]]&gt;</system-out><system-err>&lt;![CDATA[\n\n]]&gt;</system-err></testsuite>"""])
+
+        self._try_test_run(
+            TestTest,
+            [
+                """<testsuite errors="0" failures="0" name="unittest.suite.TestSuite" tests="0" time="0.000"><system-out>&lt;![CDATA[\n\n]]&gt;</system-out><system-err>&lt;![CDATA[\n\n]]&gt;</system-err></testsuite>"""
+            ],
+        )
 
     def test_success(self):
         """Regression test: Check whether a test run with a successful test
         matches a previous run.
 
         """
-        class TestTest(unittest.TestCase):
 
+        class TestTest(unittest.TestCase):
             def test_foo(self):
                 pass
+
         py2_expected = """<testsuite errors="0" failures="0" name="unittest.suite.TestSuite" tests="1" time="0.000"><testcase classname="test.test_xmlrunner.TestTest" name="test_foo" time="0.000" /><system-out>&lt;![CDATA[\n\n]]&gt;</system-out><system-err>&lt;![CDATA[\n\n]]&gt;</system-err></testsuite>"""
-        py3_expected = py2_expected.replace('TestTest', 'XMLTestRunnerTest.test_success.&lt;locals&gt;.TestTest')
+        py3_expected = py2_expected.replace(
+            "TestTest", "XMLTestRunnerTest.test_success.&lt;locals&gt;.TestTest"
+        )
         self._try_test_run(TestTest, [py2_expected, py3_expected])
 
     def test_failure(self):
@@ -75,12 +87,15 @@ class XMLTestRunnerTest(unittest.TestCase):
         matches a previous run.
 
         """
-        class TestTest(unittest.TestCase):
 
+        class TestTest(unittest.TestCase):
             def test_foo(self):
                 self.assert_(False)
+
         py2_expected = """<testsuite errors="0" failures="1" name="unittest.suite.TestSuite" tests="1" time="0.000"><testcase classname="test.test_xmlrunner.TestTest" name="test_foo" time="0.000"><failure type="AssertionError">Foobar</failure></testcase><system-out>&lt;![CDATA[\n\n]]&gt;</system-out><system-err>&lt;![CDATA[\n\n]]&gt;</system-err></testsuite>"""
-        py3_expected = py2_expected.replace('TestTest', 'XMLTestRunnerTest.test_failure.&lt;locals&gt;.TestTest')
+        py3_expected = py2_expected.replace(
+            "TestTest", "XMLTestRunnerTest.test_failure.&lt;locals&gt;.TestTest"
+        )
         self._try_test_run(TestTest, [py2_expected, py3_expected])
 
     def test_error(self):
@@ -88,12 +103,15 @@ class XMLTestRunnerTest(unittest.TestCase):
         matches a previous run.
 
         """
-        class TestTest(unittest.TestCase):
 
+        class TestTest(unittest.TestCase):
             def test_foo(self):
                 raise IndexError()
+
         py2_expected = """<testsuite errors="1" failures="0" name="unittest.suite.TestSuite" tests="1" time="0.000"><testcase classname="test.test_xmlrunner.TestTest" name="test_foo" time="0.000"><error type="IndexError">Foobar</error></testcase><system-out>&lt;![CDATA[\n\n]]&gt;</system-out><system-err>&lt;![CDATA[\n\n]]&gt;</system-err></testsuite>"""
-        py3_expected = py2_expected.replace('TestTest', 'XMLTestRunnerTest.test_error.&lt;locals&gt;.TestTest')
+        py3_expected = py2_expected.replace(
+            "TestTest", "XMLTestRunnerTest.test_error.&lt;locals&gt;.TestTest"
+        )
         self._try_test_run(TestTest, [py2_expected, py3_expected])
 
     def test_stdout_capture(self):
@@ -101,12 +119,15 @@ class XMLTestRunnerTest(unittest.TestCase):
         matches a previous run.
 
         """
-        class TestTest(unittest.TestCase):
 
+        class TestTest(unittest.TestCase):
             def test_foo(self):
-                print('Foo > Bar')
+                print("Foo > Bar")
+
         py2_expected = """<testsuite errors="0" failures="0" name="unittest.suite.TestSuite" tests="1" time="0.000"><testcase classname="test.test_xmlrunner.TestTest" name="test_foo" time="0.000" /><system-out>&lt;![CDATA[\nFoo &gt; Bar\n\n]]&gt;</system-out><system-err>&lt;![CDATA[\n\n]]&gt;</system-err></testsuite>"""
-        py3_expected = py2_expected.replace('TestTest', 'XMLTestRunnerTest.test_stdout_capture.&lt;locals&gt;.TestTest')
+        py3_expected = py2_expected.replace(
+            "TestTest", "XMLTestRunnerTest.test_stdout_capture.&lt;locals&gt;.TestTest"
+        )
         self._try_test_run(TestTest, [py2_expected, py3_expected])
 
     def test_stderr_capture(self):
@@ -114,16 +135,20 @@ class XMLTestRunnerTest(unittest.TestCase):
         matches a previous run.
 
         """
-        class TestTest(unittest.TestCase):
 
+        class TestTest(unittest.TestCase):
             def test_foo(self):
-                print('Foo > Bar', file=sys.stderr)
+                print("Foo > Bar", file=sys.stderr)
+
         py2_expected = """<testsuite errors="0" failures="0" name="unittest.suite.TestSuite" tests="1" time="0.000"><testcase classname="test.test_xmlrunner.TestTest" name="test_foo" time="0.000" /><system-out>&lt;![CDATA[\n\n]]&gt;</system-out><system-err>&lt;![CDATA[\nFoo &gt; Bar\n\n]]&gt;</system-err></testsuite>"""
-        py3_expected = py2_expected.replace('TestTest', 'XMLTestRunnerTest.test_stderr_capture.&lt;locals&gt;.TestTest')
+        py3_expected = py2_expected.replace(
+            "TestTest", "XMLTestRunnerTest.test_stderr_capture.&lt;locals&gt;.TestTest"
+        )
         self._try_test_run(TestTest, [py2_expected, py3_expected])
 
     class NullStream(object):
         """A file-like object that discards everything written to it."""
+
         def write(self, buffer):
             pass
 
@@ -132,8 +157,8 @@ class XMLTestRunnerTest(unittest.TestCase):
         that change stdout, but don't change it back properly.
 
         """
-        class TestTest(unittest.TestCase):
 
+        class TestTest(unittest.TestCase):
             def test_foo(self):
                 sys.stdout = XMLTestRunnerTest.NullStream()
 
@@ -145,8 +170,8 @@ class XMLTestRunnerTest(unittest.TestCase):
         that change stderr, but don't change it back properly.
 
         """
-        class TestTest(unittest.TestCase):
 
+        class TestTest(unittest.TestCase):
             def test_foo(self):
                 sys.stderr = XMLTestRunnerTest.NullStream()
 
@@ -155,7 +180,6 @@ class XMLTestRunnerTest(unittest.TestCase):
 
 
 class XMLTestProgram(unittest.TestProgram):
-
     def runTests(self):
         if self.testRunner is None:
             self.testRunner = XMLTestRunner()
@@ -165,5 +189,5 @@ class XMLTestProgram(unittest.TestProgram):
 main = XMLTestProgram
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(module=None)

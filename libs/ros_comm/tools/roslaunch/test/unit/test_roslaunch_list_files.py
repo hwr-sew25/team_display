@@ -33,44 +33,64 @@
 from __future__ import print_function
 
 import os
-import sys 
+import sys
 import time
 import unittest
 import roslib.packages
 
 from subprocess import Popen, PIPE, check_call, call
 
+
 def get_test_path():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'xml'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "xml"))
+
 
 class TestListFiles(unittest.TestCase):
-
     def setUp(self):
         pass
 
     def test_list_files(self):
-        cmd = 'roslaunch'
+        cmd = "roslaunch"
 
         # check error behavior
-        p = Popen([cmd, '--files'], stdout = PIPE)
+        p = Popen([cmd, "--files"], stdout=PIPE)
         p.communicate()
-        self.assertTrue(p.returncode != 0, "Should have failed w/o file argument. Code: %d" % (p.returncode))
+        self.assertTrue(
+            p.returncode != 0,
+            "Should have failed w/o file argument. Code: %d" % (p.returncode),
+        )
 
         d = get_test_path()
-        
-        p = Popen([cmd, '--files', 'roslaunch', 'test-valid.xml'], stdout = PIPE)
+
+        p = Popen([cmd, "--files", "roslaunch", "test-valid.xml"], stdout=PIPE)
         o = p.communicate()[0]
         o = o.decode()
-        self.assertTrue(p.returncode == 0, "Return code nonzero for list files! Code: %d" % (p.returncode))
-        self.assertEqual(os.path.realpath(os.path.join(d, 'test-valid.xml')), os.path.realpath(o.strip()))
+        self.assertTrue(
+            p.returncode == 0,
+            "Return code nonzero for list files! Code: %d" % (p.returncode),
+        )
+        self.assertEqual(
+            os.path.realpath(os.path.join(d, "test-valid.xml")),
+            os.path.realpath(o.strip()),
+        )
 
         print("check 1", o)
-        
-        p = Popen([cmd, '--files', 'roslaunch', 'test-env.xml'], stdout = PIPE)
+
+        p = Popen([cmd, "--files", "roslaunch", "test-env.xml"], stdout=PIPE)
         o = p.communicate()[0]
         o = o.decode()
-        self.assertTrue(p.returncode == 0, "Return code nonzero for list files! Code: %d" % (p.returncode))
-        self.assertEqual(set([os.path.realpath(os.path.join(d, 'test-env.xml')), os.path.realpath(os.path.join(d, 'test-env-include.xml'))]),
-                          set([os.path.realpath(x.strip()) for x in o.split() if x.strip()]))
+        self.assertTrue(
+            p.returncode == 0,
+            "Return code nonzero for list files! Code: %d" % (p.returncode),
+        )
+        self.assertEqual(
+            set(
+                [
+                    os.path.realpath(os.path.join(d, "test-env.xml")),
+                    os.path.realpath(os.path.join(d, "test-env-include.xml")),
+                ]
+            ),
+            set([os.path.realpath(x.strip()) for x in o.split() if x.strip()]),
+        )
 
         print("check 2", o)

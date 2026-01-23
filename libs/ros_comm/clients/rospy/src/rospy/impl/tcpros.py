@@ -39,7 +39,7 @@ Implements: U{http://ros.org/wiki/ROS/TCPROS}
 The rospy tcpros implementation is split into three areas:
  - L{rospy.tcpros_base}: common TCPROS routines, including header and connection processing
  - L{rospy.tcpros_pubsub}: Topic-specific capabilities for publishing and subscribing
- - L{rospy.tcpros_service}: Service-specific capabilities 
+ - L{rospy.tcpros_service}: Service-specific capabilities
 """
 
 import rospy.impl.tcpros_service
@@ -49,6 +49,7 @@ from rospy.impl.tcpros_pubsub import TCPROSHandler
 
 _handler = TCPROSHandler()
 
+
 def init_tcpros(port=0):
     """
     @param tcpros_port: override the port of the TCP server
@@ -56,7 +57,10 @@ def init_tcpros(port=0):
     """
     server = init_tcpros_server(port)
     server.topic_connection_handler = _handler.topic_connection_handler
-    server.service_connection_handler = rospy.impl.tcpros_service.service_connection_handler
+    server.service_connection_handler = (
+        rospy.impl.tcpros_service.service_connection_handler
+    )
+
 
 def get_tcpros_handler():
     return _handler

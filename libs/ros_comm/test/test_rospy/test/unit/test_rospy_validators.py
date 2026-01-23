@@ -37,24 +37,26 @@ import struct
 import unittest
 import time
 
-class TestRospyValidators(unittest.TestCase):
 
+class TestRospyValidators(unittest.TestCase):
     def test_ParameterInvalid(self):
         # not really testing anything here other than typos
         from rospy.impl.validators import ParameterInvalid
-        self.assertTrue(isinstance(ParameterInvalid('param'), Exception))
-        
+
+        self.assertTrue(isinstance(ParameterInvalid("param"), Exception))
+
     def test_validators(self):
         from rospy.impl.validators import ParameterInvalid
         from rospy.impl.validators import non_empty
-        contexts = ['', '/', '/foo']
+
+        contexts = ["", "/", "/foo"]
         for context in contexts:
-            valid = ['foo', 1, [1]]
+            valid = ["foo", 1, [1]]
             for v in valid:
-                non_empty('param-name')(v, context)
-            invalid = ['', 0, []]
+                non_empty("param-name")(v, context)
+            invalid = ["", 0, []]
             for i in invalid:
                 try:
-                    non_empty('param-name-foo')(i, context)
+                    non_empty("param-name-foo")(i, context)
                 except ParameterInvalid as e:
-                    self.assertTrue('param-name-foo' in str(e))
+                    self.assertTrue("param-name-foo" in str(e))

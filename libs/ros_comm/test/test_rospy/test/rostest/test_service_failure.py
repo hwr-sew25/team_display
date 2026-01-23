@@ -34,44 +34,48 @@
 ## Integration test for empty services to test serializers
 ## and transport
 
-PKG = 'test_rospy'
-NAME = 'empty_service'
+PKG = "test_rospy"
+NAME = "empty_service"
 
 import sys, time
 import unittest
 
 import rostest
 
+
 class TestServiceFailure(unittest.TestCase):
-        
     def test_persistent(self):
         # fail_two_ints succeeds unless the first argument is -1.
         # this makes sure, in the persistent case, that the proxy handle remains valid after a call
         from test_rosmaster.srv import AddTwoInts
         import rospy
-        rospy.wait_for_service('fail_two_ints', 10.)
-        p = rospy.ServiceProxy('fail_two_ints', AddTwoInts, persistent=True)
+
+        rospy.wait_for_service("fail_two_ints", 10.0)
+        p = rospy.ServiceProxy("fail_two_ints", AddTwoInts, persistent=True)
         for a in [1, -1, 1, -1, -1, -1, -1, 1]:
             try:
                 resp = p(a, 1)
                 if a == 1:
                     self.assertEqual(resp.sum, 2)
                 else:
-                    self.fail("service call should have failed: %s,%s, %s"%(a, 1, resp.sum))
+                    self.fail(
+                        "service call should have failed: %s,%s, %s" % (a, 1, resp.sum)
+                    )
             except rospy.ServiceException as e:
                 if a == -1:
                     # expected
                     pass
                 else:
-                    self.fail("service call failed when it shouldn't have: %s"%str(e))
+                    self.fail("service call failed when it shouldn't have: %s" % str(e))
 
     def test_non_persistent(self):
         # fail_two_ints succeeds unless the first argument is -1.
         # this makes sure, in the non-persistent case, that the proxy handle remains valid after a call
         from test_rosmaster.srv import AddTwoInts
         import rospy
-        rospy.wait_for_service('fail_two_ints', 10.)
-        p = rospy.ServiceProxy('fail_two_ints', AddTwoInts)
+
+        rospy.wait_for_service("fail_two_ints", 10.0)
+        p = rospy.ServiceProxy("fail_two_ints", AddTwoInts)
         for a in [1, -1, 1, -1, -1, -1, -1, 1]:
             try:
                 resp = p(a, 1)
@@ -85,7 +89,7 @@ class TestServiceFailure(unittest.TestCase):
                     pass
                 else:
                     self.fail("service call should have failed")
-        
-        
-if __name__ == '__main__':
-    rostest.run(PKG, 'rospy_service_failure', TestServiceFailure, sys.argv)
+
+
+if __name__ == "__main__":
+    rostest.run(PKG, "rospy_service_failure", TestServiceFailure, sys.argv)

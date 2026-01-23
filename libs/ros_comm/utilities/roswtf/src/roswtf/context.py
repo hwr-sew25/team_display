@@ -50,11 +50,14 @@ import roslaunch.substitution_args
 
 from roswtf.model import WtfWarning
 
+
 class WtfException(Exception):
     """
     Base exception class of roswtf-related issues.
     """
+
     pass
+
 
 class WtfContext(object):
     """
@@ -63,73 +66,88 @@ class WtfContext(object):
     having to load this state manually) and performance (not having to
     do the same calculation repeatedly).
     """
-    __slots__ = ['pkg', 'pkg_dir', 'pkgs',
-                 'stack', 'stack_dir', 'stacks',
-                 'manifest_file', 'manifest',
-                 'env', 'ros_root', 'ros_package_path', 'pythonpath',
-                 'ros_master_uri',
-                 'roslaunch_uris',
-                 'launch_files',
-                 'launch_file_deps',
-                 'launch_file_missing_deps',
-                 'system_state',
-                 'service_providers',
-                 'topics', 'services',
-                 'nodes', 'uri_node_map',
-                 'expected_edges',
-                 'actual_edges',
-                 'unconnected_subscriptions',
-                 'use_sim_time',
-                 'warnings', 'errors',
-                 'rospack', 'rosstack']
-    
+
+    __slots__ = [
+        "pkg",
+        "pkg_dir",
+        "pkgs",
+        "stack",
+        "stack_dir",
+        "stacks",
+        "manifest_file",
+        "manifest",
+        "env",
+        "ros_root",
+        "ros_package_path",
+        "pythonpath",
+        "ros_master_uri",
+        "roslaunch_uris",
+        "launch_files",
+        "launch_file_deps",
+        "launch_file_missing_deps",
+        "system_state",
+        "service_providers",
+        "topics",
+        "services",
+        "nodes",
+        "uri_node_map",
+        "expected_edges",
+        "actual_edges",
+        "unconnected_subscriptions",
+        "use_sim_time",
+        "warnings",
+        "errors",
+        "rospack",
+        "rosstack",
+    ]
+
     def __init__(self):
-        # main package we are running 
+        # main package we are running
         self.pkg = None
         self.pkg_dir = None
-        # main stack we are running 
+        # main stack we are running
         self.stack = None
         self.stack_dir = None
-        
+
         # - list of all packages involved in this check
         self.pkgs = []
-        # - list of all stacks involved in this check        
-        self.stacks = []        
+        # - list of all stacks involved in this check
+        self.stacks = []
 
-        # manifest location of package that we are running 
+        # manifest location of package that we are running
         self.manifest_file = None
-        # manifest of package that we are running 
+        # manifest of package that we are running
         self.manifest = None
 
-        # environment variables 
+        # environment variables
         self.env = {}
 
         # provide these for convenience
         self.ros_root = None
         self.ros_package_path = None
         self.pythonpath = None
-        
+
         # launch file that is being run
         self.launch_files = None
         self.launch_file_deps = None
-        self.launch_file_missing_deps = None        
-        
+        self.launch_file_missing_deps = None
+
         # online state
-        self.roslaunch_uris = None 
-        self.system_state = None #master.getSystemState
+        self.roslaunch_uris = None
+        self.system_state = None  # master.getSystemState
         self.topics = None
         self.services = None
-        self.service_providers = None #names of nodes with services
+        self.service_providers = None  # names of nodes with services
         self.nodes = None
         self.uri_node_map = {}
         self.expected_edges = None
         self.actual_edges = None
         self.unconnected_subscriptions = None
         self.use_sim_time = None
-        
+
         # caching rospack instance
         self.rospack = self.rosstack = None
-        
+
         # warnings that we have collected so far
         self.warnings = []
         # errors that we have collected so far
@@ -156,9 +174,11 @@ class WtfContext(object):
         l, c = roslaunch.XmlLoader(), roslaunch.ROSLaunchConfig()
         for f in roslaunch_files:
             try:
-                l.load(f, c, verbose=False) 
+                l.load(f, c, verbose=False)
             except roslaunch.RLException as e:
-                raise WtfException("Unable to load roslaunch file [%s]: %s"%(f, str(e)))
+                raise WtfException(
+                    "Unable to load roslaunch file [%s]: %s" % (f, str(e))
+                )
 
         ctx = WtfContext()
         ctx.rospack = rospkg.RosPack(rospkg.get_ros_paths(env))
@@ -169,7 +189,7 @@ class WtfContext(object):
         # ctx.pkg and ctx.stack initialized by _load_roslaunch
         _load_pkg(ctx, ctx.pkg)
         if ctx.stack:
-            _load_stack(ctx, ctx.stack)        
+            _load_stack(ctx, ctx.stack)
         _load_env(ctx, env)
         return ctx
 
@@ -196,7 +216,7 @@ class WtfContext(object):
             ctx.pkgs = []
         _load_env(ctx, env)
         return ctx
-    
+
     @staticmethod
     def from_package(pkg, env=None):
         """
@@ -212,7 +232,7 @@ class WtfContext(object):
         ctx = WtfContext()
         ctx.rospack = rospkg.RosPack(rospkg.get_ros_paths(env))
         ctx.rosstack = rospkg.RosStack(rospkg.get_ros_paths(env))
-        
+
         _load_pkg(ctx, pkg)
         stack = ctx.rospack.stack_of(pkg)
         if stack:
@@ -224,7 +244,7 @@ class WtfContext(object):
     def from_env(env=None):
         """
         Initialize WtfContext from environment.
-        
+
         @raise WtfException: if context state cannot be initialized
         """
         if env is None:
@@ -236,7 +256,8 @@ class WtfContext(object):
 
         _load_env(ctx, env)
         return ctx
-    
+
+
 def _load_roslaunch(ctx, roslaunch_files):
     """
     Utility for initializing WtfContext state from roslaunch file
@@ -247,9 +268,10 @@ def _load_roslaunch(ctx, roslaunch_files):
         ctx.launch_file_deps = file_deps
         ctx.launch_file_missing_deps = missing
     except roslaunch.substitution_args.SubstitutionException as se:
-        raise WtfException("Cannot load roslaunch file(s): "+str(se))
+        raise WtfException("Cannot load roslaunch file(s): " + str(se))
     except roslaunch.depends.RoslaunchDepsException as e:
         raise WtfException(str(e))
+
 
 def _load_pkg(ctx, pkg):
     """
@@ -261,15 +283,18 @@ def _load_pkg(ctx, pkg):
     try:
         ctx.pkgs = [pkg] + r.get_depends(pkg)
     except rospkg.ResourceNotFound as e:
-        raise WtfException("Cannot find dependencies for package [%s]: missing %s"%(pkg, e))
+        raise WtfException(
+            "Cannot find dependencies for package [%s]: missing %s" % (pkg, e)
+        )
     try:
         ctx.pkg_dir = r.get_path(pkg)
-        ctx.manifest_file = os.path.join(ctx.pkg_dir, 'manifest.xml')
+        ctx.manifest_file = os.path.join(ctx.pkg_dir, "manifest.xml")
         ctx.manifest = r.get_manifest(pkg)
     except rospkg.ResourceNotFound:
-        raise WtfException("Cannot locate manifest file for package [%s]"%pkg)
+        raise WtfException("Cannot locate manifest file for package [%s]" % pkg)
     except rospkg.InvalidManifest as e:
-        raise WtfException("Package [%s] has an invalid manifest: %s"%(pkg, e))
+        raise WtfException("Package [%s] has an invalid manifest: %s" % (pkg, e))
+
 
 def _load_stack(ctx, stack):
     """
@@ -281,13 +306,15 @@ def _load_stack(ctx, stack):
     try:
         ctx.stacks = [stack] + r.get_depends(stack, implicit=True)
     except rospkg.ResourceNotFound as e:
-        raise WtfException("Cannot load dependencies of stack [%s]: %s"%(stack, e))
+        raise WtfException("Cannot load dependencies of stack [%s]: %s" % (stack, e))
     try:
         ctx.stack_dir = r.get_path(stack)
     except rospkg.ResourceNotFound:
-        raise WtfException("[%s] appears to be a stack, but it's not on your ROS_PACKAGE_PATH"%stack)
-    
-    
+        raise WtfException(
+            "[%s] appears to be a stack, but it's not on your ROS_PACKAGE_PATH" % stack
+        )
+
+
 def _load_env(ctx, env):
     """
     Utility for initializing WtfContext state
@@ -300,7 +327,5 @@ def _load_env(ctx, env):
     except KeyError:
         raise WtfException("ROS_ROOT is not set")
     ctx.ros_package_path = env.get(rospkg.environment.ROS_PACKAGE_PATH, None)
-    ctx.pythonpath = env.get('PYTHONPATH', None)
+    ctx.pythonpath = env.get("PYTHONPATH", None)
     ctx.ros_master_uri = rosgraph.rosenv.get_master_uri()
-
-    

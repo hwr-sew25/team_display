@@ -51,12 +51,12 @@ def _get_valid_search_dirs(search_dirs, project):
     :raises: ValueError
     """
     # define valid search folders
-    valid_global_search_dirs = ['bin', 'etc', 'include', 'lib', 'share']
-    valid_project_search_dirs = ['etc', 'include', 'libexec', 'share']
+    valid_global_search_dirs = ["bin", "etc", "include", "lib", "share"]
+    valid_project_search_dirs = ["etc", "include", "libexec", "share"]
 
-    valid_search_dirs = (valid_global_search_dirs
-                         if project is None
-                         else valid_project_search_dirs)
+    valid_search_dirs = (
+        valid_global_search_dirs if project is None else valid_project_search_dirs
+    )
     if not search_dirs:
         search_dirs = valid_search_dirs
     else:
@@ -65,18 +65,24 @@ def _get_valid_search_dirs(search_dirs, project):
 
         # determine valid search folders
         all_valid_search_dirs = set(valid_global_search_dirs).union(
-            set(valid_project_search_dirs))
+            set(valid_project_search_dirs)
+        )
 
         # check folder name is known at all
         diff_dirs = set(search_dirs).difference(all_valid_search_dirs)
         if len(diff_dirs) > 0:
-            raise ValueError('Unsupported search folders: ' +
-                             ', '.join(['"%s"' % i for i in diff_dirs]))
+            raise ValueError(
+                "Unsupported search folders: "
+                + ", ".join(['"%s"' % i for i in diff_dirs])
+            )
         # check foldername works with project arg
         diff_dirs = set(search_dirs).difference(valid_search_dirs)
         if len(diff_dirs) > 0:
-            msg = 'Searching %s a project can not be combined with the search folders:' % ('without' if project is None else 'for')
-            raise ValueError(msg + ', '.join(['"%s"' % i for i in diff_dirs]))
+            msg = (
+                "Searching %s a project can not be combined with the search folders:"
+                % ("without" if project is None else "for")
+            )
+            raise ValueError(msg + ", ".join(['"%s"' % i for i in diff_dirs]))
     return search_dirs
 
 
@@ -92,7 +98,17 @@ def _get_valid_search_dirs(search_dirs, project):
 #      except for s == 'share', cand is a list of two paths: ws[0] + s + project (+ path) and ws[1] + project (+ path)
 #      add cand to result list if it exists
 #      is not defined for s in ['bin', 'lib'], bailing out
-def find_in_workspaces(search_dirs=None, project=None, path=None, _workspaces=None, considered_paths=None, first_matching_workspace_only=False, first_match_only=False, workspace_to_source_spaces=None, source_path_to_packages=None):
+def find_in_workspaces(
+    search_dirs=None,
+    project=None,
+    path=None,
+    _workspaces=None,
+    considered_paths=None,
+    first_matching_workspace_only=False,
+    first_match_only=False,
+    workspace_to_source_spaces=None,
+    source_path_to_packages=None,
+):
     """
     Find all paths which match the search criteria.
 
@@ -114,8 +130,8 @@ def find_in_workspaces(search_dirs=None, project=None, path=None, _workspaces=No
     :returns: List of paths
     """
     search_dirs = _get_valid_search_dirs(search_dirs, project)
-    if 'libexec' in search_dirs:
-        search_dirs.insert(search_dirs.index('libexec'), 'lib')
+    if "libexec" in search_dirs:
+        search_dirs.insert(search_dirs.index("libexec"), "lib")
     if _workspaces is None:
         _workspaces = get_workspaces()
     if workspace_to_source_spaces is None:
@@ -126,7 +142,7 @@ def find_in_workspaces(search_dirs=None, project=None, path=None, _workspaces=No
     paths = []
     existing_paths = []
     try:
-        for workspace in (_workspaces or []):
+        for workspace in _workspaces or []:
             for sub in search_dirs:
                 # search in workspace
                 p = os.path.join(workspace, sub)
@@ -141,13 +157,21 @@ def find_in_workspaces(search_dirs=None, project=None, path=None, _workspaces=No
                         raise StopIteration
 
                 # for search in share also consider source spaces
-                if project is not None and sub == 'share':
+                if project is not None and sub == "share":
                     if workspace not in workspace_to_source_spaces:
-                        workspace_to_source_spaces[workspace] = get_source_paths(workspace)
+                        workspace_to_source_spaces[workspace] = get_source_paths(
+                            workspace
+                        )
                     for source_path in workspace_to_source_spaces[workspace]:
                         if source_path not in source_path_to_packages:
-                            source_path_to_packages[source_path] = find_packages(source_path)
-                        matching_packages = [p for p, pkg in source_path_to_packages[source_path].items() if pkg.name == project]
+                            source_path_to_packages[source_path] = find_packages(
+                                source_path
+                            )
+                        matching_packages = [
+                            p
+                            for p, pkg in source_path_to_packages[source_path].items()
+                            if pkg.name == project
+                        ]
                         if matching_packages:
                             p = source_path
                             if matching_packages[0] != os.curdir:

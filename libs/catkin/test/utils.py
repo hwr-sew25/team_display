@@ -12,37 +12,46 @@ import tempfile
 # import platform
 # ubuntudist = platform.dist()[2]
 
-PYTHON_INSTALL_PATH = os.path.join('lib',
-                                   'python%u.%u' % (version_info[0],
-                                                    version_info[1]),
-                                   'dist-packages')
+PYTHON_INSTALL_PATH = os.path.join(
+    "lib", "python%u.%u" % (version_info[0], version_info[1]), "dist-packages"
+)
 
 
 TESTS_DIR = os.path.dirname(__file__)
 CATKIN_DIR = os.path.dirname(TESTS_DIR)
 
-TEMP_DIR = os.path.join(TESTS_DIR, 'tmp')
+TEMP_DIR = os.path.join(TESTS_DIR, "tmp")
 if not os.path.isdir(TEMP_DIR):
     os.makedirs(TEMP_DIR)
 
 # network_tests_path = os.path.join(TESTS_DIR, 'network_tests')
-MOCK_DIR = os.path.join(TESTS_DIR, 'mock_resources')
+MOCK_DIR = os.path.join(TESTS_DIR, "mock_resources")
 
 # MAKE_CMD = ['make', 'VERBOSE=1', '-j8']
-MAKE_CMD = ['make', '-j8']
+MAKE_CMD = ["make", "-j8"]
 
 
 def rosinstall(pth, specfile):
-    '''
+    """
     calls rosinstall in pth with given specfile,
     then replaces CMakelists with catkin's toplevel.cmake'
-    '''
+    """
     assert os.path.exists(specfile), specfile
     # to save testing time, we do not invoke rosinstall when we
     # already have a .rosinstall file
-    if not os.path.exists(os.path.join(pth, '.rosinstall')):
-        succeed(["rosinstall", "-j8", "--catkin", "-n",
-                 pth, specfile, '--continue-on-error'], cwd=TESTS_DIR)
+    if not os.path.exists(os.path.join(pth, ".rosinstall")):
+        succeed(
+            [
+                "rosinstall",
+                "-j8",
+                "--catkin",
+                "-n",
+                pth,
+                specfile,
+                "--continue-on-error",
+            ],
+            cwd=TESTS_DIR,
+        )
 
 
 def run(args, **kwargs):
@@ -50,10 +59,12 @@ def run(args, **kwargs):
     Call to Popen, returns (errcode, stdout, stderr)
     """
     print("run:", args)
-    p = subprocess.Popen(args,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT,
-                         cwd=kwargs.get('cwd', None))
+    p = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=kwargs.get("cwd", None),
+    )
     print("P==", p.__dict__)
     (stdout, stderr) = p.communicate()
     return (p.returncode, stdout, stderr)
@@ -67,26 +78,26 @@ def create_catkin_workspace(pth):
     if not os.path.isdir(pth):
         os.makedirs(pth)
 
-    catkin_dir = os.path.join(pth, 'catkin')
+    catkin_dir = os.path.join(pth, "catkin")
     if os.path.isdir(catkin_dir):
         shutil.rmtree(catkin_dir)
     # copy current catkin sources into workspace
     # avoid copying tmp, as that may contain all of ros core
 
     def notest(folder, contents):
-        if folder.endswith('test'):
-            return ['tmp']
+        if folder.endswith("test"):
+            return ["tmp"]
         return []
+
     shutil.copytree(CATKIN_DIR, catkin_dir, symlinks=True, ignore=notest)
-    assert (os.path.exists(pth + "/catkin/cmake/toplevel.cmake")), \
+    assert os.path.exists(pth + "/catkin/cmake/toplevel.cmake"), (
         pth + "/catkin/cmake/toplevel.cmake"
+    )
     # workaround for current rosinstall creating flawed CMakelists
     workspace_cmake = os.path.join(pth, "CMakeLists.txt")
     if os.path.isfile(workspace_cmake):
         os.remove(workspace_cmake)
-    succeed(["/bin/ln", "-s", "catkin/cmake/toplevel.cmake",
-             "CMakeLists.txt"],
-            cwd=pth)
+    succeed(["/bin/ln", "-s", "catkin/cmake/toplevel.cmake", "CMakeLists.txt"], cwd=pth)
 
 
 def succeed(cmd, **kwargs):
@@ -113,7 +124,6 @@ def fail(cmd, **kwargs):
 
 
 class AbstractCatkinWorkspaceTest(unittest.TestCase):
-
     """
     Parent class for any test case that creates a workspace and calls
     cmake, make, and make install. Creates a suitable folder structure
@@ -130,9 +140,9 @@ class AbstractCatkinWorkspaceTest(unittest.TestCase):
         self.directories = {}
         if self.rootdir is None:
             self.rootdir = tempfile.mkdtemp()
-        self.directories['root'] = self.rootdir
+        self.directories["root"] = self.rootdir
         self.builddir = os.path.join(self.rootdir, "build")
-        self.develspace = os.path.join(self.builddir, 'devel')
+        self.develspace = os.path.join(self.builddir, "devel")
         self.workspacedir = os.path.join(self.rootdir, "src")
         self.installdir = os.path.join(self.rootdir, "install")
         if not os.path.exists(self.builddir):
@@ -149,13 +159,15 @@ class AbstractCatkinWorkspaceTest(unittest.TestCase):
             shutil.rmtree(self.directories[d])
         self.directories = {}
 
-    def cmake(self,
-              cwd=None,
-              srcdir=None,
-              installdir=None,
-              prefix_path=None,
-              expect=succeed,
-              **kwargs):
+    def cmake(
+        self,
+        cwd=None,
+        srcdir=None,
+        installdir=None,
+        prefix_path=None,
+        expect=succeed,
+        **kwargs,
+    ):
         """
         invokes cmake
         :param cwd: changes build dir
@@ -174,17 +186,17 @@ class AbstractCatkinWorkspaceTest(unittest.TestCase):
         this_builddir = cwd
         this_srcdir = srcdir
         print("v~_", this_builddir, this_srcdir)
-        if 'CATKIN_DPKG_BUILDPACKAGE_FLAGS' not in kwargs:
-            kwargs['CATKIN_DPKG_BUILDPACKAGE_FLAGS'] = '-d;-S;-us;-uc'
+        if "CATKIN_DPKG_BUILDPACKAGE_FLAGS" not in kwargs:
+            kwargs["CATKIN_DPKG_BUILDPACKAGE_FLAGS"] = "-d;-S;-us;-uc"
         for k, v in kwargs.items():
             print("~v^v~", k, v)
             args += ["-D%s=%s" % (k, v)]
-        if not 'CMAKE_INSTALL_PREFIX' in kwargs:
+        if not "CMAKE_INSTALL_PREFIX" in kwargs:
             if installdir is None:
                 installdir = self.installdir
             args += ["-DCMAKE_INSTALL_PREFIX=%s" % (installdir)]
 
-        if not 'CMAKE_PREFIX_PATH' in kwargs:
+        if not "CMAKE_PREFIX_PATH" in kwargs:
             if prefix_path is None:
                 prefix_path = self.installdir
             args += ["-DCMAKE_PREFIX_PATH=%s" % (prefix_path)]
@@ -193,7 +205,7 @@ class AbstractCatkinWorkspaceTest(unittest.TestCase):
             os.makedirs(this_builddir)
         cmd = ["cmake", this_srcdir] + args
         o = expect(cmd, cwd=this_builddir)
-        if (expect == succeed):
+        if expect == succeed:
             self.assertTrue(os.path.isfile(this_builddir + "/CMakeCache.txt"))
             self.assertTrue(os.path.isfile(this_builddir + "/Makefile"))
         return o

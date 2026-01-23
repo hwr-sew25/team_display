@@ -50,7 +50,7 @@ from .logger_level_service_caller import ROSConsoleException
 
 from rosgraph_msgs.msg import Log
 
-NAME = 'rosconsole'
+NAME = "rosconsole"
 
 
 def error(status, msg):
@@ -81,7 +81,7 @@ def _rosconsole_cmd_list(argv):
 
     loggers = logger_level.get_loggers(args[0])
 
-    output = '\n'.join(loggers)
+    output = "\n".join(loggers)
     print(output)
 
 
@@ -89,7 +89,7 @@ def _get_cmd_set_optparse():
     from optparse import OptionParser
 
     usage = "usage: %prog set <node> <logger> <level>"
-    levels = ', '.join(LoggerLevelServiceCaller().get_levels())
+    levels = ", ".join(LoggerLevelServiceCaller().get_levels())
     usage += "\n\n <level> must be one of [" + levels + "]"
     parser = OptionParser(usage=usage, prog=NAME)
 
@@ -147,11 +147,11 @@ class RosConsoleEcho(object):
     # See ANSI/VT100 terminal color codes here:
     # https://misc.flogisoft.com/bash/tip_colors_and_formatting
     LEVEL_COLOR = {
-        'DEBUG': 92,  # Light green
-        'INFO' : 97,  # White
-        'WARN' : 93,  # Light yellow
-        'ERROR': 91,  # Light red
-        'FATAL': 95,  # Light magenta
+        "DEBUG": 92,  # Light green
+        "INFO": 97,  # White
+        "WARN": 93,  # Light yellow
+        "ERROR": 91,  # Light red
+        "FATAL": 95,  # Light magenta
     }
 
     LEVEL_MAX_LENGTH = max([len(level) for level in LEVEL_COLOR.keys()])
@@ -162,7 +162,10 @@ class RosConsoleEcho(object):
         self._nocolor = options.nocolor
         self._verbose = options.verbose
 
-        self._level_string_map = {getattr(Log, level): self._stringify(level) for level in self.LEVEL_COLOR.keys()}
+        self._level_string_map = {
+            getattr(Log, level): self._stringify(level)
+            for level in self.LEVEL_COLOR.keys()
+        }
 
         callback = self._once_callback if options.once else self._callback
         rospy.Subscriber(options.topic, Log, callback)
@@ -170,24 +173,35 @@ class RosConsoleEcho(object):
     def _stringify(self, level):
         string = level.ljust(RosConsoleEcho.LEVEL_MAX_LENGTH)
 
-        return string if self._nocolor else \
-               '\033[{}m{}\033[0m'.format(self.LEVEL_COLOR[level], string)
+        return (
+            string
+            if self._nocolor
+            else "\033[{}m{}\033[0m".format(self.LEVEL_COLOR[level], string)
+        )
 
     @staticmethod
     def get_levels():
         """Get levels sorted by increasing severity."""
-        return sorted(RosConsoleEcho.LEVEL_COLOR.keys(), key=lambda level: getattr(Log, level))
+        return sorted(
+            RosConsoleEcho.LEVEL_COLOR.keys(), key=lambda level: getattr(Log, level)
+        )
 
     def _print(self, msg):
-        print('[ {} ] [\033[1m{}\033[21m]: {}'.format(
-            self._level_string_map[msg.level], msg.name, msg.msg))
+        print(
+            "[ {} ] [\033[1m{}\033[21m]: {}".format(
+                self._level_string_map[msg.level], msg.name, msg.msg
+            )
+        )
 
         if self._verbose:
             stamp_sec = msg.header.stamp.to_sec()
             stamp_tz = datetime.fromtimestamp(stamp_sec, tzlocal())
 
-            print('          [{} ({:.6f})] [{}]: {}:{}'.format(
-                stamp_tz, stamp_sec, msg.function, msg.file, msg.line))
+            print(
+                "          [{} ({:.6f})] [{}]: {}:{}".format(
+                    stamp_tz, stamp_sec, msg.function, msg.file, msg.line
+                )
+            )
 
     def _callback(self, msg):
         if self._filter.search(msg.name) and msg.level >= self._level:
@@ -195,39 +209,65 @@ class RosConsoleEcho(object):
 
     def _once_callback(self, msg):
         self._callback(msg)
-        rospy.signal_shutdown('Done')
+        rospy.signal_shutdown("Done")
 
 
 def _get_cmd_echo_argparse(prog):
-    parser = ArgumentParser(prog=prog, description='Print logger messages')
+    parser = ArgumentParser(prog=prog, description="Print logger messages")
 
-    parser.add_argument('filter', metavar='FILTER', type=str, nargs='?', default='.*',
-                        help='regular expression to filter the logger name (default: %(default)s)')
+    parser.add_argument(
+        "filter",
+        metavar="FILTER",
+        type=str,
+        nargs="?",
+        default=".*",
+        help="regular expression to filter the logger name (default: %(default)s)",
+    )
 
-    parser.add_argument('-l', '--level', action='store', metavar='LEVEL',
-                        type=str, default='warn', dest='level',
-                        choices=[level.lower() for level in RosConsoleEcho.get_levels()],
-                        help='minimum logger level to print (default: %(default)s)')
+    parser.add_argument(
+        "-l",
+        "--level",
+        action="store",
+        metavar="LEVEL",
+        type=str,
+        default="warn",
+        dest="level",
+        choices=[level.lower() for level in RosConsoleEcho.get_levels()],
+        help="minimum logger level to print (default: %(default)s)",
+    )
 
-    parser.add_argument('-1', '--once', action='store_true', dest='once',
-                        help='prints one logger message and exits')
+    parser.add_argument(
+        "-1",
+        "--once",
+        action="store_true",
+        dest="once",
+        help="prints one logger message and exits",
+    )
 
-    parser.add_argument('--topic', action='store', metavar='TOPIC',
-                        type=str, default='/rosout', dest='topic',
-                        help='topic to read the logger messages from (default: %(default)s)')
+    parser.add_argument(
+        "--topic",
+        action="store",
+        metavar="TOPIC",
+        type=str,
+        default="/rosout",
+        dest="topic",
+        help="topic to read the logger messages from (default: %(default)s)",
+    )
 
-    parser.add_argument('--nocolor', action='store_true', help='output without color')
+    parser.add_argument("--nocolor", action="store_true", help="output without color")
 
-    parser.add_argument('-v', '--verbose', action='store_true', help='print full logger details')
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="print full logger details"
+    )
 
     return parser
 
 
 def _rosconsole_cmd_echo(argv):
-    parser = _get_cmd_echo_argparse(' '.join([os.path.basename(argv[0]), argv[1]]))
+    parser = _get_cmd_echo_argparse(" ".join([os.path.basename(argv[0]), argv[1]]))
     args = parser.parse_args(argv[2:])
 
-    rospy.init_node('rosconsole', anonymous=True)
+    rospy.init_node("rosconsole", anonymous=True)
 
     rosconsole = RosConsoleEcho(args)
 
@@ -245,7 +285,7 @@ Commands:
 
 Type rosconsole <command> -h for more detailed usage, e.g. 'rosconsole list -h'
 """)
-    sys.exit(getattr(os, 'EX_USAGE', 1))
+    sys.exit(getattr(os, "EX_USAGE", 1))
 
 
 def main(argv=None):
@@ -254,7 +294,7 @@ def main(argv=None):
 
     # Initialize ourselves as a node, to ensure handling of namespace and
     # remapping arguments
-    rospy.init_node('rosconsole', anonymous=True)
+    rospy.init_node("rosconsole", anonymous=True)
     argv = rospy.myargv(argv)
 
     # process argv
@@ -263,19 +303,22 @@ def main(argv=None):
 
     try:
         command = argv[1]
-        if command == 'get':
+        if command == "get":
             _rosconsole_cmd_get(argv)
-        elif command == 'list':
+        elif command == "list":
             _rosconsole_cmd_list(argv)
-        elif command == 'set':
+        elif command == "set":
             _rosconsole_cmd_set(argv)
-        elif command == 'echo':
+        elif command == "echo":
             _rosconsole_cmd_echo(argv)
         else:
             _fullusage()
     except socket.error as e:
-        error(1,
-              "Network communication failed; most likely failed to communicate with master: %s" % e)
+        error(
+            1,
+            "Network communication failed; most likely failed to communicate with master: %s"
+            % e,
+        )
     except rosgraph.MasterException as e:
         # mainly for invalid master URI/rosgraph.masterapi
         error(1, str(e))

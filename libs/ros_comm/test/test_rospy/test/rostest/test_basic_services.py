@@ -36,10 +36,10 @@
 ## Integration test for empty services to test serializers
 ## and transport
 
-PKG = 'test_rospy'
-NAME = 'basic_services'
+PKG = "test_rospy"
+NAME = "basic_services"
 
-import sys 
+import sys
 import time
 import math
 import unittest
@@ -48,65 +48,74 @@ import rospy
 import rostest
 from test_rospy.srv import *
 
-CONSTANTS_SERVICE_NAKED = 'constants_service_naked'
-CONSTANTS_SERVICE_WRAPPED = 'constants_service_wrapped'
+CONSTANTS_SERVICE_NAKED = "constants_service_naked"
+CONSTANTS_SERVICE_WRAPPED = "constants_service_wrapped"
 
-ADD_TWO_INTS_SERVICE_NAKED = 'a2i_naked'
-ADD_TWO_INTS_SERVICE_WRAPPED = 'a2i_wrapped'
+ADD_TWO_INTS_SERVICE_NAKED = "a2i_naked"
+ADD_TWO_INTS_SERVICE_WRAPPED = "a2i_wrapped"
 
-STRING_CAT_SERVICE_NAKED = 'string_lower_naked'
-STRING_CAT_SERVICE_WRAPPED = 'string_lower_wrapped'
+STRING_CAT_SERVICE_NAKED = "string_lower_naked"
+STRING_CAT_SERVICE_WRAPPED = "string_lower_wrapped"
 
-FAULTY_SERVICE = 'faulty_service'
-FAULTY_SERVICE_RESULT = 'faulty_service_result'
+FAULTY_SERVICE = "faulty_service"
+FAULTY_SERVICE_RESULT = "faulty_service_result"
 
-#TODO:
+# TODO:
 
-STRING_SERVICE       = 'string_service'
-EMBEDDED_MSG_SERVICE = 'embedded_msg_service'
+STRING_SERVICE = "string_service"
+EMBEDDED_MSG_SERVICE = "embedded_msg_service"
 
-WAIT_TIMEOUT = 10.0 #s
+WAIT_TIMEOUT = 10.0  # s
+
 
 def add_two_ints_wrapped(req):
     from test_rosmaster.srv import AddTwoIntsResponse
+
     return AddTwoIntsResponse(req.a + req.b)
+
+
 def add_two_ints_naked(req):
     return req.a + req.b
 
+
 def string_cat_naked(req):
     from std_msgs.msg import String
+
     return String(req.str.data + req.str2.val)
+
+
 def string_cat_wrapped(req):
     from test_rospy.srv import StringStringResponse
     from std_msgs.msg import String
+
     return StringStringResponse(String(req.str.data + req.str2.val))
+
 
 def handle_constants_wrapped(req):
     cmr = ConstantsMultiplexRequest
     Resp = ConstantsMultiplexResponse
     if req.selection == cmr.SELECT_X:
         # test w/o wrapper
-        return Resp(req.selection,
-                    cmr.BYTE_X, cmr.INT32_X, cmr.UINT32_X, cmr.FLOAT32_X)
+        return Resp(req.selection, cmr.BYTE_X, cmr.INT32_X, cmr.UINT32_X, cmr.FLOAT32_X)
     elif req.selection == cmr.SELECT_Y:
-        return Resp(req.selection,
-            cmr.BYTE_Y, cmr.INT32_Y, cmr.UINT32_Y, cmr.FLOAT32_Y)
+        return Resp(req.selection, cmr.BYTE_Y, cmr.INT32_Y, cmr.UINT32_Y, cmr.FLOAT32_Y)
     elif req.selection == cmr.SELECT_Z:
-        return Resp(req.selection,
-            cmr.BYTE_Z, cmr.INT32_Z, cmr.UINT32_Z, cmr.FLOAT32_Z)
+        return Resp(req.selection, cmr.BYTE_Z, cmr.INT32_Z, cmr.UINT32_Z, cmr.FLOAT32_Z)
     else:
         print("test failed, req.selection not in (X,Y,Z)", req.selection)
+
 
 def handle_constants_naked(req):
     cmr = ConstantsMultiplexRequest
     if req.selection == cmr.SELECT_X:
-        return req.selection,cmr.BYTE_X, cmr.INT32_X, cmr.UINT32_X, cmr.FLOAT32_X
+        return req.selection, cmr.BYTE_X, cmr.INT32_X, cmr.UINT32_X, cmr.FLOAT32_X
     elif req.selection == cmr.SELECT_Y:
         return req.selection, cmr.BYTE_Y, cmr.INT32_Y, cmr.UINT32_Y, cmr.FLOAT32_Y
     elif req.selection == cmr.SELECT_Z:
         return req.selection, cmr.BYTE_Z, cmr.INT32_Z, cmr.UINT32_Z, cmr.FLOAT32_Z
     else:
         print("test failed, req.selection not in (X,Y,Z)", req.selection)
+
 
 class UnexpectedException(Exception):
     pass
@@ -120,7 +129,7 @@ class FaultyHandler(object):
         self.test_call = True
 
     def call_handler(self, req):
-        raise UnexpectedException('Call raised an exception')
+        raise UnexpectedException("Call raised an exception")
 
     def result_handler(self, req):
         resp = EmptyReqSrvResponse()
@@ -130,10 +139,15 @@ class FaultyHandler(object):
 
 def services():
     from test_rosmaster.srv import AddTwoInts
+
     rospy.init_node(NAME)
-    s1 = rospy.Service(CONSTANTS_SERVICE_NAKED, ConstantsMultiplex, handle_constants_naked)
-    s2 = rospy.Service(CONSTANTS_SERVICE_WRAPPED, ConstantsMultiplex, handle_constants_wrapped)
-    
+    s1 = rospy.Service(
+        CONSTANTS_SERVICE_NAKED, ConstantsMultiplex, handle_constants_naked
+    )
+    s2 = rospy.Service(
+        CONSTANTS_SERVICE_WRAPPED, ConstantsMultiplex, handle_constants_wrapped
+    )
+
     s3 = rospy.Service(ADD_TWO_INTS_SERVICE_NAKED, AddTwoInts, add_two_ints_naked)
     s4 = rospy.Service(ADD_TWO_INTS_SERVICE_WRAPPED, AddTwoInts, add_two_ints_wrapped)
 
@@ -141,24 +155,31 @@ def services():
     s6 = rospy.Service(STRING_CAT_SERVICE_WRAPPED, StringString, string_cat_wrapped)
 
     faulty_handler = FaultyHandler()
-    s7 = rospy.Service(FAULTY_SERVICE, EmptySrv, faulty_handler.call_handler, error_handler=faulty_handler.custom_error_handler)
-    s8 = rospy.Service(FAULTY_SERVICE_RESULT, EmptyReqSrv, faulty_handler.result_handler)
+    s7 = rospy.Service(
+        FAULTY_SERVICE,
+        EmptySrv,
+        faulty_handler.call_handler,
+        error_handler=faulty_handler.custom_error_handler,
+    )
+    s8 = rospy.Service(
+        FAULTY_SERVICE_RESULT, EmptyReqSrv, faulty_handler.result_handler
+    )
 
     rospy.spin()
 
-class TestBasicServicesClient(unittest.TestCase):
 
+class TestBasicServicesClient(unittest.TestCase):
     # call with request instance style
     def _test(self, name, srv, req):
-        rospy.wait_for_service(name, WAIT_TIMEOUT)        
+        rospy.wait_for_service(name, WAIT_TIMEOUT)
         s = rospy.ServiceProxy(name, srv)
         resp = s.call(req)
         self.assertTrue(resp is not None)
         return resp
 
-    # call with args style    
+    # call with args style
     def _test_req_naked(self, name, srv, args):
-        rospy.wait_for_service(name, WAIT_TIMEOUT)        
+        rospy.wait_for_service(name, WAIT_TIMEOUT)
         s = rospy.ServiceProxy(name, srv)
         resp = s.call(*args)
         self.assertTrue(resp is not None)
@@ -166,38 +187,43 @@ class TestBasicServicesClient(unittest.TestCase):
 
     # call with keyword style
     def _test_req_kwds(self, name, srv, kwds):
-        rospy.wait_for_service(name, WAIT_TIMEOUT)        
+        rospy.wait_for_service(name, WAIT_TIMEOUT)
         s = rospy.ServiceProxy(name, srv)
         resp = s.call(**kwds)
         self.assertTrue(resp is not None)
         return resp
-    
+
     def test_calltype_mismatch(self):
         try:
             s = rospy.ServiceProxy(CONSTANTS_SERVICE_WRAPPED, ConstantsMultiplex)
             s.call(EmptySrvRequest())
-            self.fail("rospy failed to raise TypeError when request type does not match service type")
+            self.fail(
+                "rospy failed to raise TypeError when request type does not match service type"
+            )
         except TypeError:
             pass
-        
+
     def test_type_mismatch(self):
         try:
             self._test(CONSTANTS_SERVICE_WRAPPED, EmptySrv, EmptySrvRequest())
-            self.fail("Service failed to throw exception on type mismatch [sent EmptySrvRequest to ConstantsMultiplex service")
+            self.fail(
+                "Service failed to throw exception on type mismatch [sent EmptySrvRequest to ConstantsMultiplex service"
+            )
         except rospy.ServiceException:
-            pass 
+            pass
 
     def test_add_two_ints(self):
         # add two ints checks single, integer return value, which is
         # an interesting in the naked case
         from test_rosmaster.srv import AddTwoInts, AddTwoIntsRequest
+
         Cls = AddTwoInts
         Req = AddTwoIntsRequest
 
         for name in [ADD_TWO_INTS_SERVICE_NAKED, ADD_TWO_INTS_SERVICE_WRAPPED]:
             resp_req = self._test(name, Cls, Req(1, 2))
             resp_req_naked = self._test_req_naked(name, Cls, (1, 2))
-            resp_req_kwds = self._test_req_kwds(name, Cls, {'a': 3})
+            resp_req_kwds = self._test_req_kwds(name, Cls, {"a": 3})
             for resp in [resp_req, resp_req_naked, resp_req_kwds]:
                 self.assertEqual(3, resp.sum)
 
@@ -205,29 +231,51 @@ class TestBasicServicesClient(unittest.TestCase):
         from std_msgs.msg import String
         from test_rospy.srv import StringString, StringStringRequest
         from test_rospy.msg import Val
+
         Cls = StringString
         Req = StringStringRequest
 
         for name in [STRING_CAT_SERVICE_NAKED, STRING_CAT_SERVICE_WRAPPED]:
-            resp_req = self._test(name, Cls, Req(String('FOO'), Val('bar')))
-            resp_req_naked = self._test_req_naked(name, Cls, (String('FOO'), Val('bar'),))
-            resp_req_kwds = self._test_req_kwds(name, Cls, {'str': String('FOO'), 'str2': Val('bar')})
+            resp_req = self._test(name, Cls, Req(String("FOO"), Val("bar")))
+            resp_req_naked = self._test_req_naked(
+                name,
+                Cls,
+                (
+                    String("FOO"),
+                    Val("bar"),
+                ),
+            )
+            resp_req_kwds = self._test_req_kwds(
+                name, Cls, {"str": String("FOO"), "str2": Val("bar")}
+            )
             for resp in [resp_req, resp_req_naked, resp_req_kwds]:
-                self.assertEqual('FOObar', resp.str.data)
+                self.assertEqual("FOObar", resp.str.data)
 
     def test_String_String_unicode(self):
         from std_msgs.msg import String
         from test_rospy.srv import StringString, StringStringRequest
         from test_rospy.msg import Val
+
         Cls = StringString
         Req = StringStringRequest
 
         for name in [STRING_CAT_SERVICE_NAKED, STRING_CAT_SERVICE_WRAPPED]:
-            resp_req = self._test(name, Cls, Req(String(u'ロボット'), Val(u'机器人')))
-            resp_req_naked = self._test_req_naked(name, Cls, (String(u'ロボット'), Val(u'机器人'),))
-            resp_req_kwds = self._test_req_kwds(name, Cls, {'str': String(u'ロボット'), 'str2': Val(u'机器人')})
+            resp_req = self._test(name, Cls, Req(String("ロボット"), Val("机器人")))
+            resp_req_naked = self._test_req_naked(
+                name,
+                Cls,
+                (
+                    String("ロボット"),
+                    Val("机器人"),
+                ),
+            )
+            resp_req_kwds = self._test_req_kwds(
+                name, Cls, {"str": String("ロボット"), "str2": Val("机器人")}
+            )
             for resp in [resp_req, resp_req_naked, resp_req_kwds]:
-                self.assertEqual('ロボット机器人', resp.str.data)  # if you send in unicode, you'll receive in str
+                self.assertEqual(
+                    "ロボット机器人", resp.str.data
+                )  # if you send in unicode, you'll receive in str
 
     def test_constants(self):
         Cls = ConstantsMultiplex
@@ -237,29 +285,26 @@ class TestBasicServicesClient(unittest.TestCase):
             # test all three call forms
             resp_req = self._test(name, Cls, Req(Req.SELECT_X))
             resp_req_naked = self._test_req_naked(name, Cls, (Req.SELECT_X,))
-            resp_req_kwds = self._test_req_kwds(name, Cls, {'selection': Req.SELECT_X})
+            resp_req_kwds = self._test_req_kwds(name, Cls, {"selection": Req.SELECT_X})
 
             for resp in [resp_req, resp_req_naked, resp_req_kwds]:
-                self.assertEqual(ConstantsMultiplexResponse.CONFIRM_X,
-                                  resp.select_confirm)
+                self.assertEqual(
+                    ConstantsMultiplexResponse.CONFIRM_X, resp.select_confirm
+                )
                 self.assertEqual(Req.BYTE_X, resp.ret_byte)
                 self.assertEqual(Req.INT32_X, resp.ret_int32)
                 self.assertEqual(Req.UINT32_X, resp.ret_uint32)
                 self.assertTrue(math.fabs(Req.FLOAT32_X - resp.ret_float32) < 0.001)
 
-            resp = self._test(name, Cls,
-                              ConstantsMultiplexRequest(Req.SELECT_Y))
-            self.assertEqual(ConstantsMultiplexResponse.CONFIRM_Y,
-                              resp.select_confirm)
+            resp = self._test(name, Cls, ConstantsMultiplexRequest(Req.SELECT_Y))
+            self.assertEqual(ConstantsMultiplexResponse.CONFIRM_Y, resp.select_confirm)
             self.assertEqual(Req.BYTE_Y, resp.ret_byte)
             self.assertEqual(Req.INT32_Y, resp.ret_int32)
             self.assertEqual(Req.UINT32_Y, resp.ret_uint32)
             self.assertTrue(math.fabs(Req.FLOAT32_Y - resp.ret_float32) < 0.001)
 
-            resp = self._test(name, Cls,
-                              ConstantsMultiplexRequest(Req.SELECT_Z))
-            self.assertEqual(ConstantsMultiplexResponse.CONFIRM_Z,
-                              resp.select_confirm)
+            resp = self._test(name, Cls, ConstantsMultiplexRequest(Req.SELECT_Z))
+            self.assertEqual(ConstantsMultiplexResponse.CONFIRM_Z, resp.select_confirm)
             self.assertEqual(Req.BYTE_Z, resp.ret_byte)
             self.assertEqual(Req.INT32_Z, resp.ret_int32)
             self.assertEqual(Req.UINT32_Z, resp.ret_uint32)
@@ -282,8 +327,9 @@ class TestBasicServicesClient(unittest.TestCase):
         resp = sproxy_result.call(EmptyReqSrvRequest())
         self.assertEqual(resp.fake_secret, 1)
 
-if __name__ == '__main__':
-    if '--service' in sys.argv:
+
+if __name__ == "__main__":
+    if "--service" in sys.argv:
         services()
     else:
-        rostest.run(PKG, 'rospy_basic_services', TestBasicServicesClient, sys.argv)
+        rostest.run(PKG, "rospy_basic_services", TestBasicServicesClient, sys.argv)

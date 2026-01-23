@@ -44,11 +44,12 @@ import rospy.rostime
 # author: tfield (Timers)
 # author: kwc (Rate, sleep)
 
+
 class Rate(object):
     """
     Convenience class for sleeping in a loop at a specified rate
     """
-    
+
     def __init__(self, hz, reset=False):
         """
         Constructor.
@@ -59,7 +60,7 @@ class Rate(object):
         """
         # #1403
         self.last_time = rospy.rostime.get_rostime()
-        self.sleep_dur = rospy.rostime.Duration(0, int(1e9/hz))
+        self.sleep_dur = rospy.rostime.Duration(0, int(1e9 / hz))
         self._reset = reset
 
     def _remaining(self, curr_time):
@@ -92,7 +93,7 @@ class Rate(object):
         Attempt sleep at the specified rate. sleep() takes into
         account the time elapsed since the last successful
         sleep().
-        
+
         @raise ROSInterruptException: if ROS shutdown occurs before
         sleep completes
         @raise ROSTimeMovedBackwardsException: if ROS time is set
@@ -113,11 +114,12 @@ class Rate(object):
         if curr_time - self.last_time > self.sleep_dur * 2:
             self.last_time = curr_time
 
+
 def sleep(duration):
     """
     sleep for the specified duration in ROS time. If duration
     is negative, sleep immediately returns.
-    
+
     @param duration: seconds (or rospy.Duration) to sleep
     @type  duration: float or Duration
     @raise ROSInterruptException: if ROS shutdown occurs before sleep
@@ -142,8 +144,7 @@ def sleep(duration):
         # #3123
         if initial_rostime == genpy.Time(0):
             # break loop if time is initialized or node is shutdown
-            while initial_rostime == genpy.Time(0) and \
-                      not rospy.core.is_shutdown():
+            while initial_rostime == genpy.Time(0) and not rospy.core.is_shutdown():
                 with rostime_cond:
                     rostime_cond.wait(0.3)
                 initial_rostime = rospy.rostime.get_rostime()
@@ -152,9 +153,11 @@ def sleep(duration):
 
         # break loop if sleep_t is reached, time moves backwards, or
         # node is shutdown
-        while rospy.rostime.get_rostime() < sleep_t and \
-              rospy.rostime.get_rostime() >= initial_rostime and \
-                  not rospy.core.is_shutdown():
+        while (
+            rospy.rostime.get_rostime() < sleep_t
+            and rospy.rostime.get_rostime() >= initial_rostime
+            and not rospy.core.is_shutdown()
+        ):
             with rostime_cond:
                 rostime_cond.wait(0.5)
 
@@ -163,6 +166,7 @@ def sleep(duration):
             raise rospy.exceptions.ROSTimeMovedBackwardsException(time_jump)
         if rospy.core.is_shutdown():
             raise rospy.exceptions.ROSInterruptException("ROS shutdown request")
+
 
 class TimerEvent(object):
     """
@@ -180,12 +184,16 @@ class TimerEvent(object):
                           Note that this is always in wall-clock time.
     @type  last_duration: float
     """
-    def __init__(self, last_expected, last_real, current_expected, current_real, last_duration):
-        self.last_expected    = last_expected
-        self.last_real        = last_real
+
+    def __init__(
+        self, last_expected, last_real, current_expected, current_real, last_duration
+    ):
+        self.last_expected = last_expected
+        self.last_real = last_real
         self.current_expected = current_expected
-        self.current_real     = current_real
-        self.last_duration    = last_duration
+        self.current_real = current_real
+        self.last_duration = last_duration
+
 
 class Timer(threading.Thread):
     """
@@ -205,9 +213,9 @@ class Timer(threading.Thread):
         @type  reset: bool
         """
         super(Timer, self).__init__()
-        self._period   = period
+        self._period = period
         self._callback = callback
-        self._oneshot  = oneshot
+        self._oneshot = oneshot
         self._reset = reset
         self._shutdown = False
         self.daemon = True
@@ -218,7 +226,7 @@ class Timer(threading.Thread):
         Stop firing callbacks.
         """
         self._shutdown = True
-        
+
     def run(self):
         r = Rate(1.0 / self._period.to_sec(), reset=self._reset)
         current_expected = rospy.rostime.get_rostime() + self._period
@@ -237,7 +245,15 @@ class Timer(threading.Thread):
                 break
             current_real = rospy.rostime.get_rostime()
             start = time.time()
-            self._callback(TimerEvent(last_expected, last_real, current_expected, current_real, last_duration))
+            self._callback(
+                TimerEvent(
+                    last_expected,
+                    last_real,
+                    current_expected,
+                    current_real,
+                    last_duration,
+                )
+            )
             if self._oneshot:
                 break
             last_duration = time.time() - start

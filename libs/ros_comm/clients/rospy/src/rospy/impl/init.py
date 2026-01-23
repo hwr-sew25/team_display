@@ -54,19 +54,21 @@ from ..core import is_shutdown, signal_shutdown, rospyerr
 from .tcpros import init_tcpros
 from .masterslave import ROSHandler
 
-DEFAULT_NODE_PORT = 0 #bind to any open port
+DEFAULT_NODE_PORT = 0  # bind to any open port
 from rosgraph.rosenv import DEFAULT_MASTER_PORT  # default port for master's to bind to
 from rosgraph.rosenv import DEFAULT_MASTER_URI
 
 ###################################################
 # rospy module lower-level initialization
 
+
 def _node_run_error(e):
     """
     If XML-RPC errors out of the run() method, this handler is invoked
     """
     rospyerr(traceback.format_exc())
-    signal_shutdown('error in XML-RPC server: %s'%(e))
+    signal_shutdown("error in XML-RPC server: %s" % (e))
+
 
 def start_node(environ, resolved_name, master_uri=None, port=0, tcpros_port=0):
     """
@@ -92,20 +94,23 @@ def start_node(environ, resolved_name, master_uri=None, port=0, tcpros_port=0):
         master_uri = DEFAULT_MASTER_URI
 
     # this will go away in future versions of API
-    _set_caller_id(resolved_name) 
+    _set_caller_id(resolved_name)
 
     handler = ROSHandler(resolved_name, master_uri)
     node = rosgraph.xmlrpc.XmlRpcNode(port, handler, on_run_error=_node_run_error)
     node.start()
     while not node.uri and not is_shutdown():
-        time.sleep(0.00001) #poll for XMLRPC init
+        time.sleep(0.00001)  # poll for XMLRPC init
     logging.getLogger("rospy.init").info("ROS Slave URI: [%s]", node.uri)
 
     while not handler._is_registered() and not is_shutdown():
-        time.sleep(0.1) #poll for master registration
+        time.sleep(0.1)  # poll for master registration
     logging.getLogger("rospy.init").info("registered with master")
     return node
 
+
 class RosStreamHandler(rosgraph.roslogging.RosStreamHandler):
     def __init__(self, colorize=True, stdout=None, stderr=None):
-        super(RosStreamHandler, self).__init__(colorize=colorize, stdout=stdout, stderr=stderr)
+        super(RosStreamHandler, self).__init__(
+            colorize=colorize, stdout=stdout, stderr=stderr
+        )

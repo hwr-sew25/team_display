@@ -57,10 +57,13 @@ except ImportError:
 import traceback
 
 try:
-    from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler #Python 3.x
+    from xmlrpc.server import (
+        SimpleXMLRPCServer,
+        SimpleXMLRPCRequestHandler,
+    )  # Python 3.x
 except ImportError:
-    from SimpleXMLRPCServer import SimpleXMLRPCServer #Python 2.x
-    from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler #Python 2.x
+    from SimpleXMLRPCServer import SimpleXMLRPCServer  # Python 2.x
+    from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler  # Python 2.x
 
 try:
     import socketserver
@@ -68,6 +71,7 @@ except ImportError:
     import SocketServer as socketserver
 
 import rosgraph.network
+
 
 def isstring(s):
     """Small helper version to check an object is a string in a way that works
@@ -87,30 +91,33 @@ def _support_http_1_1():
     new as 4.16. Linux kernels 4.15 and older cause significant performance
     degradation in the roscore when using HTTP 1.1
     """
-    if platform.system() != 'Linux':
+    if platform.system() != "Linux":
         return True
     minimum_supported_major, minimum_supported_minor = (4, 16)
-    release = platform.release().split('.')
+    release = platform.release().split(".")
     platform_major = int(release[0])
-    platform_minor = int(re.sub('[^0-9].*$', '', release[1]))
+    platform_minor = int(re.sub("[^0-9].*$", "", release[1]))
     if platform_major < minimum_supported_major:
         return False
     if platform_major > minimum_supported_major:
         return True
-    if (platform_major == minimum_supported_major and
-        platform_minor < minimum_supported_minor):
+    if (
+        platform_major == minimum_supported_major
+        and platform_minor < minimum_supported_minor
+    ):
         return False
     return True
 
 
 class SilenceableXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     if _support_http_1_1():
-        protocol_version = 'HTTP/1.1'
+        protocol_version = "HTTP/1.1"
 
     def log_message(self, format, *args):
         if 0:
             SimpleXMLRPCRequestHandler.log_message(self, format, *args)
-    
+
+
 class ThreadingXMLRPCServer(socketserver.ThreadingMixIn, SimpleXMLRPCServer):
     """
     Adds ThreadingMixin to SimpleXMLRPCServer to support multiple concurrent
@@ -123,55 +130,67 @@ class ThreadingXMLRPCServer(socketserver.ThreadingMixIn, SimpleXMLRPCServer):
         """
         Overrides SimpleXMLRPCServer to set option to allow_reuse_address.
         """
-        # allow_reuse_address defaults to False in Python 2.4.  We set it 
-        # to True to allow quick restart on the same port.  This is equivalent 
+        # allow_reuse_address defaults to False in Python 2.4.  We set it
+        # to True to allow quick restart on the same port.  This is equivalent
         # to calling setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
         self.allow_reuse_address = True
         # Increase request_queue_size to handle issues with many simultaneous
         # connections in OSX 10.11
         self.request_queue_size = min(socket.SOMAXCONN, 128)
         if rosgraph.network.use_ipv6():
-            logger = logging.getLogger('xmlrpc')
+            logger = logging.getLogger("xmlrpc")
             # The XMLRPC library does not support IPv6 out of the box
             # We have to monipulate private members and duplicate
             # code from the constructor.
-            # TODO IPV6: Get this into SimpleXMLRPCServer 
-            SimpleXMLRPCServer.__init__(self, addr, SilenceableXMLRPCRequestHandler, log_requests,  bind_and_activate=False)
+            # TODO IPV6: Get this into SimpleXMLRPCServer
+            SimpleXMLRPCServer.__init__(
+                self,
+                addr,
+                SilenceableXMLRPCRequestHandler,
+                log_requests,
+                bind_and_activate=False,
+            )
             self.address_family = socket.AF_INET6
             self.socket = socket.socket(self.address_family, self.socket_type)
-            logger.info('binding ipv6 xmlrpc socket to' + str(addr))
+            logger.info("binding ipv6 xmlrpc socket to" + str(addr))
             # TODO: set IPV6_V6ONLY to 0:
             # self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
             self.server_bind()
             self.server_activate()
-            logger.info('bound to ' + str(self.socket.getsockname()[0:2]))
+            logger.info("bound to " + str(self.socket.getsockname()[0:2]))
         else:
-            SimpleXMLRPCServer.__init__(self, addr, SilenceableXMLRPCRequestHandler, log_requests)
+            SimpleXMLRPCServer.__init__(
+                self, addr, SilenceableXMLRPCRequestHandler, log_requests
+            )
 
     def handle_error(self, request, client_address):
         """
         override ThreadingMixin, which sends errors to stderr
         """
         if logging and traceback:
-            logger = logging.getLogger('xmlrpc')
+            logger = logging.getLogger("xmlrpc")
             if logger:
                 logger.error(traceback.format_exc())
 
 
 # ForkingMixIn and the Forking classes mentioned below are only available on POSIX platforms.
 if hasattr(socketserver, "ForkingMixIn"):
+
     class ForkingXMLRPCServer(socketserver.ForkingMixIn, SimpleXMLRPCServer):
         """
         Adds ThreadingMixin to SimpleXMLRPCServer to support multiple concurrent
-        requests via forking. Also makes logging toggleable.      
+        requests via forking. Also makes logging toggleable.
         """
-        def __init__(self, addr, request_handler=SilenceableXMLRPCRequestHandler, log_requests=1):
+
+        def __init__(
+            self, addr, request_handler=SilenceableXMLRPCRequestHandler, log_requests=1
+        ):
             SimpleXMLRPCServer.__init__(self, addr, request_handler, log_requests)
-    
+
 
 class XmlRpcHandler(object):
     """
-    Base handler API for handlers used with XmlRpcNode. Public methods will be 
+    Base handler API for handlers used with XmlRpcNode. Public methods will be
     exported as XML RPC methods.
     """
 
@@ -180,17 +199,18 @@ class XmlRpcHandler(object):
         callback into handler to inform it of XML-RPC URI
         """
         pass
-    
+
     def _shutdown(self, reason):
         """
         callback into handler to inform it of shutdown
         """
         pass
 
+
 class XmlRpcNode(object):
     """
     Generic XML-RPC node. Handles the additional complexity of binding
-    an XML-RPC server to an arbitrary port. 
+    an XML-RPC server to an arbitrary port.
     XmlRpcNode is initialized when the uri field has a value.
     """
 
@@ -207,7 +227,7 @@ class XmlRpcNode(object):
         super(XmlRpcNode, self).__init__()
 
         self.handler = rpc_handler
-        self.uri = None # initialize the property now so it can be tested against, will be filled in later
+        self.uri = None  # initialize the property now so it can be tested against, will be filled in later
         self.server = None
         if port and isstring(port):
             port = int(port)
@@ -231,7 +251,7 @@ class XmlRpcNode(object):
             if server:
                 server.socket.close()
                 server.server_close()
-                
+
     def start(self):
         """
         Initiate a thread to run the XML RPC server. Uses thread.start_new_thread.
@@ -246,7 +266,7 @@ class XmlRpcNode(object):
         :param uri: XMLRPC URI, ``str``
         """
         self.uri = uri
-        
+
     def run(self):
         try:
             self._run()
@@ -254,24 +274,26 @@ class XmlRpcNode(object):
             if self.is_shutdown:
                 pass
             elif self.on_run_error is not None:
-               self.on_run_error(e)
+                self.on_run_error(e)
             else:
                 raise
 
     # separated out for easier testing
     def _run_init(self):
-        logger = logging.getLogger('xmlrpc')            
+        logger = logging.getLogger("xmlrpc")
         try:
             log_requests = 0
-            port = self.port or 0 #0 = any
+            port = self.port or 0  # 0 = any
 
             bind_address = rosgraph.network.get_bind_address()
             logger.info("XML-RPC server binding to %s:%d" % (bind_address, port))
-            
+
             self.server = ThreadingXMLRPCServer((bind_address, port), log_requests)
-            self.port = self.server.server_address[1] #set the port to whatever server bound to
+            self.port = self.server.server_address[
+                1
+            ]  # set the port to whatever server bound to
             if not self.port:
-                self.port = self.server.socket.getsockname()[1] #Python 2.4
+                self.port = self.server.socket.getsockname()[1]  # Python 2.4
 
             assert self.port, "Unable to retrieve local address binding"
 
@@ -282,18 +304,26 @@ class XmlRpcNode(object):
             uri = None
             override = rosgraph.network.get_address_override()
             if override:
-                uri = 'http://%s:%s/'%(override, self.port)
+                uri = "http://%s:%s/" % (override, self.port)
             else:
                 try:
                     hostname = socket.gethostname()
-                    if hostname and not hostname == 'localhost' and not hostname.startswith('127.') and hostname != '::':
-                        uri = 'http://%s:%s/'%(hostname, self.port)
+                    if (
+                        hostname
+                        and not hostname == "localhost"
+                        and not hostname.startswith("127.")
+                        and hostname != "::"
+                    ):
+                        uri = "http://%s:%s/" % (hostname, self.port)
                 except:
                     pass
             if not uri:
-                uri = 'http://%s:%s/'%(rosgraph.network.get_local_address(), self.port)
+                uri = "http://%s:%s/" % (
+                    rosgraph.network.get_local_address(),
+                    self.port,
+                )
             self.set_uri(uri)
-            
+
             logger.info("Started XML-RPC server [%s]", self.uri)
 
             self.server.register_multicall_functions()
@@ -301,22 +331,25 @@ class XmlRpcNode(object):
 
         except socket.error as e:
             if e.errno == errno.EADDRINUSE:
-                msg = "ERROR: Unable to start XML-RPC server, port %s is already in use"%self.port
+                msg = (
+                    "ERROR: Unable to start XML-RPC server, port %s is already in use"
+                    % self.port
+                )
             else:
                 msg = "ERROR: Unable to start XML-RPC server: %s" % e.strerror
             logger.error(msg)
             print(msg)
-            raise #let higher level catch this
+            raise  # let higher level catch this
 
         if self.handler is not None:
             self.handler._ready(self.uri)
         logger.info("xml rpc node: starting XML-RPC server")
-        
+
     def _run(self):
         """
         Main processing thread body.
         :raises: :exc:`socket.error` If server cannot bind
-        
+
         """
         self._run_init()
         while not self.is_shutdown:
@@ -330,5 +363,6 @@ class XmlRpcNode(object):
                     pass
                 elif e.errno != errno.EINTR:
                     self.is_shutdown = True
-                    logging.getLogger('xmlrpc').error("serve forever IOError: %s, %s"%(e.errno, e.strerror))
-                    
+                    logging.getLogger("xmlrpc").error(
+                        "serve forever IOError: %s, %s" % (e.errno, e.strerror)
+                    )

@@ -41,35 +41,37 @@ import datetime
 
 from rosgraph.names import make_global_ns, ns_join
 
+
 ## Unit tests for rospy.paramserver module
 class TestRospyParamServer(unittest.TestCase):
-    
     def test_param_server_cache(self):
         from rospy.impl.paramserver import get_param_server_cache
+
         ps = get_param_server_cache()
         self.assertTrue(ps is not None)
         try:
-            ps.get('foo')
+            ps.get("foo")
             self.fail("get should fail on non-existent key")
         except KeyError:
             pass
         for i in range(0, 10):
-            k = 'key-%s%s'%(i, random.randint(0, 1000))
-            v = 'value-%s'%random.randint(0, 1000)
+            k = "key-%s%s" % (i, random.randint(0, 1000))
+            v = "value-%s" % random.randint(0, 1000)
             try:
                 ps.update(k, v)
-                self.fail("update should fail on non-existent key "+k)
+                self.fail("update should fail on non-existent key " + k)
             except KeyError:
                 pass
-                
+
             ps.set(k, v)
             self.assertEqual(v, ps.get(k))
-            v = 'value-%s'%random.randint(0, 1000)
-            ps.update(k, v)            
+            v = "value-%s" % random.randint(0, 1000)
+            ps.update(k, v)
             self.assertEqual(v, ps.get(k))
-        
+
             ps.delete(k)
             try:
                 ps.get(k)
-                self.fail('get should fail on deleted key')
-            except KeyError: pass
+                self.fail("get should fail on deleted key")
+            except KeyError:
+                pass

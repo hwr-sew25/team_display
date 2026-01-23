@@ -33,30 +33,38 @@
 """
 Checks if rosdep database has been initialized
 """
+
 import os
 
 
 def get_user_home_directory():
-    """Returns cross-platform user home directory """
+    """Returns cross-platform user home directory"""
     return os.path.expanduser("~")
 
 
 def rosdep_database_updated_check(ctx):
     """Makes sure rosdep database is updated"""
-    if not os.path.exists((os.path.join(get_user_home_directory(), '.ros', 'rosdep', 'sources.cache', 'index'))):
+    if not os.path.exists(
+        (
+            os.path.join(
+                get_user_home_directory(), ".ros", "rosdep", "sources.cache", "index"
+            )
+        )
+    ):
         return "Please update rosdep database with 'rosdep update'."
 
 
 warnings = []
 
-errors = [(rosdep_database_updated_check,
-           "ROS Dep database not updated: "),
-         ]
+errors = [
+    (rosdep_database_updated_check, "ROS Dep database not updated: "),
+]
 
 
 def wtf_check(ctx):
     """Check implementation function for roswtf"""
     from roswtf.rules import warning_rule, error_rule
+
     for r in warnings:
         warning_rule(r, r[0](ctx), ctx)
     for r in errors:

@@ -40,7 +40,8 @@ from roslaunch.core import Node, Master, RLException
 
 import roslaunch.config
 import roslaunch.parent
-import roslaunch.xmlloader 
+import roslaunch.xmlloader
+
 
 class ROSLaunch(object):
     """
@@ -49,7 +50,7 @@ class ROSLaunch(object):
     and then starting up any remote processes. The __main__ method
     delegates most of runtime to ROSLaunchParent.
 
-    This must be called from the Python Main thread due to signal registration.    
+    This must be called from the Python Main thread due to signal registration.
     """
 
     def __init__(self):
@@ -57,7 +58,8 @@ class ROSLaunch(object):
         @raise RLException: if fails to initialize
         """
         import rosgraph.masterapi
-        master = rosgraph.masterapi.Master('/roslaunch_script')
+
+        master = rosgraph.masterapi.Master("/roslaunch_script")
         uuid = roslaunch.rlutil.get_or_generate_uuid(None, True)
         self.parent = roslaunch.parent.ROSLaunchParent(uuid, [], is_core=False)
         self.started = False
@@ -65,7 +67,7 @@ class ROSLaunch(object):
     def load(self, f):
         """
         Load roslaunch file
-        
+
         @param f: filename
         @type  f: str
         """
@@ -74,16 +76,16 @@ class ROSLaunch(object):
     def load_str(self, s):
         """
         Load roslaunch string
-        
+
         @param s: string representation of roslaunch config
         @type  s: str
         """
         raise NotImplemented
-        
+
     def launch(self, node):
         """
         Launch a roslaunch node instance
-        
+
         @param node: roslaunch Node instance
         @type  node: roslaunch.Node
         @return: node process
@@ -97,7 +99,7 @@ class ROSLaunch(object):
 
         proc, success = self.parent.runner.launch_node(node)
         if not success:
-            raise RLException("failed to launch %s/%s"%(node.package, node.type))
+            raise RLException("failed to launch %s/%s" % (node.package, node.type))
         return proc
 
     def start(self):
@@ -106,13 +108,12 @@ class ROSLaunch(object):
         """
         self.parent.start(auto_terminate=False)
         self.started = True
-        
+
     def spin(self):
         self.parent.spin()
 
     def spin_once(self):
-        self.parent.spin_once()        
-        
+        self.parent.spin_once()
+
     def stop(self):
         self.parent.shutdown()
-

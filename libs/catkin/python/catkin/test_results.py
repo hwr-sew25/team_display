@@ -62,7 +62,11 @@ def ensure_junit_result_exist(filename):
             try:
                 tree = ElementTree(None, filename)
             except ParseError as e:
-                print("Invalid XML in result file '%s' (even after trying to tidy it): %s " % (filename, str(e)), file=sys.stderr)
+                print(
+                    "Invalid XML in result file '%s' (even after trying to tidy it): %s "
+                    % (filename, str(e)),
+                    file=sys.stderr,
+                )
                 return False
         if tree:
             _, num_errors, num_failures = read_junit(filename)
@@ -71,7 +75,10 @@ def ensure_junit_result_exist(filename):
     else:
         # if result file does not exist create placeholder which indicates failure
         missing_filename = _get_missing_junit_result_filename(filename)
-        print("Cannot find results, writing failure results to '%s'" % missing_filename, file=sys.stderr)
+        print(
+            "Cannot find results, writing failure results to '%s'" % missing_filename,
+            file=sys.stderr,
+        )
         # create folder if necessary
         if not os.path.exists(os.path.dirname(filename)):
             try:
@@ -80,20 +87,25 @@ def ensure_junit_result_exist(filename):
                 # catch case where folder has been created in the mean time
                 if e.errno != errno.EEXIST:
                     raise
-        with open(missing_filename, 'w') as f:
-            data = {'test': os.path.basename(filename), 'test_file': filename}
-            f.write("""<?xml version="1.0" encoding="UTF-8"?>
+        with open(missing_filename, "w") as f:
+            data = {"test": os.path.basename(filename), "test_file": filename}
+            f.write(
+                """<?xml version="1.0" encoding="UTF-8"?>
 <testsuite tests="1" failures="1" time="1" errors="0" name="%(test)s">
   <testcase name="test_ran" status="run" time="1" classname="Results">
     <failure message="Unable to find test results for %(test)s, test did not run.\nExpected results in %(test_file)s" type=""/>
   </testcase>
-</testsuite>""" % data)
+</testsuite>"""
+                % data
+            )
         return False
     return True
 
 
 def _get_missing_junit_result_filename(filename):
-    return os.path.join(os.path.dirname(filename), 'MISSING-%s' % os.path.basename(filename))
+    return os.path.join(
+        os.path.dirname(filename), "MISSING-%s" % os.path.basename(filename)
+    )
 
 
 def read_junit(filename):
@@ -120,9 +132,11 @@ def read_junit2(filename):
     num_failures_sum = 0
     num_skipped_sum = 0
 
-    if root.tag == 'testsuites':
+    if root.tag == "testsuites":
         try:
-            num_tests, num_errors, num_failures, num_skipped = _get_testsuite_stats(root)
+            num_tests, num_errors, num_failures, num_skipped = _get_testsuite_stats(
+                root
+            )
         except KeyError:
             pass
         else:
@@ -131,9 +145,11 @@ def read_junit2(filename):
             num_failures_sum += num_failures
             num_skipped_sum += num_skipped
         for child in root:
-            if child.tag == 'testsuite':
+            if child.tag == "testsuite":
                 try:
-                    num_tests, num_errors, num_failures, num_skipped = _get_testsuite_stats(child)
+                    num_tests, num_errors, num_failures, num_skipped = (
+                        _get_testsuite_stats(child)
+                    )
                 except KeyError:
                     pass
                 else:
@@ -141,24 +157,27 @@ def read_junit2(filename):
                     num_errors_sum += num_errors
                     num_failures_sum += num_failures
                     num_skipped_sum += num_skipped
-    elif root.tag == 'testsuite':
+    elif root.tag == "testsuite":
         num_tests, num_errors, num_failures, num_skipped = _get_testsuite_stats(root)
         num_tests_sum += num_tests
         num_errors_sum += num_errors
         num_failures_sum += num_failures
         num_skipped_sum += num_skipped
     else:
-        raise ValueError(
-            "the root tag is neither 'testsuite' nor 'testsuites'")
+        raise ValueError("the root tag is neither 'testsuite' nor 'testsuites'")
 
     return (num_tests_sum, num_errors_sum, num_failures_sum, num_skipped_sum)
 
 
 def _get_testsuite_stats(node):
-    num_tests = int(node.attrib['tests'])
-    num_errors = int(node.attrib['errors'])
-    num_failures = int(node.attrib['failures'])
-    num_skipped = int(node.get('skip', '0')) + int(node.get('skipped', '0')) + int(node.get('disabled', '0'))
+    num_tests = int(node.attrib["tests"])
+    num_errors = int(node.attrib["errors"])
+    num_failures = int(node.attrib["failures"])
+    num_skipped = (
+        int(node.get("skip", "0"))
+        + int(node.get("skipped", "0"))
+        + int(node.get("disabled", "0"))
+    )
     return (num_tests, num_errors, num_failures, num_skipped)
 
 
@@ -166,7 +185,8 @@ def test_results(test_results_dir, show_verbose=False, show_all=False):
     """Same as `test_results2` except the returned values don't include num_skipped."""
     results = {}
     results2 = test_results2(
-        test_results_dir, show_verbose=show_verbose, show_all=show_all)
+        test_results_dir, show_verbose=show_verbose, show_all=show_all
+    )
     for name, values in results2.items():
         num_tests, num_errors, num_failures, _ = values
         results[name] = (num_tests, num_errors, num_failures)
@@ -184,12 +204,14 @@ def test_results2(test_results_dir, show_verbose=False, show_all=False):
     results = {}
     for dirpath, dirnames, filenames in os.walk(test_results_dir):
         # do not recurse into folders starting with a dot
-        dirnames[:] = [d for d in dirnames if not d.startswith('.')]
-        for filename in [f for f in filenames if f.endswith('.xml')]:
+        dirnames[:] = [d for d in dirnames if not d.startswith(".")]
+        for filename in [f for f in filenames if f.endswith(".xml")]:
             filename_abs = os.path.join(dirpath, filename)
-            name = filename_abs[len(test_results_dir) + 1:]
+            name = filename_abs[len(test_results_dir) + 1 :]
             try:
-                num_tests, num_errors, num_failures, num_skipped = read_junit2(filename_abs)
+                num_tests, num_errors, num_failures, num_skipped = read_junit2(
+                    filename_abs
+                )
             except Exception as e:
                 if show_all:
                     print('Skipping "%s": %s' % (name, str(e)))
@@ -197,10 +219,10 @@ def test_results2(test_results_dir, show_verbose=False, show_all=False):
             results[name] = (num_tests, num_errors, num_failures, num_skipped)
             if show_verbose and (num_errors + num_failures > 0):
                 print("Full test results for '%s'" % (name))
-                print('-------------------------------------------------')
-                with open(filename_abs, 'r') as f:
+                print("-------------------------------------------------")
+                with open(filename_abs, "r") as f:
                     print(f.read())
-                print('-------------------------------------------------')
+                print("-------------------------------------------------")
     return results
 
 
@@ -208,10 +230,13 @@ def aggregate_results(results, callback_per_result=None):
     """Aggregate results similar to `aggregate_results2` except it doesn't return num_skipped."""
     callback = None
     if callback_per_result is not None:
+
         def callback(name, num_tests, num_errors, num_failures, num_skipped):
             callback_per_result(name, num_tests, num_errors, num_failures)
+
     sum_tests, sum_errors, sum_failures, _ = aggregate_results2(
-        results, callback_per_result=callback)
+        results, callback_per_result=callback
+    )
     return (sum_tests, sum_errors, sum_failures)
 
 
@@ -230,16 +255,18 @@ def aggregate_results2(results, callback_per_result=None):
         sum_failures += num_failures
         sum_skipped += num_skipped
         if callback_per_result:
-            callback_per_result(
-                name, num_tests, num_errors, num_failures, num_skipped)
+            callback_per_result(name, num_tests, num_errors, num_failures, num_skipped)
     return sum_tests, sum_errors, sum_failures, sum_skipped
 
 
 def print_summary(results, show_stable=False, show_unstable=True):
     """Print summary similar to `print_summary2` except it doesn't print skipped tests."""
     print_summary2(
-        results, show_stable=show_stable, show_unstable=show_unstable,
-        print_skipped=False)
+        results,
+        show_stable=show_stable,
+        show_unstable=show_unstable,
+        print_skipped=False,
+    )
 
 
 def print_summary2(results, show_stable=False, show_unstable=True, print_skipped=True):
@@ -251,22 +278,26 @@ def print_summary2(results, show_stable=False, show_unstable=True, print_skipped
     :param show_unstable: print tests with failures extra
     :param print_skipped: include skipped tests in output
     """
+
     def callback(name, num_tests, num_errors, num_failures, num_skipped):
         if show_stable and not num_errors and not num_failures and not num_skipped:
-            print('%s: %d tests' % (name, num_tests))
+            print("%s: %d tests" % (name, num_tests))
         if show_unstable and (num_errors or num_failures or num_skipped):
-            msg = '{}: {} tests, {} errors, {} failures'
+            msg = "{}: {} tests, {} errors, {} failures"
             msg_args = [name, num_tests, num_errors, num_failures]
             if print_skipped:
-                msg += ', {} skipped'
+                msg += ", {} skipped"
                 msg_args.append(num_skipped)
             print(msg.format(*msg_args))
-    sum_tests, sum_errors, sum_failures, sum_skipped = aggregate_results2(results, callback)
 
-    msg = 'Summary: {} tests, {} errors, {} failures'
+    sum_tests, sum_errors, sum_failures, sum_skipped = aggregate_results2(
+        results, callback
+    )
+
+    msg = "Summary: {} tests, {} errors, {} failures"
     msg_args = [sum_tests, sum_errors, sum_failures]
     if print_skipped:
-        msg += ', {} skipped'
+        msg += ", {} skipped"
         msg_args.append(sum_skipped)
 
     print(msg.format(*msg_args))

@@ -34,7 +34,7 @@
 ## Integration test for empty services to test serializers
 ## and transport
 
-PKG = 'test_rospy'
+PKG = "test_rospy"
 
 import sys, time
 import unittest
@@ -42,51 +42,57 @@ import unittest
 import rospy, rostest
 from test_rospy.srv import *
 
-SERVICE_BEFORE = 'service_order_before'
-SERVICE_AFTER  = 'service_order_after'
+SERVICE_BEFORE = "service_order_before"
+SERVICE_AFTER = "service_order_after"
 
 FAKE_SECRET = 123456
 
-WAIT_TIMEOUT = 10.0 #s
+WAIT_TIMEOUT = 10.0  # s
+
 
 def handle_empty_req(req):
     print("Returning fake_secret")
     return EmptyReqSrvResponse(FAKE_SECRET)
 
+
 def service_before():
     s = rospy.Service(SERVICE_BEFORE, EmptyReqSrv, handle_empty_req)
-    rospy.init_node('service_before')
+    rospy.init_node("service_before")
     rospy.spin()
+
 
 # #530: verify that init_node can occur after service declarations
 def service_after():
-    rospy.init_node('service_after')
+    rospy.init_node("service_after")
     s = rospy.Service(SERVICE_AFTER, EmptyReqSrv, handle_empty_req)
     rospy.spin()
 
+
 class TestServiceOrder(unittest.TestCase):
-        
     def _test(self, name, srv, req):
-        rospy.wait_for_service(name, WAIT_TIMEOUT)        
+        rospy.wait_for_service(name, WAIT_TIMEOUT)
         s = rospy.ServiceProxy(name, srv)
         resp = s.call(req)
         self.assertTrue(resp is not None)
         return resp
+
     def test_before(self):
-        resp = self._test(SERVICE_BEFORE, EmptyReqSrv,
-                          EmptyReqSrvRequest())
-        self.assertEqual(FAKE_SECRET, resp.fake_secret, 
-                          "fake_secret fields is not set as expected")        
+        resp = self._test(SERVICE_BEFORE, EmptyReqSrv, EmptyReqSrvRequest())
+        self.assertEqual(
+            FAKE_SECRET, resp.fake_secret, "fake_secret fields is not set as expected"
+        )
+
     def test_after(self):
-        resp = self._test(SERVICE_AFTER, EmptyReqSrv,
-                          EmptyReqSrvRequest())
-        self.assertEqual(FAKE_SECRET, resp.fake_secret, 
-                          "fake_secret fields is not set as expected")        
-        
-if __name__ == '__main__':
-    if '--before' in sys.argv:
+        resp = self._test(SERVICE_AFTER, EmptyReqSrv, EmptyReqSrvRequest())
+        self.assertEqual(
+            FAKE_SECRET, resp.fake_secret, "fake_secret fields is not set as expected"
+        )
+
+
+if __name__ == "__main__":
+    if "--before" in sys.argv:
         service_before()
-    elif '--after' in sys.argv:
+    elif "--after" in sys.argv:
         service_after()
     else:
-        rostest.run(PKG, 'rospy_service_decl_order', TestServiceOrder, sys.argv)
+        rostest.run(PKG, "rospy_service_decl_order", TestServiceOrder, sys.argv)

@@ -30,19 +30,22 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PRN_SEPARATOR = '/'
+PRN_SEPARATOR = "/"
 
 import re
+
 
 def normalize_package_context(package_context):
     package_context = package_context.strip()
     while package_context.endswith(PRN_SEPARATOR):
         package_context = package_context[:-1]
     return package_context
-    
+
+
 #######################################################################
 # RESOURCE NAMES
 # resource names refer to entities in a file system
+
 
 def resource_name(res_pkg_name, name, my_pkg=None):
     """
@@ -53,42 +56,45 @@ def resource_name(res_pkg_name, name, my_pkg=None):
     @param name: resource base name
     @type  name: str
     @param my_pkg: name of package resource is being referred to
-        in. If specified, name will be returned in local form if 
+        in. If specified, name will be returned in local form if
         res_pkg_name is my_pkg
     @type  my_pkg: str
-    @return: name for resource 
+    @return: name for resource
     @rtype: str
-    """    
+    """
     if res_pkg_name != my_pkg:
-        return res_pkg_name+PRN_SEPARATOR+name
+        return res_pkg_name + PRN_SEPARATOR + name
     return name
+
 
 def resource_name_base(name):
     """
     pkg/typeName -> typeName, typeName -> typeName
-    
+
     Convert fully qualified resource name into the package-less resource name
     @param name: package resource name, e.g. 'std_msgs/String'
     @type  name: str
     @return: resource name sans package-name scope
     @rtype: str
-    """    
+    """
 
-    return name[name.rfind(PRN_SEPARATOR)+1:]
+    return name[name.rfind(PRN_SEPARATOR) + 1 :]
+
 
 def resource_name_package(name):
     """
     pkg/typeName -> pkg, typeName -> None
-    
+
     @param name: package resource name, e.g. 'std_msgs/String'
     @type  name: str
     @return: package name of resource
     @rtype: str
-    """    
+    """
 
     if not PRN_SEPARATOR in name:
         return None
-    return name[:name.find(PRN_SEPARATOR)]
+    return name[: name.find(PRN_SEPARATOR)]
+
 
 def package_resource_name(name):
     """
@@ -99,21 +105,24 @@ def package_resource_name(name):
     @return: package name, resource name
     @rtype: str
     @raise ValueError: if name is invalid
-    """    
+    """
     if PRN_SEPARATOR in name:
         val = tuple(name.split(PRN_SEPARATOR))
         if len(val) != 2:
-            raise ValueError("invalid name [%s]"%name)
+            raise ValueError("invalid name [%s]" % name)
         else:
             return val
     else:
-        return '', name
+        return "", name
+
 
 ################################################################################
 # NAME VALIDATORS
 
-#ascii char followed by (alphanumeric, _, /)
-RESOURCE_NAME_LEGAL_CHARS_P = re.compile(r'^[A-Za-z][\w_\/]*$') 
+# ascii char followed by (alphanumeric, _, /)
+RESOURCE_NAME_LEGAL_CHARS_P = re.compile(r"^[A-Za-z][\w_\/]*$")
+
+
 def is_legal_resource_name(name):
     """
     Check if name is a legal ROS name for filesystem resources
@@ -129,9 +138,14 @@ def is_legal_resource_name(name):
         return False
     m = RESOURCE_NAME_LEGAL_CHARS_P.match(name)
     # '//' check makes sure there isn't double-slashes
-    return m is not None and m.group(0) == name and not '//' in name
+    return m is not None and m.group(0) == name and not "//" in name
 
-BASE_RESOURCE_NAME_LEGAL_CHARS_P = re.compile(r'^[A-Za-z][\w_]*$') #ascii char followed by (alphanumeric, _)
+
+BASE_RESOURCE_NAME_LEGAL_CHARS_P = re.compile(
+    r"^[A-Za-z][\w_]*$"
+)  # ascii char followed by (alphanumeric, _)
+
+
 def is_legal_resource_base_name(name):
     """
     Validates that name is a legal resource base name. A base name has
@@ -142,4 +156,3 @@ def is_legal_resource_base_name(name):
         return False
     m = BASE_RESOURCE_NAME_LEGAL_CHARS_P.match(name)
     return m is not None and m.group(0) == name
-

@@ -31,21 +31,24 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-NAME = 'header_echo_server'
+NAME = "header_echo_server"
 
 from test_rosservice.srv import *
-import rospy 
+import rospy
+
 
 def header_echo(req):
-    print("Returning %s"%(req))
+    print("Returning %s" % (req))
     return req.header
+
 
 def header_echo_server():
     rospy.init_node(NAME)
-    s = rospy.Service('header_echo', HeaderEcho, header_echo)
+    s = rospy.Service("header_echo", HeaderEcho, header_echo)
 
     # spin() keeps Python from exiting until node is shutdown
     rospy.spin()
+
 
 if __name__ == "__main__":
     header_echo_server()

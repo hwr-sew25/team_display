@@ -42,5 +42,6 @@ import sys
 # genutil is a utility package the implements the package crawling
 # logic of genmsg_py and gensrv_py logic
 import genutil
+
 if __name__ == "__main__":
-    genutil.genmain(sys.argv, 'srv')
+    genutil.genmain(sys.argv, "srv")

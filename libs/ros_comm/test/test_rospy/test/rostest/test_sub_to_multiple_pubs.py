@@ -36,13 +36,14 @@
 
 from __future__ import print_function
 
-PKG = 'test_rospy'
-NAME = 'test_sub_to_multiple_pubs'
+PKG = "test_rospy"
+NAME = "test_sub_to_multiple_pubs"
 
 import socket
 import sys
 import time
 import unittest
+
 try:
     from xmlrpc.client import ServerProxy
 except ImportError:
@@ -52,28 +53,33 @@ import rosgraph
 import rospy
 import rostest
 
-TOPIC = '/chatter'
-TALKER_NODE = 'talker%d'
+TOPIC = "/chatter"
+TALKER_NODE = "talker%d"
 NUMBER_OF_TALKERS = 99
-LISTENER_NODE = 'listener'
+LISTENER_NODE = "listener"
 
 
 class TestPubSubToMultiplePubs(unittest.TestCase):
-
     def test_subscribe_to_multiple_publishers(self):
         # wait so that all connections are established
         time.sleep(1.0)
 
         # ensure that publishers are publishing
         for i in range(1, NUMBER_OF_TALKERS + 1):
-            self.assertTrue(rostest.is_publisher(
-                rospy.resolve_name(TOPIC),
-                rospy.resolve_name(TALKER_NODE % i)), 'talker node %d is not up' % i)
+            self.assertTrue(
+                rostest.is_publisher(
+                    rospy.resolve_name(TOPIC), rospy.resolve_name(TALKER_NODE % i)
+                ),
+                "talker node %d is not up" % i,
+            )
 
         # ensure that subscriber is subscribed
-        self.assertTrue(rostest.is_subscriber(
-            rospy.resolve_name(TOPIC),
-            rospy.resolve_name(LISTENER_NODE)), 'listener node is not up')
+        self.assertTrue(
+            rostest.is_subscriber(
+                rospy.resolve_name(TOPIC), rospy.resolve_name(LISTENER_NODE)
+            ),
+            "listener node is not up",
+        )
 
         # check number of connections from subscriber to the topic
         connections = 0
@@ -81,13 +87,13 @@ class TestPubSubToMultiplePubs(unittest.TestCase):
         master = rosgraph.Master(NAME)
         node_api = master.lookupNode(LISTENER_NODE)
         if not node_api:
-            self.assertTrue(False, 'cannot contact [%s]: unknown node' % LISTENER_NODE)
+            self.assertTrue(False, "cannot contact [%s]: unknown node" % LISTENER_NODE)
 
         socket.setdefaulttimeout(5.0)
         node = ServerProxy(node_api)
         code, _, businfo = node.getBusInfo(NAME)
         if code != 1:
-            self.assertTrue(False, 'cannot get node information')
+            self.assertTrue(False, "cannot get node information")
         if businfo:
             for info in businfo:
                 topic = info[4]
@@ -100,8 +106,13 @@ class TestPubSubToMultiplePubs(unittest.TestCase):
                     if topic == TOPIC:
                         connections += 1
 
-        self.assertTrue(connections == NUMBER_OF_TALKERS, 'Found only %d connections instead of %d' % (connections, NUMBER_OF_TALKERS))
+        self.assertTrue(
+            connections == NUMBER_OF_TALKERS,
+            "Found only %d connections instead of %d"
+            % (connections, NUMBER_OF_TALKERS),
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     rospy.init_node(NAME)
     rostest.run(PKG, NAME, TestPubSubToMultiplePubs, sys.argv)

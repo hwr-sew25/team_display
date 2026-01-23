@@ -33,8 +33,8 @@
 
 ## Simple talker demo that publishes std_msg/Strings to the 'chatter' topic
 
-PKG = 'test_rospy'
-NAME = 'test_node'
+PKG = "test_rospy"
+NAME = "test_node"
 
 import sys
 
@@ -42,8 +42,9 @@ import rospy
 import test_rosmaster.msg
 
 # Copied from test_ros.test_node
-#_required_publications  = 'test_string_out', 'test_primitives_out', 'test_arrays_out', 'test_header_out'
-#_required_subscriptions = 'test_string_in', 'test_primitives_in', 'test_arrays_in', 'test_header_in', 'probe_topic'
+# _required_publications  = 'test_string_out', 'test_primitives_out', 'test_arrays_out', 'test_header_out'
+# _required_subscriptions = 'test_string_in', 'test_primitives_in', 'test_arrays_in', 'test_header_in', 'probe_topic'
+
 
 ## pass-through callback that republishes message on \a pub.
 ## @param pub TopicPub: topic to republish incoming messages on
@@ -58,32 +59,52 @@ def chain_callback(pub):
                 new_data.header.stamp = Time(1234, 5678)
                 # frame_id not really important
                 new_data.header.frame_id = 1234
-            else: # force auto-header timestamp
-                new_data = test_rosmaster.msg.TestHeader(None, rospy.caller_id(), data.auto)
+            else:  # force auto-header timestamp
+                new_data = test_rosmaster.msg.TestHeader(
+                    None, rospy.caller_id(), data.auto
+                )
             data = new_data
         data.caller_id = rospy.caller_id()
         pub.publish(data)
 
+
 def test_node():
     # required publications
-    string_out = rospy.Publisher("test_string_out", test_rosmaster.msg.TestString, queue_size=0)
-    primitives_out = rospy.Publisher("test_primitives_out", test_rosmaster.msg.TestPrimitives, queue_size=0)
-    arrays_out = rospy.Publisher("test_arrays_out", test_rosmaster.msg.TestArrays, queue_size=0)
-    header_out = rospy.Publisher("test_header_out", test_rosmaster.msg.TestHeader, queue_size=0)
+    string_out = rospy.Publisher(
+        "test_string_out", test_rosmaster.msg.TestString, queue_size=0
+    )
+    primitives_out = rospy.Publisher(
+        "test_primitives_out", test_rosmaster.msg.TestPrimitives, queue_size=0
+    )
+    arrays_out = rospy.Publisher(
+        "test_arrays_out", test_rosmaster.msg.TestArrays, queue_size=0
+    )
+    header_out = rospy.Publisher(
+        "test_header_out", test_rosmaster.msg.TestHeader, queue_size=0
+    )
 
-    #required subs
-    rospy.Subscriber("test_string_in", test_rosmaster.msg.TestString, chain_callback(string_out))
-    rospy.Subscriber("test_primitives_in", test_rosmaster.msg.TestPrimitives, chain_callback(primitives_out))
-    rospy.Subscriber("test_arrays_in", test_rosmaster.msg.TestArrays, chain_callback(arrays_out))
-    rospy.Subscriber("test_header_in", test_rosmaster.msg.TestHeader, chain_callback(header_out))
-     
+    # required subs
+    rospy.Subscriber(
+        "test_string_in", test_rosmaster.msg.TestString, chain_callback(string_out)
+    )
+    rospy.Subscriber(
+        "test_primitives_in",
+        test_rosmaster.msg.TestPrimitives,
+        chain_callback(primitives_out),
+    )
+    rospy.Subscriber(
+        "test_arrays_in", test_rosmaster.msg.TestArrays, chain_callback(arrays_out)
+    )
+    rospy.Subscriber(
+        "test_header_in", test_rosmaster.msg.TestHeader, chain_callback(header_out)
+    )
+
     # subscription with no publisher
     probe_in = rospy.Subscriber("probe_topic", test_rosmaster.msg.TestString)
-    
+
     rospy.init_node(NAME)
     rospy.spin()
-        
-if __name__ == '__main__':
-    test_node()
 
-        
+
+if __name__ == "__main__":
+    test_node()

@@ -47,7 +47,7 @@ Internally, L{_TopicImpl} instances (_PublisherImpl/_SubscriberImpl)
 are used to manage actual transport connections.  The L{_TopicManager}
 is responsible for tracking the system-wide state of publications and
 subscriptions as well as the L{_TopicImpl} instances. More info is below.
- 
+
 L{_TopicManager}
 ================
 
@@ -63,19 +63,23 @@ Common parent classes for all rospy topics. The rospy topic autogenerators
 create classes that are children of these implementations.
 """
 
-
 import struct
 import select
+
 try:
-    from cStringIO import StringIO #Python 2.x
+    from cStringIO import StringIO  # Python 2.x
+
     python3 = 0
+
     def isstring(s):
-        return isinstance(s, basestring) #Python 2.x
+        return isinstance(s, basestring)  # Python 2.x
 except ImportError:
     python3 = 1
-    from io import StringIO, BytesIO #Python 3.x
+    from io import StringIO, BytesIO  # Python 3.x
+
     def isstring(s):
-        return isinstance(s, str) #Python 3.x
+        return isinstance(s, str)  # Python 3.x
+
 
 import threading
 import logging
@@ -92,14 +96,20 @@ from rospy.msg import serialize_message, args_kwds_to_message
 
 from rospy.impl.statistics import SubscriberStatisticsLogger
 
-from rospy.impl.registration import get_topic_manager, set_topic_manager, Registration, get_registration_listeners
+from rospy.impl.registration import (
+    get_topic_manager,
+    set_topic_manager,
+    Registration,
+    get_registration_listeners,
+)
 from rospy.impl.tcpros import get_tcpros_handler, DEFAULT_BUFF_SIZE
 from rospy.impl.tcpros_pubsub import QueuedConnection
 
-_logger = logging.getLogger('rospy.topics')
+_logger = logging.getLogger("rospy.topics")
 
 # wrap genpy implementation and map it to rospy namespace
 import genpy
+
 Message = genpy.Message
 
 #######################################################################
@@ -107,18 +117,18 @@ Message = genpy.Message
 #
 # There are two trees: Topic and _TopicImpl. Topic is the client API
 # for interfacing with topics, while _TopicImpl implements the
-# underlying connection details. 
+# underlying connection details.
 
-if not hasattr(select, 'EPOLLRDHUP'):
+if not hasattr(select, "EPOLLRDHUP"):
     select.EPOLLRDHUP = 0x2000
 
 
 class Topic(object):
     """Base class of L{Publisher} and L{Subscriber}"""
-    
+
     def __init__(self, name, data_class, reg_type):
         """
-        @param name: graph resource name of topic, e.g. 'laser'. 
+        @param name: graph resource name of topic, e.g. 'laser'.
         @type  name: str
         @param data_class: message class for serialization
         @type  data_class: L{Message}
@@ -126,27 +136,35 @@ class Topic(object):
         @type  reg_type: str
         @raise ValueError: if parameters are invalid
         """
-        
+
         if not name or not isstring(name):
             raise ValueError("topic name is not a non-empty string")
         try:
             if python3 == 1:
                 name.encode("utf-8")
-            else: 
+            else:
                 name = name.encode("utf-8")
         except UnicodeError:
             raise ValueError("topic name must be ascii/utf-8 compatible")
         if data_class is None:
             raise ValueError("topic parameter 'data_class' is not initialized")
         if not type(data_class) == type:
-            raise ValueError("data_class [%s] is not a class"%data_class) 
+            raise ValueError("data_class [%s] is not a class" % data_class)
         if not issubclass(data_class, genpy.Message):
-            raise ValueError("data_class [%s] is not a message data class"%data_class.__class__.__name__)
+            raise ValueError(
+                "data_class [%s] is not a message data class"
+                % data_class.__class__.__name__
+            )
         # #2202
         if not rosgraph.names.is_legal_name(name):
             import warnings
-            warnings.warn("'%s' is not a legal ROS graph resource name. This may cause problems with other ROS tools"%name, stacklevel=2)
-        
+
+            warnings.warn(
+                "'%s' is not a legal ROS graph resource name. This may cause problems with other ROS tools"
+                % name,
+                stacklevel=2,
+            )
+
         # this is a bit ugly, but necessary due to the fact that we allow
         # topics and services to be initialized before the node
         if not rospy.core.is_initialized():
@@ -155,13 +173,15 @@ class Topic(object):
             # init_node() has been called, so we can do normal resolution
             self.resolved_name = resolve_name(name)
 
-        self.name = self.resolved_name # #1810 for backwards compatibility
+        self.name = self.resolved_name  # #1810 for backwards compatibility
 
         self.data_class = data_class
         self.type = data_class._type
         self.md5sum = data_class._md5sum
         self.reg_type = reg_type
-        self.impl = get_topic_manager().acquire_impl(reg_type, self.resolved_name, data_class)
+        self.impl = get_topic_manager().acquire_impl(
+            reg_type, self.resolved_name, data_class
+        )
 
     def get_num_connections(self):
         """
@@ -172,7 +192,7 @@ class Topic(object):
         @rtype: int
         """
         return self.impl.get_num_connections()
-        
+
     def unregister(self):
         """
         unpublish/unsubscribe from topic. Topic instance is no longer
@@ -183,7 +203,10 @@ class Topic(object):
         resolved_name = self.resolved_name
         if resolved_name and self.impl:
             get_topic_manager().release_impl(self.reg_type, resolved_name)
-            self.impl = self.resolved_name = self.type = self.md5sum = self.data_class = None
+            self.impl = self.resolved_name = self.type = self.md5sum = (
+                self.data_class
+            ) = None
+
 
 # #3808
 class Poller(object):
@@ -191,25 +214,26 @@ class Poller(object):
     select.poll/kqueue abstraction to handle socket failure detection
     on multiple platforms.  NOT thread-safe.
     """
+
     def __init__(self):
-        if hasattr(select, 'kqueue'):
+        if hasattr(select, "kqueue"):
             self.poller = select.kqueue()
             self.add_fd = self.add_kqueue
             self.remove_fd = self.remove_kqueue
             self.error_iter = self.error_kqueue_iter
             self.kevents = []
-        elif hasattr(select, 'epoll'):
+        elif hasattr(select, "epoll"):
             self.poller = select.epoll()
             self.add_fd = self.add_epoll
             self.remove_fd = self.remove_epoll
             self.error_iter = self.error_epoll_iter
-        elif hasattr(select, 'poll'):
+        elif hasattr(select, "poll"):
             self.poller = select.poll()
             self.add_fd = self.add_poll
             self.remove_fd = self.remove_poll
             self.error_iter = self.error_poll_iter
         else:
-            #TODO: non-Noop impl for Windows
+            # TODO: non-Noop impl for Windows
             self.poller = self.noop
             self.add_fd = self.noop
             self.remove_fd = self.noop
@@ -236,7 +260,7 @@ class Poller(object):
                 yield fd
 
     def add_epoll(self, fd):
-        self.poller.register(fd, select.EPOLLHUP|select.EPOLLERR|select.EPOLLRDHUP)
+        self.poller.register(fd, select.EPOLLHUP | select.EPOLLERR | select.EPOLLRDHUP)
 
     def remove_epoll(self, fd):
         self.poller.unregister(fd)
@@ -255,32 +279,33 @@ class Poller(object):
         for event in events:
             if event & (select.KQ_EV_ERROR | select.KQ_EV_EOF):
                 yield event.ident
-            
+
     def remove_kqueue(self, fd):
         e = [x for x in self.kevents if x.ident == fd]
         for x in e:
             self.kevents.remove(x)
-            
+
+
 class _TopicImpl(object):
     """
     Base class of internal topic implementations. Each topic has a
     singleton _TopicImpl implementation for managing the underlying
     connections.
     """
-    
+
     def __init__(self, name, data_class):
         """
         Base constructor
-        @param name: graph resource name of topic, e.g. 'laser'. 
+        @param name: graph resource name of topic, e.g. 'laser'.
         @type  name: str
-        @param data_class: message data class 
+        @param data_class: message data class
         @type  data_class: L{Message}
         """
 
         # #1810 made resolved/unresolved more explicit so we don't accidentally double-resolve
-        self.resolved_name = resolve_name(name) #NOTE: remapping occurs here!
-        self.name = self.resolved_name # for backwards compatibility
-        
+        self.resolved_name = resolve_name(name)  # NOTE: remapping occurs here!
+        self.name = self.resolved_name  # for backwards compatibility
+
         self.data_class = data_class
         self.type = data_class._type
         self.handler = None
@@ -311,7 +336,9 @@ class _TopicImpl(object):
                 except:
                     pass
             del self.connections[:]
-        self.c_lock = self.connections = self.handler = self.data_class = self.type = None
+        self.c_lock = self.connections = self.handler = self.data_class = self.type = (
+            None
+        )
 
     def close(self):
         """close I/O"""
@@ -329,16 +356,16 @@ class _TopicImpl(object):
                         _logger.error(traceback.format_exc())
                 del self.connections[:]
             self.handler = None
-            
+
     def get_num_connections(self):
         with self.c_lock:
             return len(self.connections)
-    
+
     def has_connection(self, endpoint_id):
         """
         Query whether or not a connection with the associated \a
         endpoint has been added to this object.
-        @param endpoint_id: endpoint ID associated with connection. 
+        @param endpoint_id: endpoint ID associated with connection.
         @type  endpoint_id: str
         """
         # save reference to avoid lock
@@ -350,7 +377,7 @@ class _TopicImpl(object):
 
     def has_connections(self):
         """
-        Check to see if this topic is connected to other publishers/subscribers 
+        Check to see if this topic is connected to other publishers/subscribers
         @return: True if topic is connected
         @rtype: bool
         """
@@ -378,7 +405,8 @@ class _TopicImpl(object):
         # therefore additionally check for fileno equality if available
         elif c.fileno():
             matching_connections = [
-                conn for conn in connections if conn.fileno() == c.fileno()]
+                conn for conn in connections if conn.fileno() == c.fileno()
+            ]
             if len(matching_connections) == 1:
                 connections.remove(matching_connections[0])
 
@@ -386,12 +414,15 @@ class _TopicImpl(object):
         """
         Add a connection to this topic.  If any previous connections
         to same endpoint exist, drop them.
-        
+
         @param c: connection instance
         @type  c: Transport
         @return: True if connection was added, ``bool``
         """
-        rospyinfo("topic[%s] adding connection to [%s], count %s"%(self.resolved_name, c.endpoint_id, len(self.connections)))
+        rospyinfo(
+            "topic[%s] adding connection to [%s], count %s"
+            % (self.resolved_name, c.endpoint_id, len(self.connections))
+        )
         with self.c_lock:
             # protect against race condition adding connection to closed sub
             if self.closed:
@@ -430,7 +461,10 @@ class _TopicImpl(object):
             for fd in self.connection_poll.error_iter():
                 to_remove = [x for x in new_connections if x.fileno() == fd]
                 for x in to_remove:
-                    rospydebug("removing connection to %s, connection error detected"%(x.endpoint_id))
+                    rospydebug(
+                        "removing connection to %s, connection error detected"
+                        % (x.endpoint_id)
+                    )
                     self._remove_connection(new_connections, x)
 
             # Add new connection to poller, register for all events,
@@ -438,7 +472,7 @@ class _TopicImpl(object):
             new_fd = c.fileno()
             if new_fd is not None:
                 self.connection_poll.add_fd(new_fd)
-            
+
             # add in new connection
             new_connections.append(c)
 
@@ -451,11 +485,13 @@ class _TopicImpl(object):
             else:
                 previous_callback = c.cleanup_cb
                 new_callback = self.remove_connection
+
                 def cleanup_cb_wrapper(s):
                     new_callback(s)
                     previous_callback(s)
+
                 c.set_cleanup_callback(cleanup_cb_wrapper)
-            
+
             return True
 
     def check(self):
@@ -465,7 +501,10 @@ class _TopicImpl(object):
                 new_connections = self.connections[:]
                 to_remove = [x for x in new_connections if x.fileno() in fds_to_remove]
                 for x in to_remove:
-                    rospydebug("removing connection to %s, connection error detected"%(x.endpoint_id))
+                    rospydebug(
+                        "removing connection to %s, connection error detected"
+                        % (x.endpoint_id)
+                    )
                     self._remove_connection(new_connections, x)
                 self.connections = new_connections
 
@@ -475,16 +514,18 @@ class _TopicImpl(object):
         @param c: connection instance to remove
         @type  c: Transport
         """
-        rospyinfo("topic[%s] removing connection to %s"%(self.resolved_name, c.endpoint_id))
+        rospyinfo(
+            "topic[%s] removing connection to %s" % (self.resolved_name, c.endpoint_id)
+        )
         with self.c_lock:
             # c_lock is to make remove_connection thread-safe, but we
             # still make a copy of self.connections so that the rest of the
-            # code can use self.connections in an unlocked manner            
+            # code can use self.connections in an unlocked manner
             new_connections = self.connections[:]
             self._remove_connection(new_connections, c)
             self.connections = new_connections
 
-    def get_stats_info(self): # STATS
+    def get_stats_info(self):  # STATS
         """
         Get the stats for this topic
         @return: stats for topic in getBusInfo() format::
@@ -496,23 +537,45 @@ class _TopicImpl(object):
         """
         # save referenceto avoid locking
         connections = self.connections
-        return [(c.id, c.endpoint_id, c.direction, c.transport_type, self.resolved_name, True, c.get_transport_info()) for c in connections]
+        return [
+            (
+                c.id,
+                c.endpoint_id,
+                c.direction,
+                c.transport_type,
+                self.resolved_name,
+                True,
+                c.get_transport_info(),
+            )
+            for c in connections
+        ]
 
-    def get_stats(self): # STATS
+    def get_stats(self):  # STATS
         """Get the stats for this topic (API stub)"""
         raise Exception("subclasses must override")
+
 
 #  Implementation note: Subscriber attaches to a _SubscriberImpl
 #  singleton for that topic.  The underlying impl manages the
 #  connections for that publication and enables thread-safe access
+
 
 class Subscriber(Topic):
     """
     Class for registering as a subscriber to a specified topic, where
     the messages are of a given type.
     """
-    def __init__(self, name, data_class, callback=None, callback_args=None,
-                 queue_size=None, buff_size=DEFAULT_BUFF_SIZE, tcp_nodelay=False):
+
+    def __init__(
+        self,
+        name,
+        data_class,
+        callback=None,
+        callback_args=None,
+        queue_size=None,
+        buff_size=DEFAULT_BUFF_SIZE,
+        tcp_nodelay=False,
+    ):
         """
         Constructor.
 
@@ -561,7 +624,7 @@ class Subscriber(Topic):
         @raise ROSException: if parameters are invalid
         """
         super(Subscriber, self).__init__(name, data_class, Registration.SUB)
-        #add in args that factory cannot pass in
+        # add in args that factory cannot pass in
 
         # last person to set these to non-defaults wins, not much way
         # around this
@@ -580,9 +643,9 @@ class Subscriber(Topic):
             self.callback_args = callback_args
         else:
             # initialize fields
-            self.callback = self.callback_args = None            
+            self.callback = self.callback_args = None
         if tcp_nodelay:
-            self.impl.set_tcp_nodelay(tcp_nodelay)        
+            self.impl.set_tcp_nodelay(tcp_nodelay)
 
     def unregister(self):
         """
@@ -597,10 +660,12 @@ class Subscriber(Topic):
             self.callback = self.callback_args = None
             super(Subscriber, self).unregister()
 
+
 class _SubscriberImpl(_TopicImpl):
     """
     Underlying L{_TopicImpl} implementation for subscriptions.
     """
+
     def __init__(self, name, data_class):
         """
         ctor.
@@ -613,13 +678,15 @@ class _SubscriberImpl(_TopicImpl):
         # client-methods to invoke on new messages. should only modify
         # under lock. This is a list of 2-tuples (fn, args), where
         # args are additional arguments for the callback, or None
-        self.callbacks = [] 
+        self.callbacks = []
         self.queue_size = None
         self.buff_size = DEFAULT_BUFF_SIZE
         self.tcp_nodelay = False
-        self.statistics_logger = SubscriberStatisticsLogger(self) \
-            if SubscriberStatisticsLogger.is_enabled() \
+        self.statistics_logger = (
+            SubscriberStatisticsLogger(self)
+            if SubscriberStatisticsLogger.is_enabled()
             else None
+        )
 
     def close(self):
         """close I/O and release resources"""
@@ -630,7 +697,7 @@ class _SubscriberImpl(_TopicImpl):
         if self.statistics_logger:
             self.statistics_logger.shutdown()
             self.statistics_logger = None
-        
+
     def set_tcp_nodelay(self, tcp_nodelay):
         """
         Set the value of TCP_NODELAY, which causes the Nagle algorithm
@@ -638,12 +705,12 @@ class _SubscriberImpl(_TopicImpl):
         supports it.
         """
         self.tcp_nodelay = tcp_nodelay
-        
+
     def set_queue_size(self, queue_size):
         """
         Set the receive queue size. If more than queue_size messages
         are waiting to be deserialized, they are discarded.
-        
+
         @param queue_size int: incoming queue size. Must be positive integer or None.
         @type  queue_size: int
         """
@@ -668,8 +735,8 @@ class _SubscriberImpl(_TopicImpl):
         elif buff_size <= 0:
             raise ROSException("buffer size must be a positive integer")
         self.buff_size = buff_size
-        
-    def get_stats(self): # STATS
+
+    def get_stats(self):  # STATS
         """
         Get the stats for this topic subscriber
         @return: stats for topic in getBusStats() publisher format::
@@ -680,10 +747,11 @@ class _SubscriberImpl(_TopicImpl):
         """
         # save reference to avoid locking
         conn = self.connections
-        #for now drop estimate is -1
-        stats = (self.resolved_name, 
-                 [(c.id, c.stat_bytes, c.stat_num_msg, -1, not c.done)
-                  for c in conn] )
+        # for now drop estimate is -1
+        stats = (
+            self.resolved_name,
+            [(c.id, c.stat_bytes, c.stat_num_msg, -1, not c.done) for c in conn],
+        )
         return stats
 
     def add_callback(self, cb, cb_args):
@@ -697,7 +765,7 @@ class _SubscriberImpl(_TopicImpl):
         @type  cb_cargs: Any
         """
         if self.closed:
-            raise ROSException("subscriber [%s] has been closed"%(self.resolved_name))
+            raise ROSException("subscriber [%s] has been closed" % (self.resolved_name))
         with self.c_lock:
             # we lock in order to serialize calls to add_callback, but
             # we copy self.callbacks so we can it
@@ -750,10 +818,13 @@ class _SubscriberImpl(_TopicImpl):
                 cb(msg)
         except Exception as e:
             if not is_shutdown():
-                logerr("bad callback: %s\n%s"%(cb, traceback.format_exc()))
+                logerr("bad callback: %s\n%s" % (cb, traceback.format_exc()))
             else:
-                _logger.warn("during shutdown, bad callback: %s\n%s"%(cb, traceback.format_exc()))
-        
+                _logger.warn(
+                    "during shutdown, bad callback: %s\n%s"
+                    % (cb, traceback.format_exc())
+                )
+
     def receive_callback(self, msgs, connection):
         """
         Called by underlying connection transport for each new message received
@@ -764,9 +835,12 @@ class _SubscriberImpl(_TopicImpl):
         callbacks = self.callbacks
         for msg in msgs:
             if self.statistics_logger:
-                self.statistics_logger.callback(msg, connection.callerid_pub, connection.stat_bytes)
+                self.statistics_logger.callback(
+                    msg, connection.callerid_pub, connection.stat_bytes
+                )
             for cb, cb_args in callbacks:
                 self._invoke_callback(msg, cb, cb_args)
+
 
 class SubscribeListener(object):
     """
@@ -804,15 +878,25 @@ class SubscribeListener(object):
 #  manages the connections for that publication and enables
 #  thread-safe access
 
+
 class Publisher(Topic):
     """
     Class for registering as a publisher of a ROS topic.
     """
 
-    def __init__(self, name, data_class, subscriber_listener=None, tcp_nodelay=False, latch=False, headers=None, queue_size=None):
+    def __init__(
+        self,
+        name,
+        data_class,
+        subscriber_listener=None,
+        tcp_nodelay=False,
+        latch=False,
+        headers=None,
+        queue_size=None,
+    ):
         """
         Constructor
-        @param name: resource name of topic, e.g. 'laser'. 
+        @param name: resource name of topic, e.g. 'laser'.
         @type  name: str
         @param data_class: message class for serialization
         @type  data_class: L{Message} class
@@ -837,7 +921,7 @@ class Publisher(Topic):
         publishing will happen synchronously and a warning message
         will be printed.
         @type  queue_size: int
-        @raise ROSException: if parameters are invalid     
+        @raise ROSException: if parameters are invalid
         """
         super(Publisher, self).__init__(name, data_class, Registration.PUB)
 
@@ -853,19 +937,24 @@ class Publisher(Topic):
             self.impl.set_queue_size(queue_size)
         else:
             import warnings
-            warnings.warn("The publisher should be created with an explicit keyword argument 'queue_size'. "
-                "Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.", SyntaxWarning, stacklevel=2)
+
+            warnings.warn(
+                "The publisher should be created with an explicit keyword argument 'queue_size'. "
+                "Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.",
+                SyntaxWarning,
+                stacklevel=2,
+            )
 
     def publish(self, *args, **kwds):
         """
-        Publish message data object to this topic. 
+        Publish message data object to this topic.
         Publish can either be called with the message instance to
         publish or with the constructor args for a new Message
         instance, i.e.::
           pub.publish(message_instance)
-          pub.publish(message_field_1, message_field_2...)            
+          pub.publish(message_field_1, message_field_2...)
           pub.publish(message_field_1='foo', message_field_2='bar')
-    
+
         @param args : L{Message} instance, message arguments, or no args if keyword arguments are used
         @param kwds : Message keyword arguments. If kwds are used, args must be unset
         @raise ROSException: If rospy node has not been initialized
@@ -875,7 +964,9 @@ class Publisher(Topic):
         if self.impl is None:
             raise ROSException("publish() to an unregistered() handle")
         if not is_initialized():
-            raise ROSException("ROS node has not been initialized yet. Please call init_node() first")
+            raise ROSException(
+                "ROS node has not been initialized yet. Please call init_node() first"
+            )
         data = args_kwds_to_message(self.data_class, args, kwds)
         try:
             self.impl.acquire()
@@ -885,18 +976,19 @@ class Publisher(Topic):
             _logger.error(traceback.format_exc())
             raise ROSSerializationException(str(e))
         finally:
-            self.impl.release()            
+            self.impl.release()
+
 
 class _PublisherImpl(_TopicImpl):
     """
     Underlying L{_TopicImpl} implementation for publishers.
     """
-    
+
     def __init__(self, name, data_class):
         """
-        @param name: name of topic, e.g. 'laser'. 
+        @param name: name of topic, e.g. 'laser'.
         @type  name: str
-        @param data_class: Message data class    
+        @param data_class: Message data class
         @type  data_class: L{Message} class
         """
         super(_PublisherImpl, self).__init__(name, data_class)
@@ -904,20 +996,20 @@ class _PublisherImpl(_TopicImpl):
             self.buff = StringIO()
         else:
             self.buff = BytesIO()
-        self.publock = threading.RLock() #for acquire()/release
+        self.publock = threading.RLock()  # for acquire()/release
         self.subscriber_listeners = []
 
         # additional client connection headers
         self.headers = {}
-        
+
         # publish latch, starts disabled
         self.is_latch = False
         self.latch = None
-        
+
         # maximum queue size for publishing messages
         self.queue_size = None
 
-        #STATS
+        # STATS
         self.message_data_sent = 0
 
     def close(self):
@@ -940,18 +1032,18 @@ class _PublisherImpl(_TopicImpl):
         @type  headers: dict
         """
         self.headers.update(headers)
-    
+
     def enable_latch(self):
         """
         Enable publish() latch. The latch contains the last published
         message and is sent to any new subscribers.
         """
         self.is_latch = True
-        
+
     def set_queue_size(self, queue_size):
         self.queue_size = queue_size
 
-    def get_stats(self): # STATS
+    def get_stats(self):  # STATS
         """
         Get the stats for this topic publisher
         @return: stats for topic in getBusStats() publisher format::
@@ -962,8 +1054,11 @@ class _PublisherImpl(_TopicImpl):
         """
         # save reference to avoid lock
         conn = self.connections
-        return (self.resolved_name, self.message_data_sent,
-                [(c.id, c.stat_bytes, c.stat_num_msg, not c.done) for c in conn] )
+        return (
+            self.resolved_name,
+            self.message_data_sent,
+            [(c.id, c.stat_bytes, c.stat_num_msg, not c.done) for c in conn],
+        )
 
     def add_subscriber_listener(self, l):
         """
@@ -972,17 +1067,17 @@ class _PublisherImpl(_TopicImpl):
         @type  l: L{SubscribeListener}
         """
         self.subscriber_listeners.append(l)
-        
+
     def acquire(self):
         """lock for thread-safe publishing to this transport"""
         if self.publock is not None:
             self.publock.acquire()
-        
+
     def release(self):
         """lock for thread-safe publishing to this transport"""
         if self.publock is not None:
             self.publock.release()
-        
+
     def add_connection(self, c):
         """
         Add a connection to this topic. This must be a PubTransport. If
@@ -996,15 +1091,17 @@ class _PublisherImpl(_TopicImpl):
         if self.queue_size is not None:
             c = QueuedConnection(c, self.queue_size)
         super(_PublisherImpl, self).add_connection(c)
+
         def publish_single(data):
             self.publish(data, connection_override=c)
+
         for l in self.subscriber_listeners:
             l.peer_subscribe(self.resolved_name, self.publish, publish_single)
         if self.is_latch and self.latch is not None:
             with self.publock:
                 self.publish(self.latch, connection_override=c)
         return True
-            
+
     def remove_connection(self, c):
         """
         Remove existing connection from this topic.
@@ -1012,10 +1109,10 @@ class _PublisherImpl(_TopicImpl):
         @type  c: L{Transport}
         """
         super(_PublisherImpl, self).remove_connection(c)
-        num = len(self.connections)                
+        num = len(self.connections)
         for l in self.subscriber_listeners:
             l.peer_unsubscribe(self.resolved_name, num)
-            
+
     def publish(self, message, connection_override=None):
         """
         Publish the data to the topic. If the topic has no subscribers,
@@ -1032,7 +1129,7 @@ class _PublisherImpl(_TopicImpl):
         @raise genpy.SerializationError: if L{Message} instance is unable to serialize itself
         @raise rospy.ROSException: if topic has been closed or was closed during publish()
         """
-        #TODO: should really just use IOError instead of rospy.ROSException
+        # TODO: should really just use IOError instead of rospy.ROSException
 
         if self.closed:
             # during shutdown, the topic can get closed, which creates
@@ -1041,16 +1138,16 @@ class _PublisherImpl(_TopicImpl):
                 raise ROSException("publish() to a closed topic")
             else:
                 return
-            
+
         if self.is_latch:
             self.latch = message
 
         if not self.has_connections():
-            #publish() falls through
+            # publish() falls through
             return False
 
         if connection_override is None:
-            #copy connections so we can iterate safely
+            # copy connections so we can iterate safely
             conns = self.connections
         else:
             conns = [connection_override]
@@ -1062,7 +1159,7 @@ class _PublisherImpl(_TopicImpl):
             b.tell()
 
             # serialize the message
-            self.seq += 1 #count messages published to the topic
+            self.seq += 1  # count messages published to the topic
             serialize_message(b, self.seq, message)
 
             # send the buffer to all connections
@@ -1074,18 +1171,24 @@ class _PublisherImpl(_TopicImpl):
                     if not is_shutdown():
                         c.write_data(data)
                 except TransportTerminated as e:
-                    logdebug("publisher connection to [%s] terminated, see errorlog for details:\n%s"%(c.endpoint_id, traceback.format_exc()))
+                    logdebug(
+                        "publisher connection to [%s] terminated, see errorlog for details:\n%s"
+                        % (c.endpoint_id, traceback.format_exc())
+                    )
                     err_con.append(c)
                 except Exception as e:
                     # greater severity level
-                    logdebug("publisher connection to [%s] terminated, see errorlog for details:\n%s"%(c.endpoint_id, traceback.format_exc()))
+                    logdebug(
+                        "publisher connection to [%s] terminated, see errorlog for details:\n%s"
+                        % (c.endpoint_id, traceback.format_exc())
+                    )
                     err_con.append(c)
 
             # reset the buffer and update stats
-            self.message_data_sent += b.tell() #STATS
+            self.message_data_sent += b.tell()  # STATS
             b.seek(0)
             b.truncate(0)
-            
+
         except ValueError:
             # operations on self.buff can fail if topic is closed
             # during publish, which often happens during Ctrl-C.
@@ -1112,21 +1215,23 @@ class _PublisherImpl(_TopicImpl):
             except:
                 pass
 
+
 #################################################################################
 # TOPIC MANAGER/LISTENER
+
 
 class _TopicManager(object):
     """
     Tracks Topic objects
     See L{get_topic_manager()} for singleton access
     """
-    
+
     def __init__(self):
         """ctor."""
         super(_TopicManager, self).__init__()
-        self.pubs = {} #: { topic: _PublisherImpl }
-        self.subs = {} #: { topic: _SubscriberImpl }
-        self.topics = set() # [str] list of topic names
+        self.pubs = {}  #: { topic: _PublisherImpl }
+        self.subs = {}  #: { topic: _SubscriberImpl }
+        self.topics = set()  # [str] list of topic names
         self.lock = threading.Condition()
         self.closed = False
         _logger.info("topicmanager initialized")
@@ -1143,7 +1248,7 @@ class _TopicManager(object):
             for s in chain(iter(self.pubs.values()), iter(self.subs.values())):
                 info.extend(s.get_stats_info())
             return info
-            
+
     def get_pub_sub_stats(self):
         """
         get topic publisher and subscriber stats for getBusStats() api
@@ -1152,9 +1257,10 @@ class _TopicManager(object):
         @rtype: list
         """
         with self.lock:
-            return [s.get_stats() for s in self.pubs.values()],\
-                   [s.get_stats() for s in self.subs.values()]
-            
+            return [s.get_stats() for s in self.pubs.values()], [
+                s.get_stats() for s in self.subs.values()
+            ]
+
     def close_all(self):
         """
         Close all registered publication and subscriptions. Manager is
@@ -1165,9 +1271,8 @@ class _TopicManager(object):
             for t in chain(iter(self.pubs.values()), iter(self.subs.values())):
                 t.close()
             self.pubs.clear()
-            self.subs.clear()        
+            self.subs.clear()
 
-            
     def check_all(self):
         """
         Check all registered publication and subscriptions.
@@ -1175,7 +1280,7 @@ class _TopicManager(object):
         with self.lock:
             for t in chain(list(self.pubs.values()), list(self.subs.values())):
                 t.check()
-        
+
     def _add(self, ps, rmap, reg_type):
         """
         Add L{_TopicImpl} instance to rmap
@@ -1191,16 +1296,18 @@ class _TopicManager(object):
         with self.lock:
             rmap[resolved_name] = ps
             self.topics.add(resolved_name)
-            
+
             # NOTE: this call can take a lengthy amount of time (at
             # least until its reimplemented to use queues)
             get_registration_listeners().notify_added(resolved_name, ps.type, reg_type)
 
     def _recalculate_topics(self):
         """recalculate self.topics. expensive"""
-        self.topics = set([x.resolved_name for x in self.pubs.values()] +
-                          [x.resolved_name for x in self.subs.values()])
-    
+        self.topics = set(
+            [x.resolved_name for x in self.pubs.values()]
+            + [x.resolved_name for x in self.subs.values()]
+        )
+
     def _remove(self, ps, rmap, reg_type):
         """
         Remove L{_TopicImpl} instance from rmap
@@ -1215,11 +1322,13 @@ class _TopicManager(object):
         _logger.debug("tm._remove: %s, %s, %s", resolved_name, ps.type, reg_type)
         with self.lock:
             del rmap[resolved_name]
-            self. _recalculate_topics()
-            
+            self._recalculate_topics()
+
             # NOTE: this call can take a lengthy amount of time (at
             # least until its reimplemented to use queues)
-            get_registration_listeners().notify_removed(resolved_name, ps.type, reg_type)
+            get_registration_listeners().notify_removed(
+                resolved_name, ps.type, reg_type
+            )
 
     def get_impl(self, reg_type, resolved_name):
         """
@@ -1236,9 +1345,9 @@ class _TopicManager(object):
         elif reg_type == Registration.SUB:
             rmap = self.subs
         else:
-            raise TypeError("invalid reg_type: %s"%(reg_type,))
+            raise TypeError("invalid reg_type: %s" % (reg_type,))
         return rmap.get(resolved_name, None)
-        
+
     def acquire_impl(self, reg_type, resolved_name, data_class):
         """
         Acquire a L{_TopicImpl} for the specified topic (create one if it
@@ -1247,13 +1356,13 @@ class _TopicManager(object):
         instances use the same underlying connections. 'Acquiring' a
         topic implementation marks that another Topic instance is
         using the TopicImpl.
-        
+
         @param resolved_name: resolved topic name
         @type  resolved_name: str
-        
+
         @param reg_type: L{rospy.registration.Registration.PUB} or L{rospy.registration.Registration.SUB}
         @type  reg_type: str
-        
+
         @param data_class: message class for topic
         @type  data_class: L{Message} class
         """
@@ -1264,9 +1373,9 @@ class _TopicManager(object):
             rmap = self.subs
             impl_class = _SubscriberImpl
         else:
-            raise TypeError("invalid reg_type: %s"%reg_type)
+            raise TypeError("invalid reg_type: %s" % reg_type)
         with self.lock:
-            impl = rmap.get(resolved_name, None)            
+            impl = rmap.get(resolved_name, None)
             if not impl:
                 impl = impl_class(resolved_name, data_class)
                 self._add(impl, rmap, reg_type)
@@ -1297,16 +1406,23 @@ class _TopicManager(object):
             if self.closed:
                 return
             impl = rmap.get(resolved_name, None)
-            assert impl is not None, "cannot release topic impl as impl [%s] does not exist"%resolved_name
+            assert impl is not None, (
+                "cannot release topic impl as impl [%s] does not exist" % resolved_name
+            )
             impl.ref_count -= 1
-            assert impl.ref_count >= 0, "topic impl's reference count has gone below zero"
+            assert impl.ref_count >= 0, (
+                "topic impl's reference count has gone below zero"
+            )
             if impl.ref_count == 0:
-                rospyinfo("topic impl's ref count is zero, deleting topic %s...", resolved_name)
+                rospyinfo(
+                    "topic impl's ref count is zero, deleting topic %s...",
+                    resolved_name,
+                )
                 impl.close()
                 self._remove(impl, rmap, reg_type)
                 del impl
                 _logger.debug("... done deleting topic %s", resolved_name)
-                
+
     def get_publisher_impl(self, resolved_name):
         """
         @param resolved_name: resolved topic name
@@ -1320,7 +1436,7 @@ class _TopicManager(object):
         """
         @param resolved_name: topic name
         @type  resolved_name: str
-        @return: subscriber for the specified topic. 
+        @return: subscriber for the specified topic.
         @rtype: L{_SubscriberImpl}
         """
         return self.subs.get(resolved_name, None)
@@ -1331,7 +1447,7 @@ class _TopicManager(object):
         @type  resolved_name: str
         @return: True if manager has subscription for specified topic
         @rtype: bool
-        """                
+        """
         return resolved_name in self.subs
 
     def has_publication(self, resolved_name):
@@ -1347,9 +1463,9 @@ class _TopicManager(object):
         """
         @return: list of topic names this node subscribes to/publishes
         @rtype: [str]
-        """                
+        """
         return self.topics.copy()
-    
+
     def _get_list(self, rmap):
         return [[k, v.type] for k, v in rmap.items()]
 
@@ -1361,5 +1477,5 @@ class _TopicManager(object):
     def get_publications(self):
         return self._get_list(self.pubs)
 
-set_topic_manager(_TopicManager())
 
+set_topic_manager(_TopicManager())

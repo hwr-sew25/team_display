@@ -33,12 +33,14 @@
 import os
 import sys
 
-    
+
 try:
     from cStringIO import StringIO
 except ImportError:
     from io import StringIO
 from contextlib import contextmanager
+
+
 @contextmanager
 def fakestdout():
     realstdout = sys.stdout
@@ -46,6 +48,7 @@ def fakestdout():
     sys.stdout = fakestdout
     yield fakestdout
     sys.stdout = realstdout
+
 
 import rospkg
 import logging
@@ -161,30 +164,30 @@ SAMPLE2_NEW_YAML = """/load_ns/subns/dict1/head: 1
 
 def test_dump_params():
     # normal entrypoint has logging configured
-    logger = logging.getLogger('roslaunch').setLevel(logging.CRITICAL)
+    logger = logging.getLogger("roslaunch").setLevel(logging.CRITICAL)
     from roslaunch.param_dump import dump_params
-    roslaunch_d = rospkg.RosPack().get_path('roslaunch')
-    test_d = os.path.join(roslaunch_d, 'test', 'xml')
-    node_rosparam_f = os.path.join(test_d, 'test-node-rosparam-load.xml')
+
+    roslaunch_d = rospkg.RosPack().get_path("roslaunch")
+    test_d = os.path.join(roslaunch_d, "test", "xml")
+    node_rosparam_f = os.path.join(test_d, "test-node-rosparam-load.xml")
     with fakestdout() as b:
         assert dump_params([node_rosparam_f])
         s = b.getvalue().strip()
         # remove float vals as serialization is not stable
-        s = '\n'.join([x for x in s.split('\n') if not 'float' in x])
-        assert str(s) in (SAMPLE1_OLD_YAML, SAMPLE1_NEW_YAML), \
-            "[%s]\nvs\n[%s]\nor\n[%s]" % \
-            (s, SAMPLE1_OLD_YAML, SAMPLE1_NEW_YAML)
-    node_rosparam_f = os.path.join(test_d, 'test-node-rosparam-load-ns.xml')
+        s = "\n".join([x for x in s.split("\n") if not "float" in x])
+        assert str(s) in (SAMPLE1_OLD_YAML, SAMPLE1_NEW_YAML), (
+            "[%s]\nvs\n[%s]\nor\n[%s]" % (s, SAMPLE1_OLD_YAML, SAMPLE1_NEW_YAML)
+        )
+    node_rosparam_f = os.path.join(test_d, "test-node-rosparam-load-ns.xml")
     with fakestdout() as b:
         assert dump_params([node_rosparam_f])
         s = b.getvalue().strip()
         # remove float vals as serialization is not stable
-        s = '\n'.join([x for x in s.split('\n') if not 'float' in x])
-        assert str(s) in(SAMPLE2_OLD_YAML, SAMPLE2_NEW_YAML), \
-            "[%s]\nvs\n[%s]\nor\n[%s]" % \
-            (s, SAMPLE2_OLD_YAML, SAMPLE2_NEW_YAML)
-        
-    invalid_f = os.path.join(test_d, 'invalid-xml.xml')
+        s = "\n".join([x for x in s.split("\n") if not "float" in x])
+        assert str(s) in (SAMPLE2_OLD_YAML, SAMPLE2_NEW_YAML), (
+            "[%s]\nvs\n[%s]\nor\n[%s]" % (s, SAMPLE2_OLD_YAML, SAMPLE2_NEW_YAML)
+        )
+
+    invalid_f = os.path.join(test_d, "invalid-xml.xml")
     with fakestdout() as b:
         assert not dump_params([invalid_f])
-

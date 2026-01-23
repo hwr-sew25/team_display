@@ -33,8 +33,8 @@
 
 ## Simple talker demo that publishes std_msg/Strings to the 'chatter' topic
 
-PKG = 'test_rospy' # this package name
-NAME = 'talker'
+PKG = "test_rospy"  # this package name
+NAME = "talker"
 
 import sys
 import time
@@ -42,26 +42,27 @@ import time
 import rospy
 from std_msgs.msg import String
 
+
 def talker():
     # create our publish handle
-    pub = rospy.Publisher('chatter', String, queue_size=0)
+    pub = rospy.Publisher("chatter", String, queue_size=0)
 
     # in ROS, nodes are unique named. If two nodes with the same
-    # node are launched, the previous one is kicked off. The 
+    # node are launched, the previous one is kicked off. The
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'talker' node so that multiple talkers can
     # run simultaneously.
-    rospy.init_node('talker', anonymous=True)
+    rospy.init_node("talker", anonymous=True)
 
     count = 0
     while not rospy.is_shutdown():
         start = time.time()
-        str = "hello world %d"%count
+        str = "hello world %d" % count
         print(str)
         pub.publish(String(str))
         count += 1
         time.sleep(0.1)
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     talker()
-        

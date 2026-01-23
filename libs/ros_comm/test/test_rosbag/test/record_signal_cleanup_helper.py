@@ -34,12 +34,9 @@
 import time
 import subprocess
 
-RECORD_COMMAND = ['rosbag',
-                  'record',
-                  'chatter',
-                  '-O',
-                  '--duration=5']
+RECORD_COMMAND = ["rosbag", "record", "chatter", "-O", "--duration=5"]
 SLEEP_TIME_SEC = 10
+
 
 def test_signal_cleanup(test_bag_file_name, test_signal):
     """

@@ -41,26 +41,29 @@ import sys
 
 from .rosenv import ROS_NAMESPACE
 
-#TODO: why are these here?
-MSG_EXT = '.msg'
-SRV_EXT = '.srv'
+# TODO: why are these here?
+MSG_EXT = ".msg"
+SRV_EXT = ".srv"
 
-SEP = '/'
-GLOBALNS = '/'
-PRIV_NAME = '~'
+SEP = "/"
+GLOBALNS = "/"
+PRIV_NAME = "~"
 REMAP = ":="
-ANYTYPE = '*'
+ANYTYPE = "*"
 
-if sys.hexversion > 0x03000000: #Python3
+if sys.hexversion > 0x03000000:  # Python3
+
     def isstring(s):
-        return isinstance(s, str) #Python 3.x
+        return isinstance(s, str)  # Python 3.x
 else:
+
     def isstring(s):
         """
         Small helper version to check an object is a string in a way that works
         for both Python 2 and 3
         """
-        return isinstance(s, basestring) #Python 2.x
+        return isinstance(s, basestring)  # Python 2.x
+
 
 def get_ros_namespace(env=None, argv=None):
     """
@@ -70,16 +73,17 @@ def get_ros_namespace(env=None, argv=None):
     @type  argv: [str]
     @return: ROS namespace of current program
     @rtype: str
-    """    
-    #we force command-line-specified namespaces to be globally scoped
+    """
+    # we force command-line-specified namespaces to be globally scoped
     if argv is None:
         argv = sys.argv
     for a in argv:
-        if a.startswith('__ns:='):
-            return make_global_ns(a[len('__ns:='):])
+        if a.startswith("__ns:="):
+            return make_global_ns(a[len("__ns:=") :])
     if env is None:
         env = os.environ
     return make_global_ns(env.get(ROS_NAMESPACE, GLOBALNS))
+
 
 def make_caller_id(name):
     """
@@ -89,73 +93,78 @@ def make_caller_id(name):
     @type  name: str
     @return: caller ID based on supplied local name
     @rtype: str
-    """    
+    """
     return make_global_ns(ns_join(get_ros_namespace(), name))
+
 
 def make_global_ns(name):
     """
     Convert name to a global name with a trailing namespace separator.
-    
+
     @param name: ROS resource name. Cannot be a ~name.
     @type  name: str
     @return str: name as a global name, e.g. 'foo' -> '/foo/'.
         This does NOT resolve a name.
     @rtype: str
-    @raise ValueError: if name is a ~name 
-    """    
+    @raise ValueError: if name is a ~name
+    """
     if is_private(name):
-        raise ValueError("cannot turn [%s] into a global name"%name)
+        raise ValueError("cannot turn [%s] into a global name" % name)
     if not is_global(name):
         name = SEP + name
     if name[-1] != SEP:
         name = name + SEP
     return name
 
+
 def is_global(name):
     """
     Test if name is a global graph resource name.
-    
+
     @param name: must be a legal name in canonical form
     @type  name: str
     @return: True if name is a globally referenced name (i.e. /ns/name)
     @rtype: bool
-    """    
+    """
     return name and name[0] == SEP
+
 
 def is_private(name):
     """
     Test if name is a private graph resource name.
-    
+
     @param name: must be a legal name in canonical form
     @type  name: str
     @return bool: True if name is a privately referenced name (i.e. ~name)
-    """    
+    """
     return name and name[0] == PRIV_NAME
+
 
 def namespace(name):
     """
     Get the namespace of name. The namespace is returned with a
     trailing slash in order to favor easy concatenation and easier use
     within the global context.
-        
+
     @param name: name to return the namespace of. Must be a legal
         name. NOTE: an empty name will return the global namespace.
     @type  name: str
     @return str: Namespace of name. For example, '/wg/node1' returns '/wg/'. The
-        global namespace is '/'. 
+        global namespace is '/'.
     @rtype: str
     @raise ValueError: if name is invalid
-    """    
+    """
     "map name to its namespace"
-    if name is None: 
-        raise ValueError('name')
+    if name is None:
+        raise ValueError("name")
     if not isstring(name):
-        raise TypeError('name')
+        raise TypeError("name")
     if not name:
         return SEP
     elif name[-1] == SEP:
         name = name[:-1]
-    return name[:name.rfind(SEP)+1] or SEP
+    return name[: name.rfind(SEP) + 1] or SEP
+
 
 def ns_join(ns, name):
     """
@@ -168,16 +177,17 @@ def ns_join(ns, name):
     @return str: name concatenated to ns, or name if it is
         unjoinable.
     @rtype: str
-    """    
+    """
     if is_private(name) or is_global(name):
         return name
     if ns == PRIV_NAME:
         return PRIV_NAME + name
-    if not ns: 
+    if not ns:
         return name
     if ns[-1] == SEP:
         return ns + name
     return ns + SEP + name
+
 
 def load_mappings(argv):
     """
@@ -186,23 +196,23 @@ def load_mappings(argv):
 
     @param argv: command-line arguments
     @type  argv: [str]
-    @return: name->name remappings. 
+    @return: name->name remappings.
     @rtype: dict {str: str}
-    """    
+    """
     mappings = {}
     for arg in argv:
         if is_legal_remap(arg):
             try:
                 src, dst = [x.strip() for x in arg.split(REMAP)]
                 if src and dst:
-                    if len(src) > 1 and src[0] == '_' and src[1] != '_':
-                        #ignore parameter assignment mappings
+                    if len(src) > 1 and src[0] == "_" and src[1] != "_":
+                        # ignore parameter assignment mappings
                         pass
                     else:
                         mappings[src] = dst
             except:
-                #TODO: remove
-                sys.stderr.write("ERROR: Invalid remapping argument '%s'\n"%arg)
+                # TODO: remove
+                sys.stderr.write("ERROR: Invalid remapping argument '%s'\n" % arg)
     return mappings
 
 
@@ -211,8 +221,10 @@ def load_mappings(argv):
 
 import re
 
-#~,/, or ascii char followed by (alphanumeric, _, /)
-NAME_LEGAL_CHARS_P = re.compile(r'^[\~\/A-Za-z][\w\/]*$')
+# ~,/, or ascii char followed by (alphanumeric, _, /)
+NAME_LEGAL_CHARS_P = re.compile(r"^[\~\/A-Za-z][\w\/]*$")
+
+
 def is_legal_name(name):
     """
     Check if name is a legal ROS name for graph resources
@@ -222,17 +234,22 @@ def is_legal_name(name):
 
     @param name: Name
     @type  name: str
-    """    
+    """
     # should we enforce unicode checks?
     if name is None:
         return False
     # empty string is a legal name as it resolves to namespace
-    if name == '':
+    if name == "":
         return True
     m = NAME_LEGAL_CHARS_P.match(name)
-    return m is not None and m.group(0) == name and not '//' in name
-    
-BASE_NAME_LEGAL_CHARS_P = re.compile(r'^[A-Za-z][\w]*$') #ascii char followed by (alphanumeric, _)
+    return m is not None and m.group(0) == name and not "//" in name
+
+
+BASE_NAME_LEGAL_CHARS_P = re.compile(
+    r"^[A-Za-z][\w]*$"
+)  # ascii char followed by (alphanumeric, _)
+
+
 def is_legal_base_name(name):
     """
     Validates that name is a legal base name for a graph resource. A base name has
@@ -243,7 +260,9 @@ def is_legal_base_name(name):
     m = BASE_NAME_LEGAL_CHARS_P.match(name)
     return m is not None and m.group(0) == name
 
-REMAP_PATTERN = re.compile(r'^([\~\/A-Za-z]|_|__)[\w\/]*' + REMAP + '.*')
+
+REMAP_PATTERN = re.compile(r"^([\~\/A-Za-z]|_|__)[\w\/]*" + REMAP + ".*")
+
 
 def is_legal_remap(arg):
     """
@@ -253,6 +272,7 @@ def is_legal_remap(arg):
         return False
     m = REMAP_PATTERN.match(arg)
     return m is not None and m.group(0) == arg
+
 
 def canonicalize_name(name):
     """
@@ -264,14 +284,15 @@ def canonicalize_name(name):
     if not name or name == SEP:
         return name
     elif name[0] == SEP:
-        return '/' + '/'.join([x for x in name.split(SEP) if x])
+        return "/" + "/".join([x for x in name.split(SEP) if x])
     else:
-        return '/'.join([x for x in name.split(SEP) if x])        
+        return "/".join([x for x in name.split(SEP) if x])
+
 
 def resolve_name(name, namespace_, remappings=None):
     """
     Resolve a ROS name to its global, canonical form. Private ~names
-    are resolved relative to the node name. 
+    are resolved relative to the node name.
 
     @param name: name to resolve.
     @type  name: str
@@ -282,25 +303,26 @@ def resolve_name(name, namespace_, remappings=None):
     returns parent namespace_. If namespace_ is empty/None,
     @rtype: str
     """
-    if not name: #empty string resolves to parent of the namespace_
+    if not name:  # empty string resolves to parent of the namespace_
         return namespace(namespace_)
 
     name = canonicalize_name(name)
-    if name[0] == SEP: #global name
+    if name[0] == SEP:  # global name
         resolved_name = name
-    elif is_private(name): #~name
+    elif is_private(name):  # ~name
         # #3044: be careful not to accidentally make rest of name global
         resolved_name = canonicalize_name(namespace_ + SEP + name[1:])
-    else: #relative
+    else:  # relative
         resolved_name = namespace(namespace_) + name
 
-    #Mappings override general namespace-based resolution
+    # Mappings override general namespace-based resolution
     # - do this before canonicalization as remappings are meant to
     #   match the name as specified in the code
     if remappings and resolved_name in remappings:
         return remappings[resolved_name]
     else:
         return resolved_name
+
 
 def script_resolve_name(script_name, name):
     """
@@ -312,15 +334,16 @@ def script_resolve_name(script_name, name):
       contain a namespace., ``str``
     :returns: resolved name, ``str``
     """
-    if not name: #empty string resolves to namespace
+    if not name:  # empty string resolves to namespace
         return get_ros_namespace()
-    #Check for global name: /foo/name resolves to /foo/name
+    # Check for global name: /foo/name resolves to /foo/name
     if is_global(name):
         return name
-    #Check for private name: ~name resolves to /caller_id/name
+    # Check for private name: ~name resolves to /caller_id/name
     elif is_private(name):
         return ns_join(make_caller_id(script_name), name[1:])
     return get_ros_namespace() + name
+
 
 def anonymous_name(id):
     """
@@ -330,11 +353,16 @@ def anonymous_name(id):
     @type  id: str
     """
     import socket, random
-    name = "%s_%s_%s_%s"%(id, socket.gethostname(), os.getpid(), random.randint(0, sys.maxsize))
+
+    name = "%s_%s_%s_%s" % (
+        id,
+        socket.gethostname(),
+        os.getpid(),
+        random.randint(0, sys.maxsize),
+    )
     # RFC 952 allows hyphens, IP addrs can have '.'s, both
     # of which are illegal for ROS names. For good
-    # measure, screen ipv6 ':'. 
-    name = name.replace('.', '_')
-    name = name.replace('-', '_')                
-    return name.replace(':', '_')
-
+    # measure, screen ipv6 ':'.
+    name = name.replace(".", "_")
+    name = name.replace("-", "_")
+    return name.replace(":", "_")

@@ -48,25 +48,26 @@ import rospy.names
 import rospy.impl.paramserver
 import rospy.impl.masterslave
 
-_master_arg_remap = { 
-    'deleteParam': [0], # remap key
-    'setParam': [0], # remap key
-    'getParam': [0], # remap key
-    'searchParam': [0], # remap key
-    'subscribeParam': [0], # remap key
-    'unsubscribeParam': [0], # remap key
-    'hasParam': [0], # remap key
-    'registerService': [0], # remap service
-    'lookupService': [0], # remap service
-    'unregisterService': [0], # remap service
-    'registerSubscriber': [0], # remap topic
-    'unregisterSubscriber': [0], # remap topic    
-    'registerPublisher': [0], # remap topic   
-    'unregisterPublisher': [0], # remap topic   
-    'lookupNode': [0], # remap node
-    'getPublishedTopics': [0], # remap subgraph
-    }
-    
+_master_arg_remap = {
+    "deleteParam": [0],  # remap key
+    "setParam": [0],  # remap key
+    "getParam": [0],  # remap key
+    "searchParam": [0],  # remap key
+    "subscribeParam": [0],  # remap key
+    "unsubscribeParam": [0],  # remap key
+    "hasParam": [0],  # remap key
+    "registerService": [0],  # remap service
+    "lookupService": [0],  # remap service
+    "unregisterService": [0],  # remap service
+    "registerSubscriber": [0],  # remap topic
+    "unregisterSubscriber": [0],  # remap topic
+    "registerPublisher": [0],  # remap topic
+    "unregisterPublisher": [0],  # remap topic
+    "lookupNode": [0],  # remap node
+    "getPublishedTopics": [0],  # remap subgraph
+}
+
+
 class MasterProxy(object):
     """
     Convenience wrapper for ROS master API and XML-RPC
@@ -74,7 +75,7 @@ class MasterProxy(object):
     object and will be forwarded appropriately. Names in arguments
     will be remapped according to current node settings. Provides
     dictionary-like access to parameter server, e.g.::
-    
+
       master[key] = value
 
     All methods are thread-safe.
@@ -86,22 +87,26 @@ class MasterProxy(object):
         @param uri: XML-RPC URI of master
         @type  uri: str
         """
-        self.target = rospy.core.xmlrpcapi(uri)        
+        self.target = rospy.core.xmlrpcapi(uri)
 
-    def __getattr__(self, key): #forward api calls to target
+    def __getattr__(self, key):  # forward api calls to target
         if key in _master_arg_remap:
             remappings = _master_arg_remap[key]
         else:
             remappings = rospy.impl.masterslave.ROSHandler.remappings(key)
+
         def wrappedF(*args, **kwds):
-            args = [rospy.names.get_caller_id(),]+list(args)
-            #print "Remap indicies", remappings
+            args = [
+                rospy.names.get_caller_id(),
+            ] + list(args)
+            # print "Remap indicies", remappings
             for i in remappings:
-                i = i + 1 #callerId does not count
-                #print "Remap %s => %s"%(args[i], rospy.names.resolve_name(args[i]))
+                i = i + 1  # callerId does not count
+                # print "Remap %s => %s"%(args[i], rospy.names.resolve_name(args[i]))
                 args[i] = rospy.names.resolve_name(args[i])
             f = getattr(self.target, key)
             return f(*args, **kwds)
+
         return wrappedF
 
     def __getitem__(self, key):
@@ -112,17 +117,19 @@ class MasterProxy(object):
         @type key: str
         @raise KeyError: if key is not set
         """
-        #NOTE: remapping occurs here!
+        # NOTE: remapping occurs here!
         resolved_key = rospy.names.resolve_name(key)
         try:
             return rospy.impl.paramserver.get_param_server_cache().get(resolved_key)
         except KeyError:
             pass
-        code, msg, value = self.target.getParam(rospy.names.get_caller_id(), resolved_key)
-        if code != 1: #unwrap value with Python semantics
+        code, msg, value = self.target.getParam(
+            rospy.names.get_caller_id(), resolved_key
+        )
+        if code != 1:  # unwrap value with Python semantics
             raise KeyError(key)
         return value
-        
+
     def __setitem__(self, key, val):
         """
         Set parameter value on Parameter Server
@@ -138,7 +145,7 @@ class MasterProxy(object):
             rospy.impl.paramserver.get_param_server_cache().update(resolved_key, val)
         except KeyError:
             pass
-        
+
     def search_param(self, key):
         """
         Search for a parameter matching key on the parameter server
@@ -156,7 +163,7 @@ class MasterProxy(object):
         elif code == -1:
             return None
         else:
-            raise rospy.exceptions.ROSException("cannot search for parameter: %s"%msg)
+            raise rospy.exceptions.ROSException("cannot search for parameter: %s" % msg)
 
     def get_param_cached(self, key):
         resolved_key = rospy.names.resolve_name(key)
@@ -165,15 +172,17 @@ class MasterProxy(object):
             return rospy.impl.paramserver.get_param_server_cache().get(resolved_key)
         except KeyError:
             # first access, make call to parameter server
-            code, msg, value = self.target.subscribeParam(rospy.names.get_caller_id(), rospy.core.get_node_uri(), resolved_key)
-            if code != 1: #unwrap value with Python semantics
+            code, msg, value = self.target.subscribeParam(
+                rospy.names.get_caller_id(), rospy.core.get_node_uri(), resolved_key
+            )
+            if code != 1:  # unwrap value with Python semantics
                 raise KeyError(key)
             # set the value in the cache so that it's marked as subscribed
             rospy.impl.paramserver.get_param_server_cache().set(resolved_key, value)
             if isinstance(value, dict) and not value:
                 raise KeyError(key)
             return value
-        
+
     def __delitem__(self, key):
         """
         Delete parameter key from the parameter server.
@@ -181,11 +190,13 @@ class MasterProxy(object):
         @raise ROSException: if parameter server reports an error
         """
         resolved_key = rospy.names.resolve_name(key)
-        code, msg, _ = self.target.deleteParam(rospy.names.get_caller_id(), resolved_key)
+        code, msg, _ = self.target.deleteParam(
+            rospy.names.get_caller_id(), resolved_key
+        )
         if code == -1:
             raise KeyError(key)
         elif code != 1:
-            raise rospy.exceptions.ROSException("cannot delete parameter: %s"%msg)
+            raise rospy.exceptions.ROSException("cannot delete parameter: %s" % msg)
 
     def __contains__(self, key):
         """
@@ -193,12 +204,16 @@ class MasterProxy(object):
         @param key: parameter key
         @type key: str
         @raise ROSException: if parameter server reports an error
-        """        
-        code, msg, value = self.target.hasParam(rospy.names.get_caller_id(), rospy.names.resolve_name(key))
+        """
+        code, msg, value = self.target.hasParam(
+            rospy.names.get_caller_id(), rospy.names.resolve_name(key)
+        )
         if code != 1:
-            raise rospy.exceptions.ROSException("cannot check parameter on server: %s"%msg)
+            raise rospy.exceptions.ROSException(
+                "cannot check parameter on server: %s" % msg
+            )
         return value
-        
+
     def __iter__(self):
         """
         @raise ROSException: if parameter server reports an error
@@ -207,4 +222,6 @@ class MasterProxy(object):
         if code == 1:
             return value.__iter__()
         else:
-            raise rospy.exceptions.ROSException("cannot retrieve parameter names: %s"%msg)
+            raise rospy.exceptions.ROSException(
+                "cannot retrieve parameter names: %s" % msg
+            )

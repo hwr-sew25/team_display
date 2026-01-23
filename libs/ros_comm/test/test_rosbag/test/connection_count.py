@@ -37,29 +37,39 @@ import sys
 import time
 import subprocess
 
+
 class ConnectionCount(unittest.TestCase):
+    def test_connection_count(self):
+        # Wait while the recorder creates a bag for us to examine
+        time.sleep(10.0)
 
-  def test_connection_count(self):
-    # Wait while the recorder creates a bag for us to examine
-    time.sleep(10.0)
+        # Check the connection count returned by `rosbag info`
+        # We could probably do this through the rosbag Python API...
+        cmd = [
+            "rosbag",
+            "info",
+            "/tmp/test_rosbag_record_two_publishers.bag",
+            "-y",
+            "-k",
+            "topics",
+        ]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        self.assertEqual(
+            p.returncode,
+            0,
+            "Failed to check bag\ncmd=%s\nstdout=%s\nstderr=%s" % (cmd, out, err),
+        )
 
-    # Check the connection count returned by `rosbag info`
-    # We could probably do this through the rosbag Python API...
-    cmd = ['rosbag', 'info', 
-           '/tmp/test_rosbag_record_two_publishers.bag',
-           '-y', '-k', 'topics']
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out,err = p.communicate()
-    self.assertEqual(p.returncode, 0, 'Failed to check bag\ncmd=%s\nstdout=%s\nstderr=%s'%(cmd,out,err))
+        conns = False
+        for l in out.decode().split("\n"):
+            f = l.strip().split(": ")
+            if len(f) == 2 and f[0] == "connections":
+                conns = int(f[1])
+                break
 
-    conns = False
-    for l in out.decode().split('\n'):
-        f = l.strip().split(': ')
-        if len(f) == 2 and f[0] == 'connections':
-            conns = int(f[1])
-            break
+        self.assertEqual(conns, 2)
 
-    self.assertEqual(conns, 2)
 
-if __name__ == '__main__':
-  rosunit.unitrun('test_rosbag', 'connection_count', ConnectionCount, sys.argv)
+if __name__ == "__main__":
+    rosunit.unitrun("test_rosbag", "connection_count", ConnectionCount, sys.argv)

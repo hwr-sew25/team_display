@@ -43,7 +43,7 @@ import rospkg
 
 def print_warning(msg):
     """print warning to screen (bold red)"""
-    print('\033[31m%s\033[0m' % msg, file=sys.stderr)
+    print("\033[31m%s\033[0m" % msg, file=sys.stderr)
 
 
 def author_name():
@@ -53,12 +53,14 @@ def author_name():
     :returns: name of current user, ``str``
     """
     import getpass
+
     name = getpass.getuser()
     try:
         import pwd
+
         login = name
         name = pwd.getpwnam(login)[4]
-        name = ''.join(name.split(','))  # strip commas
+        name = "".join(name.split(","))  # strip commas
         # in case pwnam is not set
         if not name:
             name = login
@@ -66,7 +68,7 @@ def author_name():
         # pwd failed
         pass
     try:
-        name = name.decode('utf-8')
+        name = name.decode("utf-8")
     except AttributeError:
         pass
     return name
@@ -78,16 +80,16 @@ def read_template(tmplf):
 
     :returns: text of template file
     """
-    if pkg_resources.resource_exists('roscreate', tmplf):
-        f = pkg_resources.resource_stream('roscreate', tmplf)
+    if pkg_resources.resource_exists("roscreate", tmplf):
+        f = pkg_resources.resource_stream("roscreate", tmplf)
         t = f.read()
     else:
         # fallback on rospkg
         r = rospkg.RosPack()
-        with open(os.path.join(r.get_path('roscreate'), 'templates', tmplf)) as f:
+        with open(os.path.join(r.get_path("roscreate"), "templates", tmplf)) as f:
             t = f.read()
     try:
-        t = t.decode('utf-8')
+        t = t.decode("utf-8")
     except AttributeError:
         pass
     return t

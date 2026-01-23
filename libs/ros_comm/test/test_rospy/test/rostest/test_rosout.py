@@ -36,8 +36,8 @@
 
 from __future__ import print_function
 
-PKG = 'test_rospy'
-NAME = 'test_rosout'
+PKG = "test_rospy"
+NAME = "test_rosout"
 
 import sys
 import time
@@ -47,13 +47,12 @@ import rospy
 import rostest
 from rosgraph_msgs.msg import Log
 
-SUBTOPIC = '/rosout'
-MSG_PREFIX = '[test_rosout] '
-TIMEOUT = 10.0 #seconds
+SUBTOPIC = "/rosout"
+MSG_PREFIX = "[test_rosout] "
+TIMEOUT = 10.0  # seconds
 
 
 class TestRosout(unittest.TestCase):
-
     callback_data = None
 
     @classmethod
@@ -76,9 +75,9 @@ class TestRosout(unittest.TestCase):
 
     # Test that rosout is outputting debug messages as expected
     def test_rosout_dbg(self):
-        self.assertIsNone(self.callback_data, 'invalid test fixture')
+        self.assertIsNone(self.callback_data, "invalid test fixture")
 
-        log_msg = MSG_PREFIX + 'logging test debug message'
+        log_msg = MSG_PREFIX + "logging test debug message"
         rospy.logdebug(log_msg)
 
         # wait for log messages to be received
@@ -88,21 +87,21 @@ class TestRosout(unittest.TestCase):
         print(self.callback_data)
 
         # checking number of messages received on /rosout is expected
-        self.assertIsNotNone(self.callback_data, 'did not receive expected message')
+        self.assertIsNotNone(self.callback_data, "did not receive expected message")
 
         # checking contents of message
         self.assertEqual(rospy.DEBUG, self.callback_data.level)
         self.assertEqual(SUBTOPIC, self.callback_data.name)
         self.assertEqual(log_msg, self.callback_data.msg)
-        self.assertEqual(NAME+'.py', self.callback_data.file)
-        self.assertEqual('TestRosout.test_rosout_dbg', self.callback_data.function)
+        self.assertEqual(NAME + ".py", self.callback_data.file)
+        self.assertEqual("TestRosout.test_rosout_dbg", self.callback_data.function)
         self.assertEqual([SUBTOPIC], self.callback_data.topics)
 
     # Test that rosout is outputting info messages as expected
     def test_rosout_info(self):
-        self.assertIsNone(self.callback_data, 'invalid test fixture')
+        self.assertIsNone(self.callback_data, "invalid test fixture")
 
-        log_msg = MSG_PREFIX + 'logging test info message'
+        log_msg = MSG_PREFIX + "logging test info message"
         rospy.loginfo(log_msg)
 
         # wait for log messages to be received
@@ -112,21 +111,21 @@ class TestRosout(unittest.TestCase):
         print(self.callback_data)
 
         # checking number of messages received on /rosout is expected
-        self.assertIsNotNone(self.callback_data, 'did not receive expected message')
+        self.assertIsNotNone(self.callback_data, "did not receive expected message")
 
         # checking contents of message
         self.assertEqual(rospy.INFO, self.callback_data.level)
         self.assertEqual(SUBTOPIC, self.callback_data.name)
         self.assertEqual(log_msg, self.callback_data.msg)
-        self.assertEqual(NAME+'.py', self.callback_data.file)
-        self.assertEqual('TestRosout.test_rosout_info', self.callback_data.function)
+        self.assertEqual(NAME + ".py", self.callback_data.file)
+        self.assertEqual("TestRosout.test_rosout_info", self.callback_data.function)
         self.assertEqual([SUBTOPIC], self.callback_data.topics)
 
     # Test that rosout is outputting warning messages as expected
     def test_rosout_warn(self):
-        self.assertIsNone(self.callback_data, 'invalid test fixture')
+        self.assertIsNone(self.callback_data, "invalid test fixture")
 
-        log_msg = MSG_PREFIX + 'logging test warning message'
+        log_msg = MSG_PREFIX + "logging test warning message"
         rospy.logwarn(log_msg)
 
         # wait for log messages to be received
@@ -136,21 +135,21 @@ class TestRosout(unittest.TestCase):
         print(self.callback_data)
 
         # checking number of messages received on /rosout is expected
-        self.assertIsNotNone(self.callback_data, 'did not receive expected message')
+        self.assertIsNotNone(self.callback_data, "did not receive expected message")
 
         # checking contents of message
         self.assertEqual(rospy.WARN, self.callback_data.level)
         self.assertEqual(SUBTOPIC, self.callback_data.name)
         self.assertEqual(log_msg, self.callback_data.msg)
-        self.assertEqual(NAME+'.py', self.callback_data.file)
-        self.assertEqual('TestRosout.test_rosout_warn', self.callback_data.function)
+        self.assertEqual(NAME + ".py", self.callback_data.file)
+        self.assertEqual("TestRosout.test_rosout_warn", self.callback_data.function)
         self.assertEqual([SUBTOPIC], self.callback_data.topics)
 
     # Test that rosout is outputting error messages as expected
     def test_rosout_err(self):
-        self.assertIsNone(self.callback_data, 'invalid test fixture')
+        self.assertIsNone(self.callback_data, "invalid test fixture")
 
-        log_msg = MSG_PREFIX + 'logging test error message'
+        log_msg = MSG_PREFIX + "logging test error message"
         rospy.logerr(log_msg)
 
         # wait for log messages to be received
@@ -160,21 +159,21 @@ class TestRosout(unittest.TestCase):
         print(self.callback_data)
 
         # checking number of messages received on /rosout is expected
-        self.assertIsNotNone(self.callback_data, 'did not receive expected message')
+        self.assertIsNotNone(self.callback_data, "did not receive expected message")
 
         # checking contents of message
         self.assertEqual(rospy.ERROR, self.callback_data.level)
         self.assertEqual(SUBTOPIC, self.callback_data.name)
         self.assertEqual(log_msg, self.callback_data.msg)
-        self.assertEqual(NAME+'.py', self.callback_data.file)
-        self.assertEqual('TestRosout.test_rosout_err', self.callback_data.function)
+        self.assertEqual(NAME + ".py", self.callback_data.file)
+        self.assertEqual("TestRosout.test_rosout_err", self.callback_data.function)
         self.assertEqual([SUBTOPIC], self.callback_data.topics)
 
     # Test that rosout is outputting fatal messages as expected
     def test_rosout_fatal(self):
-        self.assertIsNone(self.callback_data, 'invalid test fixture')
+        self.assertIsNone(self.callback_data, "invalid test fixture")
 
-        log_msg = MSG_PREFIX + 'logging test fatal message'
+        log_msg = MSG_PREFIX + "logging test fatal message"
         rospy.logfatal(log_msg)
 
         # wait for log messages to be received
@@ -184,17 +183,17 @@ class TestRosout(unittest.TestCase):
         print(self.callback_data)
 
         # checking number of messages received on /rosout is expected
-        self.assertIsNotNone(self.callback_data, 'did not receive expected message')
+        self.assertIsNotNone(self.callback_data, "did not receive expected message")
 
         # checking contents of message
         self.assertEqual(rospy.FATAL, self.callback_data.level)
         self.assertEqual(SUBTOPIC, self.callback_data.name)
         self.assertEqual(log_msg, self.callback_data.msg)
-        self.assertEqual(NAME+'.py', self.callback_data.file)
-        self.assertEqual('TestRosout.test_rosout_fatal', self.callback_data.function)
+        self.assertEqual(NAME + ".py", self.callback_data.file)
+        self.assertEqual("TestRosout.test_rosout_fatal", self.callback_data.function)
         self.assertEqual([SUBTOPIC], self.callback_data.topics)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rospy.init_node(NAME, log_level=rospy.DEBUG)
     rostest.run(PKG, NAME, TestRosout, sys.argv)

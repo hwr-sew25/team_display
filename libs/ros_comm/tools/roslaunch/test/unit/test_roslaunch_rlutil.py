@@ -36,44 +36,49 @@
 import os
 import sys
 import unittest
-    
+
 import roslaunch
 import roslaunch.rlutil
 
+
 def get_test_path():
     # two directories up from here
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
 
 # path to example.launch directory
 def get_example_path():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'resources'))
+    return os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "resources")
+    )
+
 
 ## Test roslaunch.node_args
 class TestRoslaunchRlutil(unittest.TestCase):
-
     def test_resolve_launch_arguments(self):
         from roslaunch.rlutil import resolve_launch_arguments
 
         roslaunch_dir = get_test_path()
-        example_xml_p = os.path.join(get_example_path(), 'example.launch')
+        example_xml_p = os.path.join(get_example_path(), "example.launch")
         tests = [
             ([], []),
-            (['roslaunch', 'example.launch'], [example_xml_p]),
+            (["roslaunch", "example.launch"], [example_xml_p]),
             ([example_xml_p], [example_xml_p]),
-
-            (['roslaunch', 'example.launch', 'foo', 'bar'], [example_xml_p, 'foo', 'bar']),
-            ([example_xml_p, 'foo', 'bar'], [example_xml_p,'foo', 'bar']),
-
-            ]
+            (
+                ["roslaunch", "example.launch", "foo", "bar"],
+                [example_xml_p, "foo", "bar"],
+            ),
+            ([example_xml_p, "foo", "bar"], [example_xml_p, "foo", "bar"]),
+        ]
         bad = [
-            ['does_not_exist'],
-            ['does_not_exist', 'foo.launch'],
-            ['roslaunch', 'does_not_exist.launch'],                        
-            ]
+            ["does_not_exist"],
+            ["does_not_exist", "foo.launch"],
+            ["roslaunch", "does_not_exist.launch"],
+        ]
 
         for test, result in tests:
             for v1, v2 in zip(result, resolve_launch_arguments(test)):
-                # workaround for nfs 
+                # workaround for nfs
                 if os.path.exists(v1):
                     self.assertTrue(os.path.samefile(v1, v2))
                 else:
@@ -86,16 +91,20 @@ class TestRoslaunchRlutil(unittest.TestCase):
                 pass
 
     def test_roslaunch_check_pass_all_args(self):
-        filename = os.path.join(get_example_path(), 'example-pass_all_args.launch')
+        filename = os.path.join(get_example_path(), "example-pass_all_args.launch")
         error_msg = roslaunch.rlutil.check_roslaunch(filename)
         assert error_msg is None
-        
+
     def test_check_roslaunch(self):
-        filename = os.path.join(get_test_path(), 'test', 'xml', 'test-ignore-unset-args.launch')
+        filename = os.path.join(
+            get_test_path(), "test", "xml", "test-ignore-unset-args.launch"
+        )
         error_msg = roslaunch.rlutil.check_roslaunch(filename, ignore_unset_args=True)
         assert error_msg is None
 
     def test_check_roslaunch_arg_in_arg(self):
-        filename = os.path.join(get_test_path(), 'test', 'xml', 'test-ignore-unset-args-arg-in-arg.launch')
+        filename = os.path.join(
+            get_test_path(), "test", "xml", "test-ignore-unset-args-arg-in-arg.launch"
+        )
         error_msg = roslaunch.rlutil.check_roslaunch(filename, ignore_unset_args=True)
         assert error_msg is None

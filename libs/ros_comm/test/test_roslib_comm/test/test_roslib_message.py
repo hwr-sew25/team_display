@@ -46,28 +46,30 @@ from genpy import Time, Duration
 
 # Not much to test, just tripwires
 
+
 class MessageTest(unittest.TestCase):
-    
     def test_check_types_Header(self):
         # #2128: test that check_types works with a Header
         # #message. This is a weird case because Header has an aliased
         # #type and is the only ROS type for which that is true
         from test_roslib_comm.msg import HeaderTest
+
         x = HeaderTest()
         x._check_types()
-        
+
     def test_strify_message(self):
         from genpy.message import Message, strify_message, fill_message_args
+
         def roundtrip(m):
             yaml_text = strify_message(m)
             print(yaml_text)
-            loaded = yaml.safe_load(yaml_text) 
+            loaded = yaml.safe_load(yaml_text)
             print("loaded", loaded)
             new_inst = m.__class__()
             if loaded is not None:
                 fill_message_args(new_inst, [loaded])
             else:
-                fill_message_args(new_inst, [])                
+                fill_message_args(new_inst, [])
             return new_inst
 
         # The following tests have not been ported to genpy yet
@@ -75,46 +77,52 @@ class MessageTest(unittest.TestCase):
         # test array of Messages field. We can't use M4 or M5 because fill_message_args has to instantiate the embedded type
         from test_roslib_comm.msg import ArrayOfMsgs
         from std_msgs.msg import String, Time, MultiArrayLayout, MultiArrayDimension
-        dims1 = [MultiArrayDimension(*args) for args in [('', 0, 0), ('x', 1, 2), ('y of z', 3, 4)]]
-        dims2 = [MultiArrayDimension('hello world', 91280, 1983274)]
+
+        dims1 = [
+            MultiArrayDimension(*args)
+            for args in [("", 0, 0), ("x", 1, 2), ("y of z", 3, 4)]
+        ]
+        dims2 = [MultiArrayDimension("hello world", 91280, 1983274)]
         times = [Time(genpy.Time(*args)) for args in [(0,), (12345, 6789), (1, 1)]]
-        val = ArrayOfMsgs([String(''), String('foo'), String('bar of soap')],
-                          times,
-                          [MultiArrayLayout(dims1, 0), MultiArrayLayout(dims2, 12354)],
-                          )
+        val = ArrayOfMsgs(
+            [String(""), String("foo"), String("bar of soap")],
+            times,
+            [MultiArrayLayout(dims1, 0), MultiArrayLayout(dims2, 12354)],
+        )
         self.assertEqual(val, roundtrip(val))
-        
 
     def test_get_message_class(self):
         from roslib.message import get_message_class
-      
+
         try:
-            self.assertEqual(None, get_message_class('String'))
+            self.assertEqual(None, get_message_class("String"))
             self.fail("should have thrown ValueError")
-        except ValueError: pass
+        except ValueError:
+            pass
         # non-existent package
-        self.assertEqual(None, get_message_class('fake/Fake'))
+        self.assertEqual(None, get_message_class("fake/Fake"))
         # non-existent message
-        self.assertEqual(None, get_message_class('roslib/Fake'))
+        self.assertEqual(None, get_message_class("roslib/Fake"))
         # package with no messages
-        self.assertEqual(None, get_message_class('genmsg_cpp/Fake'))
-    
+        self.assertEqual(None, get_message_class("genmsg_cpp/Fake"))
+
         import rosgraph_msgs.msg
         import std_msgs.msg
-        self.assertEqual(std_msgs.msg.Header, get_message_class('Header'))
-        self.assertEqual(std_msgs.msg.Header, get_message_class('std_msgs/Header'))
-        self.assertEqual(rosgraph_msgs.msg.Log, get_message_class('rosgraph_msgs/Log'))    
+
+        self.assertEqual(std_msgs.msg.Header, get_message_class("Header"))
+        self.assertEqual(std_msgs.msg.Header, get_message_class("std_msgs/Header"))
+        self.assertEqual(rosgraph_msgs.msg.Log, get_message_class("rosgraph_msgs/Log"))
 
     def test_get_service_class(self):
         from roslib.message import get_service_class
 
         # non-existent package
-        self.assertEqual(None, get_service_class('fake/Fake'))
+        self.assertEqual(None, get_service_class("fake/Fake"))
         # non-existent message
-        self.assertEqual(None, get_service_class('roslib/Fake'))
+        self.assertEqual(None, get_service_class("roslib/Fake"))
         # package with no messages
-        self.assertEqual(None, get_service_class('genmsg_cpp/Fake'))
-    
-        import std_srvs.srv 
-        self.assertEqual(std_srvs.srv.Empty, get_service_class('std_srvs/Empty'))    
+        self.assertEqual(None, get_service_class("genmsg_cpp/Fake"))
 
+        import std_srvs.srv
+
+        self.assertEqual(std_srvs.srv.Empty, get_service_class("std_srvs/Empty"))

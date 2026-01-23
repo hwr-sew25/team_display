@@ -34,10 +34,11 @@
 # Author: Thibault Kruse
 
 from __future__ import with_statement
-NAME = 'test_rosmsgproto'
+
+NAME = "test_rosmsgproto"
 
 import os
-import sys 
+import sys
 import unittest
 import time
 import copy
@@ -49,55 +50,68 @@ import rosmsg
 
 from nose.plugins.skip import SkipTest
 
-ROSMSGPROTO_FN = [sys.executable, os.path.join(os.getcwd(), '../scripts/rosmsg-proto')]
+ROSMSGPROTO_FN = [sys.executable, os.path.join(os.getcwd(), "../scripts/rosmsg-proto")]
 _NO_DICT = True
 if "OrderedDict" in collections.__dict__:
     _NO_DICT = False
 
-class RosMsgProtoCommandlineTestMsg(unittest.TestCase):
 
+class RosMsgProtoCommandlineTestMsg(unittest.TestCase):
     def setUp(self):
         # proto depends on python 2.7 having OrderedDict
-        if _NO_DICT: raise SkipTest("Test skipped because Python version too low")
+        if _NO_DICT:
+            raise SkipTest("Test skipped because Python version too low")
         self.new_environ = os.environ
-        self.new_environ["PYTHONPATH"] = os.path.join(os.getcwd(), "src")+os.linesep+os.environ['PYTHONPATH']
-    
+        self.new_environ["PYTHONPATH"] = (
+            os.path.join(os.getcwd(), "src") + os.linesep + os.environ["PYTHONPATH"]
+        )
+
     def testFail(self):
         cmd = copy.copy(ROSMSGPROTO_FN)
         cmd.extend(["msg", "foo123barxyz"])
-        call = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, env = self.new_environ)
+        call = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.new_environ
+        )
         (output, erroutput) = call.communicate()
-        self.assertEqual(b'', output)
-        self.assertTrue('Unknown message name foo123barxyz' in erroutput.decode())
+        self.assertEqual(b"", output)
+        self.assertTrue("Unknown message name foo123barxyz" in erroutput.decode())
 
     def testSilentFail(self):
         cmd = copy.copy(ROSMSGPROTO_FN)
         cmd.extend(["msg", "-s", "foo123barxyz"])
-        call = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, env = self.new_environ)
+        call = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.new_environ
+        )
         (output, erroutput) = call.communicate()
-        self.assertEqual(b'', output)
-        self.assertEqual(b'', erroutput)
+        self.assertEqual(b"", output)
+        self.assertEqual(b"", erroutput)
 
     def testSilentFailCpp(self):
         cmd = copy.copy(ROSMSGPROTO_FN)
         cmd.extend(["msg", "-s", "foo123barxyz::bar"])
-        call = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, env = self.new_environ)
+        call = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.new_environ
+        )
         (output, erroutput) = call.communicate()
-        self.assertEqual(b'', output)
-        self.assertEqual(b'', erroutput)
+        self.assertEqual(b"", output)
+        self.assertEqual(b"", erroutput)
 
     def testSilentFailDot(self):
         cmd = copy.copy(ROSMSGPROTO_FN)
         cmd.extend(["msg", "-s", "foo123barxyz.bar"])
-        call = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, env = self.new_environ)
+        call = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.new_environ
+        )
         (output, erroutput) = call.communicate()
-        self.assertEqual(b'', output)
-        self.assertEqual(b'', erroutput)
+        self.assertEqual(b"", output)
+        self.assertEqual(b"", erroutput)
 
     def testSilentFailMode(self):
         cmd = copy.copy(ROSMSGPROTO_FN)
         cmd.extend(["msgfoobar", "-s", "foo123barxyz.bar"])
-        call = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, env = self.new_environ)
+        call = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.new_environ
+        )
         (output, erroutput) = call.communicate()
-        self.assertEqual(b'', output)
-        self.assertEqual(b'', erroutput)
+        self.assertEqual(b"", output)
+        self.assertEqual(b"", erroutput)

@@ -39,13 +39,16 @@ import rosgraph
 import roslaunch.child
 import roslaunch.server
 
+
 ## Fake RemoteProcess object
 class ChildProcessMock(roslaunch.server.ChildROSLaunchProcess):
     def __init__(self, name, args=[], env={}):
         super(ChildProcessMock, self).__init__(name, args, env)
         self.stopped = False
+
     def stop(self):
         self.stopped = True
+
 
 ## Fake ProcessMonitor object
 class ProcessMonitorMock(object):
@@ -53,7 +56,7 @@ class ProcessMonitorMock(object):
         self.core_procs = []
         self.procs = []
         self.listeners = []
-        
+
     def join(self, timeout=0):
         pass
 
@@ -65,10 +68,10 @@ class ProcessMonitorMock(object):
 
     def register_core_proc(self, p):
         self.core_procs.append(p)
-        
+
     def registrations_complete(self):
         pass
-        
+
     def unregister(self, p):
         self.procs.remove(p)
 
@@ -83,16 +86,16 @@ class ProcessMonitorMock(object):
 
     def has_main_thread_jobs(self):
         return False
-    
+
     def do_main_thread_jobs(self):
         pass
-    
+
     def kill_process(self, name):
         pass
-        
+
     def shutdown(self):
         pass
-        
+
     def get_active_names(self):
         return [p.name for p in self.procs]
 
@@ -103,47 +106,47 @@ class ProcessMonitorMock(object):
 
     def mainthread_spin_once(self):
         pass
-        
+
     def mainthread_spin(self):
         pass
 
     def run(self):
         pass
-            
+
+
 ## Test roslaunch.server
 class TestRoslaunchChild(unittest.TestCase):
-
     def setUp(self):
         self.pmon = ProcessMonitorMock()
         try:
             # if there is a core up, we have to use its run id
-            m = rosgraph.Master('/roslaunch')
-            self.run_id = m.getParam('/run_id')
+            m = rosgraph.Master("/roslaunch")
+            self.run_id = m.getParam("/run_id")
         except:
-            self.run_id = 'foo-%s'%time.time()
+            self.run_id = "foo-%s" % time.time()
 
     def test_roslaunchChild(self):
         # this is mainly a code coverage test to try and make sure that we don't
         # have any uninitialized references, etc...
 
         from roslaunch.child import ROSLaunchChild
-        
-        name = 'child-%s'%time.time()
-        server_uri = 'http://unroutable:1234'
+
+        name = "child-%s" % time.time()
+        server_uri = "http://unroutable:1234"
         c = ROSLaunchChild(self.run_id, name, server_uri)
         self.assertEqual(self.run_id, c.run_id)
         self.assertEqual(name, c.name)
         self.assertEqual(server_uri, c.server_uri)
         # - this check tests our assumption about c's process monitor field
         self.assertEqual(None, c.pm)
-        self.assertEqual(None, c.child_server)        
+        self.assertEqual(None, c.child_server)
 
         # should be a noop
         c.shutdown()
 
         # create a new child to test _start_pm() and shutdown()
         c = ROSLaunchChild(self.run_id, name, server_uri)
-        
+
         # - test _start_pm and shutdown logic
         c._start_pm()
         self.assertTrue(c.pm is not None)
@@ -153,24 +156,29 @@ class TestRoslaunchChild(unittest.TestCase):
         # monitor. this requires an actual parent server to be running
 
         import roslaunch.config
-        server = roslaunch.server.ROSLaunchParentNode(roslaunch.config.ROSLaunchConfig(), self.pmon)
+
+        server = roslaunch.server.ROSLaunchParentNode(
+            roslaunch.config.ROSLaunchConfig(), self.pmon
+        )
         # - register a fake child with the server so that it accepts registration from ROSLaunchChild
-        server.add_child(name, ChildProcessMock('foo'))
+        server.add_child(name, ChildProcessMock("foo"))
         try:
             server.start()
             self.assertTrue(server.uri, "server URI did not initialize")
-            
+
             c = ROSLaunchChild(self.run_id, name, server.uri)
             c.pm = self.pmon
             #  - run should speed through
             c.run()
         finally:
-            server.shutdown('test done')
+            server.shutdown("test done")
 
         # one final test for code completness: raise an exception during run()
         c = ROSLaunchChild(self.run_id, name, server_uri)
+
         def bad():
-            raise Exception('haha')
+            raise Exception("haha")
+
         # - violate some encapsulation here just to make sure the exception happens
         c._start_pm = bad
         try:
@@ -179,12 +187,12 @@ class TestRoslaunchChild(unittest.TestCase):
             c.run()
         except:
             pass
-        
-        
+
+
 def kill_parent(p, delay=1.0):
     # delay execution so that whatever pmon method we're calling has time to enter
     import time
+
     time.sleep(delay)
     print("stopping parent")
     p.shutdown()
-        

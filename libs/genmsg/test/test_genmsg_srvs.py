@@ -33,65 +33,66 @@
 import os
 import sys
 
+
 def get_test_dir():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "files"))
+
 
 def test_SrvSpec():
     from genmsg import MsgSpec, SrvSpec
 
-    types = ['int32']
-    names = ['a']
+    types = ["int32"]
+    names = ["a"]
     constants = []
-    text = 'int32 a'
-    msg_a = MsgSpec(types, names, constants, text, 'a/Int')
-    assert msg_a.full_name == 'a/Int'
-    assert msg_a.package == 'a'
-    assert msg_a.short_name == 'Int'    
+    text = "int32 a"
+    msg_a = MsgSpec(types, names, constants, text, "a/Int")
+    assert msg_a.full_name == "a/Int"
+    assert msg_a.package == "a"
+    assert msg_a.short_name == "Int"
 
-    types = ['int64']
-    names = ['b']
+    types = ["int64"]
+    names = ["b"]
     constants = []
-    text = 'int64 b'
-    msg_b = MsgSpec(types, names, constants, text, 'b/Int')
-    assert msg_b.full_name == 'b/Int'
-    assert msg_b.package == 'b'
-    assert msg_b.short_name == 'Int'    
+    text = "int64 b"
+    msg_b = MsgSpec(types, names, constants, text, "b/Int")
+    assert msg_b.full_name == "b/Int"
+    assert msg_b.package == "b"
+    assert msg_b.short_name == "Int"
 
-    text = msg_a.text + '\n---\n' + msg_b.text
+    text = msg_a.text + "\n---\n" + msg_b.text
     spec = SrvSpec(msg_a, msg_b, text)
     assert msg_a == spec.request
     assert msg_b == spec.response
     assert text == spec.text
-    assert '' == spec.full_name
-    assert '' == spec.short_name
-    assert '' == spec.package
-        
+    assert "" == spec.full_name
+    assert "" == spec.short_name
+    assert "" == spec.package
+
     # tripwire
     assert repr(spec)
     assert str(spec)
 
     # exercise eq
-    assert spec != 'spec'
-    assert not spec == 'spec'
-        
+    assert spec != "spec"
+    assert not spec == "spec"
+
     spec2 = SrvSpec(msg_a, msg_b, text)
     assert spec == spec2
     assert not spec != spec2
-        
+
     # - full_name
-    spec2.full_name = 'something'
+    spec2.full_name = "something"
     assert spec != spec2
-    spec2.full_name = ''        
+    spec2.full_name = ""
     assert spec == spec2
 
     # - short_name
-    spec2.short_name = 'something'
+    spec2.short_name = "something"
     assert spec != spec2
-    spec2.short_name = ''        
+    spec2.short_name = ""
     assert spec == spec2
     # - package
-    spec2.package = 'something'
+    spec2.package = "something"
     assert spec != spec2
-    spec2.package = ''        
+    spec2.package = ""
     assert spec == spec2
-        

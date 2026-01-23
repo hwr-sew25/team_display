@@ -43,30 +43,33 @@ import sys
 import warnings
 
 # Global, usually set in setup
-ROS_ROOT = 'ROS_ROOT'
-ROS_MASTER_URI = 'ROS_MASTER_URI'
-ROS_PACKAGE_PATH = 'ROS_PACKAGE_PATH'
-ROS_HOME = 'ROS_HOME'
+ROS_ROOT = "ROS_ROOT"
+ROS_MASTER_URI = "ROS_MASTER_URI"
+ROS_PACKAGE_PATH = "ROS_PACKAGE_PATH"
+ROS_HOME = "ROS_HOME"
 
 # Build-related
-ROS_BINDEPS_PATH = 'ROS_BINDEPS_PATH'
-ROS_BOOST_ROOT = 'ROS_BOOST_ROOT'
+ROS_BINDEPS_PATH = "ROS_BINDEPS_PATH"
+ROS_BOOST_ROOT = "ROS_BOOST_ROOT"
 
 # Per session
 # hostname/address to bind XML-RPC services to.
-ROS_IP = 'ROS_IP'
-ROS_HOSTNAME = 'ROS_HOSTNAME'
-ROS_NAMESPACE = 'ROS_NAMESPACE'
+ROS_IP = "ROS_IP"
+ROS_HOSTNAME = "ROS_HOSTNAME"
+ROS_NAMESPACE = "ROS_NAMESPACE"
 # directory in which log files are written
-ROS_LOG_DIR = 'ROS_LOG_DIR'
+ROS_LOG_DIR = "ROS_LOG_DIR"
 
 
 class ROSEnvException(Exception):
     """Base class of roslib.rosenv errors."""
+
     pass
 
 
-warnings.warn('roslib.rosenv is deprecated, please use rospkg or rosgraph.rosenv', stacklevel=2)
+warnings.warn(
+    "roslib.rosenv is deprecated, please use rospkg or rosgraph.rosenv", stacklevel=2
+)
 
 
 def get_ros_root(required=True, env=None):
@@ -82,11 +85,14 @@ def get_ros_root(required=True, env=None):
     p = None
     try:
         if ROS_ROOT not in env:
-            raise ROSEnvException("""
+            raise ROSEnvException(
+                """
 The %(ROS_ROOT)s environment variable has not been set.
 Please set to the location of your ROS installation
 before continuing.
-""" % globals())
+"""
+                % globals()
+            )
 
         return env[ROS_ROOT]
     except Exception:
@@ -109,7 +115,7 @@ def get_ros_package_path(required=False, env=None):
         return env[ROS_PACKAGE_PATH]
     except KeyError:
         if required:
-            raise ROSEnvException('%s has not been configured' % ROS_PACKAGE_PATH)
+            raise ROSEnvException("%s has not been configured" % ROS_PACKAGE_PATH)
 
 
 def get_master_uri(required=True, env=None, argv=None):
@@ -131,10 +137,10 @@ def get_master_uri(required=True, env=None, argv=None):
         argv = sys.argv
     try:
         for arg in argv:
-            if arg.startswith('__master:='):
+            if arg.startswith("__master:="):
                 val = None
                 try:
-                    _, val = arg.split(':=')
+                    _, val = arg.split(":=")
                 except Exception:
                     pass
 
@@ -142,12 +148,14 @@ def get_master_uri(required=True, env=None, argv=None):
                 # correct return value as the configuration is bad
                 # rather than unspecified
                 if not val:
-                    raise ROSEnvException("__master remapping argument '%s' improperly specified" % arg)
+                    raise ROSEnvException(
+                        "__master remapping argument '%s' improperly specified" % arg
+                    )
                 return val
         return env[ROS_MASTER_URI]
     except KeyError:
         if required:
-            raise ROSEnvException('%s has not been configured' % ROS_MASTER_URI)
+            raise ROSEnvException("%s has not been configured" % ROS_MASTER_URI)
 
 
 def get_ros_home(env=None):
@@ -168,7 +176,7 @@ def get_ros_home(env=None):
         return env[ROS_HOME]
     else:
         # slightly more robust than $HOME
-        return os.path.join(os.path.expanduser('~'), '.ros')
+        return os.path.join(os.path.expanduser("~"), ".ros")
 
 
 def get_log_dir(env=None):
@@ -188,7 +196,7 @@ def get_log_dir(env=None):
     if ROS_LOG_DIR in env:
         return env[ROS_LOG_DIR]
     else:
-        return os.path.join(get_ros_home(env), 'log')
+        return os.path.join(get_ros_home(env), "log")
 
 
 def get_test_results_dir(env=None):
@@ -202,7 +210,7 @@ def get_test_results_dir(env=None):
     @return: path to use use for log file directory
     @rtype: str
     """
-    return os.path.join(get_ros_home(env), 'test_results')
+    return os.path.join(get_ros_home(env), "test_results")
 
 
 # this is a copy of the roslogging utility. it's been moved here as it is a common

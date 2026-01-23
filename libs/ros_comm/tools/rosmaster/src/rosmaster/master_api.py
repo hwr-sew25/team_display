@@ -32,7 +32,7 @@
 #
 # Revision $Id$
 """
-ROS Master API. 
+ROS Master API.
 
 L{ROSMasterHandler} provides the API implementation of the
 Master. Python allows an API to be introspected from a Python class,
@@ -40,11 +40,11 @@ so the handler has a 1-to-1 mapping with the actual XMLRPC API.
 
 API return convention: (statusCode, statusMessage, returnValue)
 
- - statusCode: an integer indicating the completion condition of the method. 
+ - statusCode: an integer indicating the completion condition of the method.
  - statusMessage: a human-readable string message for debugging
  - returnValue: the return value of the method; method-specific.
 
-Current status codes: 
+Current status codes:
 
  - -1: ERROR: Error on the part of the caller, e.g. an invalid parameter
  - 0: FAILURE: Method was attempted but failed to complete correctly.
@@ -71,9 +71,20 @@ import rosmaster.threadpool
 
 from rosmaster.util import xmlrpcapi
 from rosmaster.registrations import RegistrationManager
-from rosmaster.validators import non_empty, non_empty_str, not_none, is_api, is_topic, is_service, valid_type_name, valid_name, empty_or_valid_name, ParameterInvalid
+from rosmaster.validators import (
+    non_empty,
+    non_empty_str,
+    not_none,
+    is_api,
+    is_topic,
+    is_service,
+    valid_type_name,
+    valid_name,
+    empty_or_valid_name,
+    ParameterInvalid,
+)
 
-NUM_WORKERS = 3 #number of threads we use to send publisher_update notifications
+NUM_WORKERS = 3  # number of threads we use to send publisher_update notifications
 
 # Return code slots
 STATUS = 0
@@ -84,6 +95,7 @@ _logger = logging.getLogger("rosmaster.master")
 
 LOG_API = False
 
+
 def mloginfo(msg, *args):
     """
     Info-level master log statements. These statements may be printed
@@ -92,18 +104,19 @@ def mloginfo(msg, *args):
     @type  msg: str
     @param args: arguments for msg if msg is a format string
     """
-    #mloginfo is in core so that it is accessible to master and masterdata
+    # mloginfo is in core so that it is accessible to master and masterdata
     _logger.info(msg, *args)
+
 
 def mlogwarn(msg, *args):
     """
     Warn-level master log statements. These statements may be printed
     to screen so they should be user-readable.
     @param msg: Message string
-    @type  msg: str    
+    @type  msg: str
     @param args: arguments for msg if msg is a format string
     """
-    #mloginfo is in core so that it is accessible to master and masterdata
+    # mloginfo is in core so that it is accessible to master and masterdata
     _logger.warn(msg, *args)
     if args:
         print("WARN: " + msg % args)
@@ -125,6 +138,7 @@ def apivalidate(error_return_value, validators=()):
       start with the second param.
     @type  validators: sequence
     """
+
     def check_validates(f):
         try:
             func_code = f.__code__
@@ -132,11 +146,14 @@ def apivalidate(error_return_value, validators=()):
         except AttributeError:
             func_code = f.func_code
             func_name = f.func_name
-        assert len(validators) == func_code.co_argcount - 2, "%s failed arg check"%f #ignore self and caller_id
+        assert len(validators) == func_code.co_argcount - 2, (
+            "%s failed arg check" % f
+        )  # ignore self and caller_id
+
         def validated_f(*args, **kwds):
             if LOG_API:
                 _logger.debug("%s%s", func_name, str(args[1:]))
-                #print "%s%s"%(func_name, str(args[1:]))
+                # print "%s%s"%(func_name, str(args[1:]))
             if len(args) == 1:
                 _logger.error("%s invoked without caller_id parameter" % func_name)
                 return -1, "missing required caller_id parameter", error_return_value
@@ -145,6 +162,7 @@ def apivalidate(error_return_value, validators=()):
 
             instance = args[0]
             caller_id = args[1]
+
             def isstring(s):
                 """Small helper version to check an object is a string in
                 a way that works for both Python 2 and 3
@@ -153,19 +171,24 @@ def apivalidate(error_return_value, validators=()):
                     return isinstance(s, basestring)
                 except NameError:
                     return isinstance(s, str)
+
             if not isstring(caller_id):
                 _logger.error("%s: invalid caller_id param type", func_name)
                 return -1, "caller_id must be a string", error_return_value
-            
-            newArgs = [instance, caller_id] #canonicalized args
+
+            newArgs = [instance, caller_id]  # canonicalized args
             try:
-                for (v, a) in zip(validators, args[2:]):
+                for v, a in zip(validators, args[2:]):
                     if v:
                         try:
-                            newArgs.append(v(a, caller_id)) 
+                            newArgs.append(v(a, caller_id))
                         except ParameterInvalid as e:
-                            _logger.error("%s: invalid parameter: %s", func_name, str(e) or 'error')
-                            return -1, str(e) or 'error', error_return_value
+                            _logger.error(
+                                "%s: invalid parameter: %s",
+                                func_name,
+                                str(e) or "error",
+                            )
+                            return -1, str(e) or "error", error_return_value
                     else:
                         newArgs.append(a)
 
@@ -176,21 +199,28 @@ def apivalidate(error_return_value, validators=()):
                 else:
                     code, msg, val = f(*newArgs, **kwds)
                     if val is None:
-                        return -1, "Internal error (None value returned)", error_return_value
+                        return (
+                            -1,
+                            "Internal error (None value returned)",
+                            error_return_value,
+                        )
                     return code, msg, val
-            except TypeError as te: #most likely wrong arg number
+            except TypeError as te:  # most likely wrong arg number
                 _logger.error(traceback.format_exc())
-                return -1, "Error: invalid arguments: %s"%te, error_return_value
-            except Exception as e: #internal failure
+                return -1, "Error: invalid arguments: %s" % te, error_return_value
+            except Exception as e:  # internal failure
                 _logger.error(traceback.format_exc())
-                return 0, "Internal failure: %s"%e, error_return_value
+                return 0, "Internal failure: %s" % e, error_return_value
+
         try:
             validated_f.__name__ = func_name
         except AttributeError:
             validated_f.func_name = func_name
-        validated_f.__doc__ = f.__doc__ #preserve doc
+        validated_f.__doc__ = f.__doc__  # preserve doc
         return validated_f
+
     return check_validates
+
 
 def publisher_update_task(api, topic, pub_uris):
     """
@@ -206,8 +236,8 @@ def publisher_update_task(api, topic, pub_uris):
     mloginfo(msg)
     start_sec = time.time()
     try:
-        #TODO: check return value for errors so we can unsubscribe if stale
-        ret = xmlrpcapi(api).publisherUpdate('/master', topic, pub_uris)
+        # TODO: check return value for errors so we can unsubscribe if stale
+        ret = xmlrpcapi(api).publisherUpdate("/master", topic, pub_uris)
         msg_suffix = "result=%s" % ret
     except Exception as ex:
         msg_suffix = "exception=%s" % ex
@@ -224,14 +254,16 @@ def service_update_task(api, service, uri):
     @type  api: str
     @param service: Service name to send to node
     @type  service: str
-    @param uri: URI to send to node        
+    @param uri: URI to send to node
     @type  uri: str
     """
-    mloginfo("serviceUpdate[%s, %s] -> %s",service, uri, api)
-    xmlrpcapi(api).serviceUpdate('/master', service, uri)
+    mloginfo("serviceUpdate[%s, %s] -> %s", service, uri, api)
+    xmlrpcapi(api).serviceUpdate("/master", service, uri)
+
 
 ###################################################
 # Master Implementation
+
 
 class ROSMasterHandler(object):
     """
@@ -245,7 +277,7 @@ class ROSMasterHandler(object):
     client code as ros::msproxy::MasterProxy automatically inserts
     this parameter (see ros::client::getMaster()).
     """
-    
+
     def __init__(self, num_workers=NUM_WORKERS):
         """ctor."""
 
@@ -259,22 +291,22 @@ class ROSMasterHandler(object):
         self.reg_manager = RegistrationManager(self.thread_pool)
 
         # maintain refs to reg_manager fields
-        self.publishers  = self.reg_manager.publishers
+        self.publishers = self.reg_manager.publishers
         self.subscribers = self.reg_manager.subscribers
         self.services = self.reg_manager.services
         self.param_subscribers = self.reg_manager.param_subscribers
-        
-        self.topics_types = {} #dict { topicName : type }
+
+        self.topics_types = {}  # dict { topicName : type }
 
         # parameter server dictionary
         self.param_server = rosmaster.paramserver.ParamDictionary(self.reg_manager)
 
-    def _shutdown(self, reason=''):
+    def _shutdown(self, reason=""):
         if self.thread_pool is not None:
             self.thread_pool.join_all(wait_for_tasks=False, wait_for_threads=False)
             self.thread_pool = None
         self.done = True
-        
+
     def _ready(self, uri):
         """
         Initialize the handler with the XMLRPC URI. This is a standard callback from the XmlRpcNode API.
@@ -286,12 +318,12 @@ class ROSMasterHandler(object):
 
     def _ok(self):
         return not self.done
-    
+
     ###############################################################################
     # EXTERNAL API
 
-    @apivalidate(0, (None, ))
-    def shutdown(self, caller_id, msg=''):
+    @apivalidate(0, (None,))
+    def shutdown(self, caller_id, msg=""):
         """
         Stop this server
         @param caller_id: ROS caller id
@@ -305,19 +337,18 @@ class ROSMasterHandler(object):
             print("shutdown request: %s" % msg, file=sys.stdout)
         else:
             print("shutdown requst", file=sys.stdout)
-        self._shutdown('external shutdown request from [%s]: %s'%(caller_id, msg))
+        self._shutdown("external shutdown request from [%s]: %s" % (caller_id, msg))
         return 1, "shutdown", 0
-        
-    @apivalidate('')
+
+    @apivalidate("")
     def getUri(self, caller_id):
         """
         Get the XML-RPC URI of this server.
-        @param caller_id str: ROS caller id    
+        @param caller_id str: ROS caller id
         @return [int, str, str]: [1, "", xmlRpcUri]
         """
         return 1, "", self.uri
 
-        
     @apivalidate(-1)
     def getPid(self, caller_id):
         """
@@ -329,11 +360,10 @@ class ROSMasterHandler(object):
         """
         return 1, "", os.getpid()
 
-    
     ################################################################
     # PARAMETER SERVER ROUTINES
-    
-    @apivalidate(0, (non_empty_str('key'),))
+
+    @apivalidate(0, (non_empty_str("key"),))
     def deleteParam(self, caller_id, key):
         """
         Parameter Server: delete parameter
@@ -347,12 +377,12 @@ class ROSMasterHandler(object):
         try:
             key = resolve_name(key, caller_id)
             self.param_server.delete_param(key, self._notify_param_subscribers)
-            mloginfo("-PARAM [%s] by %s",key, caller_id)            
-            return  1, "parameter %s deleted"%key, 0                
+            mloginfo("-PARAM [%s] by %s", key, caller_id)
+            return 1, "parameter %s deleted" % key, 0
         except KeyError as e:
-            return -1, "parameter [%s] is not set"%key, 0
-        
-    @apivalidate(0, (non_empty_str('key'), not_none('value')))
+            return -1, "parameter [%s] is not set" % key, 0
+
+    @apivalidate(0, (non_empty_str("key"), not_none("value")))
     def setParam(self, caller_id, key, value):
         """
         Parameter Server: set parameter.  NOTE: if value is a
@@ -364,7 +394,7 @@ class ROSMasterHandler(object):
         will replace all existing parameters in the key parameter
         namespace with the parameters in value. You must set
         parameters individually if you wish to perform a union update.
-        
+
         @param caller_id: ROS caller id
         @type  caller_id: str
         @param key: parameter name
@@ -375,11 +405,13 @@ class ROSMasterHandler(object):
         @rtype: [int, str, int]
         """
         key = resolve_name(key, caller_id)
-        self.param_server.set_param(key, value, self._notify_param_subscribers, caller_id)
-        mloginfo("+PARAM [%s] by %s",key, caller_id)
-        return 1, "parameter %s set"%key, 0
+        self.param_server.set_param(
+            key, value, self._notify_param_subscribers, caller_id
+        )
+        mloginfo("+PARAM [%s] by %s", key, caller_id)
+        return 1, "parameter %s set" % key, 0
 
-    @apivalidate(0, (non_empty_str('key'),))
+    @apivalidate(0, (non_empty_str("key"),))
     def getParam(self, caller_id, key):
         """
         Retrieve parameter value from server.
@@ -399,11 +431,11 @@ class ROSMasterHandler(object):
         """
         try:
             key = resolve_name(key, caller_id)
-            return 1, "Parameter [%s]"%key, self.param_server.get_param(key)
-        except KeyError as e: 
-            return -1, "Parameter [%s] is not set"%key, 0
+            return 1, "Parameter [%s]" % key, self.param_server.get_param(key)
+        except KeyError as e:
+            return -1, "Parameter [%s] is not set" % key, 0
 
-    @apivalidate(0, (non_empty_str('key'),))
+    @apivalidate(0, (non_empty_str("key"),))
     def searchParam(self, caller_id, key):
         """
         Search for parameter key on parameter server. Search starts in caller's namespace and proceeds
@@ -411,7 +443,7 @@ class ROSMasterHandler(object):
 
         searchParam's behavior is to search for the first partial match.
         For example, imagine that there are two 'robot_description' parameters::
-          
+
            /robot_description
              /robot_description/arm
              /robot_description/base
@@ -429,20 +461,26 @@ class ROSMasterHandler(object):
         @param key: parameter key to search for.
         @type  key: str
         @return: [code, statusMessage, foundKey]. If code is not 1, foundKey should be
-            ignored. 
+            ignored.
         @rtype: [int, str, str]
         """
         search_key = self.param_server.search_param(caller_id, key)
         if search_key:
-            return 1, "Found [%s]"%search_key, search_key
+            return 1, "Found [%s]" % search_key, search_key
         else:
-            return -1, "Cannot find parameter [%s] in an upwards search"%key, ''
+            return -1, "Cannot find parameter [%s] in an upwards search" % key, ""
 
-    @apivalidate(0, (is_api('caller_api'), non_empty_str('key'),))
+    @apivalidate(
+        0,
+        (
+            is_api("caller_api"),
+            non_empty_str("key"),
+        ),
+    )
     def subscribeParam(self, caller_id, caller_api, key):
         """
         Retrieve parameter value from server and subscribe to updates to that param. See
-        paramUpdate() in the Node API. 
+        paramUpdate() in the Node API.
         @param caller_id str: ROS caller id
         @type  caller_id: str
         @param key: parameter to lookup.
@@ -454,7 +492,7 @@ class ROSMasterHandler(object):
            has not been set yet.
         @rtype: [int, str, XMLRPCLegalValue]
         """
-        key = resolve_name(key, caller_id)        
+        key = resolve_name(key, caller_id)
         try:
             # ps_lock has precedence and is required due to
             # potential self.reg_manager modification
@@ -462,39 +500,44 @@ class ROSMasterHandler(object):
             val = self.param_server.subscribe_param(key, (caller_id, caller_api))
         finally:
             self.ps_lock.release()
-        mloginfo("+CACHEDPARAM [%s] by %s",key, caller_id)
-        return 1, "Subscribed to parameter [%s]"%key, val
+        mloginfo("+CACHEDPARAM [%s] by %s", key, caller_id)
+        return 1, "Subscribed to parameter [%s]" % key, val
 
-    @apivalidate(0, (is_api('caller_api'), non_empty_str('key'),))
+    @apivalidate(
+        0,
+        (
+            is_api("caller_api"),
+            non_empty_str("key"),
+        ),
+    )
     def unsubscribeParam(self, caller_id, caller_api, key):
         """
         Retrieve parameter value from server and subscribe to updates to that param. See
-        paramUpdate() in the Node API. 
+        paramUpdate() in the Node API.
         @param caller_id str: ROS caller id
         @type  caller_id: str
         @param key: parameter to lookup.
         @type  key: str
         @param caller_api: API URI for paramUpdate callbacks.
         @type  caller_api: str
-        @return: [code, statusMessage, numUnsubscribed]. 
+        @return: [code, statusMessage, numUnsubscribed].
            If numUnsubscribed is zero it means that the caller was not subscribed to the parameter.
         @rtype: [int, str, int]
-        """        
-        key = resolve_name(key, caller_id)        
+        """
+        key = resolve_name(key, caller_id)
         try:
             # ps_lock is required due to potential self.reg_manager modification
             self.ps_lock.acquire()
             retval = self.param_server.unsubscribe_param(key, (caller_id, caller_api))
         finally:
             self.ps_lock.release()
-        mloginfo("-CACHEDPARAM [%s] by %s",key, caller_id)
-        return 1, "Unsubscribe to parameter [%s]"%key, 1
+        mloginfo("-CACHEDPARAM [%s] by %s", key, caller_id)
+        return 1, "Unsubscribe to parameter [%s]" % key, 1
 
-
-    @apivalidate(False, (non_empty_str('key'),))
+    @apivalidate(False, (non_empty_str("key"),))
     def hasParam(self, caller_id, key):
         """
-        Check if parameter is stored on server. 
+        Check if parameter is stored on server.
         @param caller_id str: ROS caller id
         @type  caller_id: str
         @param key: parameter to check
@@ -506,21 +549,21 @@ class ROSMasterHandler(object):
         if self.param_server.has_param(key):
             return 1, key, True
         else:
-            return 1, key, False            
+            return 1, key, False
 
     @apivalidate([])
     def getParamNames(self, caller_id):
         """
         Get list of all parameter names stored on this server.
         This does not adjust parameter names for caller's scope.
-        
-        @param caller_id: ROS caller id    
+
+        @param caller_id: ROS caller id
         @type  caller_id: str
         @return: [code, statusMessage, parameterNameList]
         @rtype: [int, str, [str]]
         """
         return 1, "Parameter names", self.param_server.get_param_names()
-            
+
     ##################################################################################
     # NOTIFICATION ROUTINES
 
@@ -540,14 +583,17 @@ class ROSMasterHandler(object):
         thread_pool = self.thread_pool
         if not thread_pool:
             return
-        
-        try:            
+
+        try:
             for node_api in node_apis:
                 # use the api as a marker so that we limit one thread per subscriber
                 thread_pool.queue_task(node_api, task, (node_api, key, value))
         except KeyError:
-            _logger.warn('subscriber data stale (key [%s], listener [%s]): node API unknown'%(key, s))
-        
+            _logger.warn(
+                "subscriber data stale (key [%s], listener [%s]): node API unknown"
+                % (key, s)
+            )
+
     def _notify_param_subscribers(self, updates):
         """
         Notify parameter subscribers of new parameter value
@@ -562,7 +608,11 @@ class ROSMasterHandler(object):
         for subscribers, key, value in updates:
             # use the api as a marker so that we limit one thread per subscriber
             for caller_id, caller_api in subscribers:
-                self.thread_pool.queue_task(caller_api, self.param_update_task, (caller_id, caller_api, key, value))
+                self.thread_pool.queue_task(
+                    caller_api,
+                    self.param_update_task,
+                    (caller_id, caller_api, key, value),
+                )
 
     def param_update_task(self, caller_id, caller_api, param_key, param_value):
         """
@@ -577,7 +627,9 @@ class ROSMasterHandler(object):
         @type  param_value: str
         """
         mloginfo("paramUpdate[%s]", param_key)
-        code, _, _ = xmlrpcapi(caller_api).paramUpdate('/master', param_key, param_value)
+        code, _, _ = xmlrpcapi(caller_api).paramUpdate(
+            "/master", param_key, param_value
+        )
         if code == -1:
             try:
                 # ps_lock is required due to potential self.reg_manager modification
@@ -585,7 +637,9 @@ class ROSMasterHandler(object):
                 # reverse lookup to figure out who we just called
                 matches = self.reg_manager.reverse_lookup(caller_api)
                 for m in matches:
-                    retval = self.param_server.unsubscribe_param(param_key, (m.id, caller_api))
+                    retval = self.param_server.unsubscribe_param(
+                        param_key, (m.id, caller_api)
+                    )
             finally:
                 self.ps_lock.release()
 
@@ -602,30 +656,34 @@ class ROSMasterHandler(object):
     ##################################################################################
     # SERVICE PROVIDER
 
-    @apivalidate(0, ( is_service('service'), is_api('service_api'), is_api('caller_api')))
+    @apivalidate(
+        0, (is_service("service"), is_api("service_api"), is_api("caller_api"))
+    )
     def registerService(self, caller_id, service, service_api, caller_api):
         """
         Register the caller as a provider of the specified service.
         @param caller_id str: ROS caller id
         @type  caller_id: str
-        @param service: Fully-qualified name of service 
+        @param service: Fully-qualified name of service
         @type  service: str
-        @param service_api: Service URI 
+        @param service_api: Service URI
         @type  service_api: str
-        @param caller_api: XML-RPC URI of caller node 
+        @param caller_api: XML-RPC URI of caller node
         @type  caller_api: str
         @return: (code, message, ignore)
         @rtype: (int, str, int)
-        """        
+        """
         try:
             self.ps_lock.acquire()
-            self.reg_manager.register_service(service, caller_id, caller_api, service_api)
+            self.reg_manager.register_service(
+                service, caller_id, caller_api, service_api
+            )
             mloginfo("+SERVICE [%s] %s %s", service, caller_id, caller_api)
         finally:
             self.ps_lock.release()
-        return 1, "Registered [%s] as provider of [%s]"%(caller_id, service), 1
+        return 1, "Registered [%s] as provider of [%s]" % (caller_id, service), 1
 
-    @apivalidate('', (is_service('service'),))
+    @apivalidate("", (is_service("service"),))
     def lookupService(self, caller_id, service):
         """
         Lookup all provider of a particular service.
@@ -643,11 +701,11 @@ class ROSMasterHandler(object):
         finally:
             self.ps_lock.release()
         if service_url:
-            return 1, "rosrpc URI: [%s]"%service_url, service_url
+            return 1, "rosrpc URI: [%s]" % service_url, service_url
         else:
-            return -1, "no provider", ''
+            return -1, "no provider", ""
 
-    @apivalidate(0, ( is_service('service'), is_api('service_api')))
+    @apivalidate(0, (is_service("service"), is_api("service_api")))
     def unregisterService(self, caller_id, service, service_api):
         """
         Unregister the caller as a provider of the specified service.
@@ -665,7 +723,9 @@ class ROSMasterHandler(object):
         """
         try:
             self.ps_lock.acquire()
-            retval = self.reg_manager.unregister_service(service, caller_id, service_api)
+            retval = self.reg_manager.unregister_service(
+                service, caller_id, service_api
+            )
             mloginfo("-SERVICE [%s] %s %s", service, caller_id, service_api)
             return retval
         finally:
@@ -674,15 +734,17 @@ class ROSMasterHandler(object):
     ##################################################################################
     # PUBLISH/SUBSCRIBE
 
-    @apivalidate([], ( is_topic('topic'), valid_type_name('topic_type'), is_api('caller_api')))
+    @apivalidate(
+        [], (is_topic("topic"), valid_type_name("topic_type"), is_api("caller_api"))
+    )
     def registerSubscriber(self, caller_id, topic, topic_type, caller_api):
         """
         Subscribe the caller to the specified topic. In addition to receiving
         a list of current publishers, the subscriber will also receive notifications
-        of new publishers via the publisherUpdate API.        
+        of new publishers via the publisherUpdate API.
         @param caller_id: ROS caller id
         @type  caller_id: str
-        @param topic str: Fully-qualified name of topic to subscribe to. 
+        @param topic str: Fully-qualified name of topic to subscribe to.
         @param topic_type: Datatype for topic. Must be a package-resource name, i.e. the .msg name.
         @type  topic_type: str
         @param caller_api: XML-RPC URI of caller node for new publisher notifications
@@ -691,7 +753,7 @@ class ROSMasterHandler(object):
            for nodes currently publishing the specified topic.
         @rtype: (int, str, [str])
         """
-        #NOTE: subscribers do not get to set topic type
+        # NOTE: subscribers do not get to set topic type
         try:
             self.ps_lock.acquire()
             self.reg_manager.register_subscriber(topic, caller_id, caller_api)
@@ -701,13 +763,13 @@ class ROSMasterHandler(object):
             if not topic in self.topics_types and topic_type != rosgraph.names.ANYTYPE:
                 self.topics_types[topic] = topic_type
 
-            mloginfo("+SUB [%s] %s %s",topic, caller_id, caller_api)
+            mloginfo("+SUB [%s] %s %s", topic, caller_id, caller_api)
             pub_uris = self.publishers.get_apis(topic)
         finally:
             self.ps_lock.release()
-        return 1, "Subscribed to [%s]"%topic, pub_uris
+        return 1, "Subscribed to [%s]" % topic, pub_uris
 
-    @apivalidate(0, (is_topic('topic'), is_api('caller_api')))
+    @apivalidate(0, (is_topic("topic"), is_api("caller_api")))
     def unregisterSubscriber(self, caller_id, topic, caller_api):
         """
         Unregister the caller as a subscriber of the topic.
@@ -716,22 +778,26 @@ class ROSMasterHandler(object):
         @param topic: Fully-qualified name of topic to unregister.
         @type  topic: str
         @param caller_api: API URI of service to unregister. Unregistration will only occur if current
-           registration matches.    
+           registration matches.
         @type  caller_api: str
-        @return: (code, statusMessage, numUnsubscribed). 
+        @return: (code, statusMessage, numUnsubscribed).
           If numUnsubscribed is zero it means that the caller was not registered as a subscriber.
           The call still succeeds as the intended final state is reached.
         @rtype: (int, str, int)
         """
         try:
             self.ps_lock.acquire()
-            retval = self.reg_manager.unregister_subscriber(topic, caller_id, caller_api)
-            mloginfo("-SUB [%s] %s %s",topic, caller_id, caller_api)
+            retval = self.reg_manager.unregister_subscriber(
+                topic, caller_id, caller_api
+            )
+            mloginfo("-SUB [%s] %s %s", topic, caller_id, caller_api)
             return retval
         finally:
             self.ps_lock.release()
 
-    @apivalidate([], ( is_topic('topic'), valid_type_name('topic_type'), is_api('caller_api')))
+    @apivalidate(
+        [], (is_topic("topic"), valid_type_name("topic_type"), is_api("caller_api"))
+    )
     def registerPublisher(self, caller_id, topic, topic_type, caller_api):
         """
         Register the caller as a publisher the topic.
@@ -748,7 +814,7 @@ class ROSMasterHandler(object):
         List of current subscribers of topic in the form of XMLRPC URIs.
         @rtype: (int, str, [str])
         """
-        #NOTE: we need topic_type for getPublishedTopics.
+        # NOTE: we need topic_type for getPublishedTopics.
         try:
             self.ps_lock.acquire()
             self.reg_manager.register_publisher(topic, caller_id, caller_api)
@@ -758,14 +824,13 @@ class ROSMasterHandler(object):
             pub_uris = self.publishers.get_apis(topic)
             sub_uris = self.subscribers.get_apis(topic)
             self._notify_topic_subscribers(topic, pub_uris, sub_uris)
-            mloginfo("+PUB [%s] %s %s",topic, caller_id, caller_api)
-            sub_uris = self.subscribers.get_apis(topic)            
+            mloginfo("+PUB [%s] %s %s", topic, caller_id, caller_api)
+            sub_uris = self.subscribers.get_apis(topic)
         finally:
             self.ps_lock.release()
-        return 1, "Registered [%s] as publisher of [%s]"%(caller_id, topic), sub_uris
+        return 1, "Registered [%s] as publisher of [%s]" % (caller_id, topic), sub_uris
 
-
-    @apivalidate(0, (is_topic('topic'), is_api('caller_api')))
+    @apivalidate(0, (is_topic("topic"), is_api("caller_api")))
     def unregisterPublisher(self, caller_id, topic, caller_api):
         """
         Unregister the caller as a publisher of the topic.
@@ -777,17 +842,21 @@ class ROSMasterHandler(object):
            unregister. Unregistration will only occur if current
            registration matches.
         @type  caller_api: str
-        @return: (code, statusMessage, numUnregistered). 
+        @return: (code, statusMessage, numUnregistered).
            If numUnregistered is zero it means that the caller was not registered as a publisher.
            The call still succeeds as the intended final state is reached.
         @rtype: (int, str, int)
-        """            
+        """
         try:
             self.ps_lock.acquire()
             retval = self.reg_manager.unregister_publisher(topic, caller_id, caller_api)
             if retval[VAL]:
-                self._notify_topic_subscribers(topic, self.publishers.get_apis(topic), self.subscribers.get_apis(topic))
-            mloginfo("-PUB [%s] %s %s",topic, caller_id, caller_api)
+                self._notify_topic_subscribers(
+                    topic,
+                    self.publishers.get_apis(topic),
+                    self.subscribers.get_apis(topic),
+                )
+            mloginfo("-PUB [%s] %s %s", topic, caller_id, caller_api)
         finally:
             self.ps_lock.release()
         return retval
@@ -795,7 +864,7 @@ class ROSMasterHandler(object):
     ##################################################################################
     # GRAPH STATE APIS
 
-    @apivalidate('', (valid_name('node'),))
+    @apivalidate("", (valid_name("node"),))
     def lookupNode(self, caller_id, node_name):
         """
         Get the XML-RPC URI of the node with the associated
@@ -815,12 +884,12 @@ class ROSMasterHandler(object):
             if node is not None:
                 retval = 1, "node api", node.api
             else:
-                retval = -1, "unknown node [%s]"%node_name, ''
+                retval = -1, "unknown node [%s]" % node_name, ""
         finally:
             self.ps_lock.release()
         return retval
-        
-    @apivalidate(0, (empty_or_valid_name('subgraph'),))
+
+    @apivalidate(0, (empty_or_valid_name("subgraph"),))
     def getPublishedTopics(self, caller_id, subgraph):
         """
         Get list of topics that can be subscribed to. This does not return topics that have no publishers.
@@ -838,54 +907,61 @@ class ROSMasterHandler(object):
             # force subgraph to be a namespace with trailing slash
             if subgraph and subgraph[-1] != rosgraph.names.SEP:
                 subgraph = subgraph + rosgraph.names.SEP
-            #we don't bother with subscribers as subscribers don't report topic types. also, the intended
-            #use case is for subscribe-by-topic-type
-            retval = [[t, self.topics_types[t]] for t in self.publishers.iterkeys() if t.startswith(subgraph)]
+            # we don't bother with subscribers as subscribers don't report topic types. also, the intended
+            # use case is for subscribe-by-topic-type
+            retval = [
+                [t, self.topics_types[t]]
+                for t in self.publishers.iterkeys()
+                if t.startswith(subgraph)
+            ]
         finally:
             self.ps_lock.release()
         return 1, "current topics", retval
-    
+
     @apivalidate([])
-    def getTopicTypes(self, caller_id): 
+    def getTopicTypes(self, caller_id):
         """
         Retrieve list topic names and their types.
-        @param caller_id: ROS caller id    
+        @param caller_id: ROS caller id
         @type  caller_id: str
         @rtype: (int, str, [[str,str]] )
         @return: (code, statusMessage, topicTypes). topicTypes is a list of [topicName, topicType] pairs.
         """
-        try: 
+        try:
             self.ps_lock.acquire()
             retval = list(self.topics_types.items())
         finally:
             self.ps_lock.release()
         return 1, "current system state", retval
 
-    @apivalidate([[],[], []])
-    def getSystemState(self, caller_id): 
+    @apivalidate([[], [], []])
+    def getSystemState(self, caller_id):
         """
         Retrieve list representation of system state (i.e. publishers, subscribers, and services).
-        @param caller_id: ROS caller id    
+        @param caller_id: ROS caller id
         @type  caller_id: str
         @rtype: (int, str, [[str,[str]], [str,[str]], [str,[str]]])
         @return: (code, statusMessage, systemState).
 
            System state is in list representation::
              [publishers, subscribers, services].
-        
+
            publishers is of the form::
              [ [topic1, [topic1Publisher1...topic1PublisherN]] ... ]
-        
+
            subscribers is of the form::
              [ [topic1, [topic1Subscriber1...topic1SubscriberN]] ... ]
-        
+
            services is of the form::
              [ [service1, [service1Provider1...service1ProviderN]] ... ]
         """
         edges = []
-        try: 
+        try:
             self.ps_lock.acquire()
-            retval = [r.get_state() for r in (self.publishers, self.subscribers, self.services)]
+            retval = [
+                r.get_state()
+                for r in (self.publishers, self.subscribers, self.services)
+            ]
         finally:
             self.ps_lock.release()
         return 1, "current system state", retval

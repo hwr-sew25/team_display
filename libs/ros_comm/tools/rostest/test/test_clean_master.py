@@ -38,12 +38,14 @@ import unittest
 import rospy
 import rosunit
 
-class CleanMasterTest(unittest.TestCase):
-  
-    def test_clean_master(self):
-        self.assertFalse(rospy.has_param('dirty'))
-        rospy.set_param('dirty', True)
 
-if __name__ == '__main__':
-    rosunit.unitrun('test_rostest', 'test_clean_master', CleanMasterTest, coverage_packages=[])
-  
+class CleanMasterTest(unittest.TestCase):
+    def test_clean_master(self):
+        self.assertFalse(rospy.has_param("dirty"))
+        rospy.set_param("dirty", True)
+
+
+if __name__ == "__main__":
+    rosunit.unitrun(
+        "test_rostest", "test_clean_master", CleanMasterTest, coverage_packages=[]
+    )

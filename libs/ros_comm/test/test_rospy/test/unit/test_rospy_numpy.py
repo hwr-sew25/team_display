@@ -33,6 +33,7 @@
 
 import os
 import sys
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -43,6 +44,7 @@ import time
 
 try:
     import numpy
+
     disable = False
 except ImportError:
     print("cannot import numpy, test is disabled")
@@ -51,9 +53,9 @@ except ImportError:
 # this is partially a teste of the rospy/Tutorials/numpy
 from test_rospy.msg import Floats
 
+
 # test rospy.names package
 class TestRospyNumpy(unittest.TestCase):
-
     def test_floats(self):
         if disable:
             return
@@ -70,17 +72,21 @@ class TestRospyNumpy(unittest.TestCase):
             self.assertAlmostEqual(x, y, 2)
 
         from rospy.numpy_msg import numpy_msg
+
         f3 = numpy_msg(Floats)()
         if 0:
             # future
             self.assertTrue(isinstance(f3.data, numpy.ndarray), type(f3.data))
         f3.deserialize(b.getvalue())
         self.assertTrue(isinstance(f3.data, numpy.ndarray), type(f3.data))
-        v = numpy.equal(f3.data, numpy.array([1.0, 2.1, 3.2, 4.3, 5.4, 6.5], dtype=numpy.float32))
+        v = numpy.equal(
+            f3.data, numpy.array([1.0, 2.1, 3.2, 4.3, 5.4, 6.5], dtype=numpy.float32)
+        )
         self.assertTrue(v.all())
 
     def test_class_identity(self):
         from rospy.numpy_msg import numpy_msg
+
         self.assertTrue(isinstance(numpy_msg(Floats)(), numpy_msg(Floats)))
 
         FloatsNP = numpy_msg(Floats)

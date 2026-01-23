@@ -35,6 +35,7 @@ from test_rosbag.msg import *
 
 import rosbag
 
+
 def generate_data():
     bag = rosbag.Bag("test/migrated_explicit_gen3.bag", "w")
     m = MigratedExplicit(None, 17, 58.2, "aldfkja", 82)
@@ -42,17 +43,27 @@ def generate_data():
     bag.close()
 
     bag = rosbag.Bag("test/migrated_implicit_gen3.bag", "w")
-    m = MigratedImplicit(None, MigratedExplicit(None, 17, 58.2, "aldfkja", 82), "kljene", 16.32, 34)
+    m = MigratedImplicit(
+        None, MigratedExplicit(None, 17, 58.2, "aldfkja", 82), "kljene", 16.32, 34
+    )
     bag.write("migrated_implicit", m, genpy.Time())
     bag.close()
 
     bag = rosbag.Bag("test/migrated_mixed_gen3.bag", "w")
-    m = MigratedMixed(None, MigratedImplicit(None, MigratedExplicit(None, 17, 58.2, "aldfkja", 82), "kljene", 16.32, 34), 59)
+    m = MigratedMixed(
+        None,
+        MigratedImplicit(
+            None, MigratedExplicit(None, 17, 58.2, "aldfkja", 82), "kljene", 16.32, 34
+        ),
+        59,
+    )
     bag.write("migrated_mixed", m, genpy.Time())
     bag.close()
 
     bag = rosbag.Bag("test/partially_migrated_gen3.bag", "w")
-    m = PartiallyMigrated(40, MigratedExplicit(None, 17, 58.2, "aldfkja", 82), "radasdk")
+    m = PartiallyMigrated(
+        40, MigratedExplicit(None, 17, 58.2, "aldfkja", 82), "radasdk"
+    )
     bag.write("partially_migrated", m, genpy.Time())
     bag.close()
 
@@ -62,9 +73,18 @@ def generate_data():
     bag.close()
 
     bag = rosbag.Bag("test/converged_gen3.bag", "w")
-    m = Converged([1.2, 3.4, 5.6, 7.8], [SimpleMigrated(11), SimpleMigrated(22), SimpleMigrated(33), SimpleMigrated(44)])
+    m = Converged(
+        [1.2, 3.4, 5.6, 7.8],
+        [
+            SimpleMigrated(11),
+            SimpleMigrated(22),
+            SimpleMigrated(33),
+            SimpleMigrated(44),
+        ],
+    )
     bag.write("converged", m, genpy.Time())
     bag.close()
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     generate_data()

@@ -24,17 +24,19 @@ from message_filters import SimpleFilter, Subscriber, Cache, TimeSynchronizer
 class MockHeader:
     pass
 
+
 class MockMessage:
     def __init__(self, stamp, data):
         self.header = MockHeader()
         self.header.stamp = stamp
         self.data = data
 
+
 class MockFilter(SimpleFilter):
     pass
 
-class TestDirected(unittest.TestCase):
 
+class TestDirected(unittest.TestCase):
     def cb_collector_2msg(self, msg1, msg2):
         self.collector.append((msg1, msg2))
 
@@ -73,10 +75,11 @@ class TestDirected(unittest.TestCase):
                 m1.signalMessage(msg)
             self.assertEqual(set(self.collector), set(zip(seq0, seq1)))
 
-if __name__ == '__main__':
-   if 0:
-        rostest.unitrun('message_filters', 'directed', TestDirected)
-   else:
+
+if __name__ == "__main__":
+    if 0:
+        rostest.unitrun("message_filters", "directed", TestDirected)
+    else:
         suite = unittest.TestSuite()
-        suite.addTest(TestDirected('test_synchronizer'))
+        suite.addTest(TestDirected("test_synchronizer"))
         unittest.TextTestRunner(verbosity=2).run(suite)

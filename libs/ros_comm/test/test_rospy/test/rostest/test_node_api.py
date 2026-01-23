@@ -31,8 +31,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG='test_rosmaster'
-NAME = 'test_node_api'
+PKG = "test_rosmaster"
+NAME = "test_node_api"
 
 import sys
 
@@ -41,7 +41,7 @@ import rostest
 
 from node import NodeApiTestCase, set_node_name
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rospy.init_node(NAME)
-    set_node_name(NAME) 
+    set_node_name(NAME)
     rostest.rosrun(PKG, NAME, NodeApiTestCase, sys.argv)

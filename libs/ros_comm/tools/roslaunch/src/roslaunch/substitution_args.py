@@ -40,9 +40,9 @@ by roslaunch and xacro, but it is not yet a top-level ROS feature.
 import os
 
 try:
-    from cStringIO import StringIO # Python 2.x
+    from cStringIO import StringIO  # Python 2.x
 except ImportError:
-    from io import StringIO # Python 3.x
+    from io import StringIO  # Python 3.x
 
 import rosgraph.names
 import rospkg
@@ -51,22 +51,29 @@ import math
 
 _rospack = None
 
+
 class SubstitutionException(Exception):
     """
     Base class for exceptions in substitution_args routines
     """
+
     pass
+
+
 class ArgException(SubstitutionException):
     """
     Exception for missing $(arg) values
     """
+
     pass
+
 
 def _eval_env(name):
     try:
         return os.environ[name]
     except KeyError as e:
         raise SubstitutionException("environment variable %s is not set" % str(e))
+
 
 def _env(resolved, a, args, context):
     """
@@ -76,13 +83,17 @@ def _env(resolved, a, args, context):
     @raise SubstitutionException: if arg invalidly specified
     """
     if len(args) != 1:
-        raise SubstitutionException("$(env var) command only accepts one argument [%s]"%a)
+        raise SubstitutionException(
+            "$(env var) command only accepts one argument [%s]" % a
+        )
     return resolved.replace("$(%s)" % a, _eval_env(args[0]))
 
-def _eval_optenv(name, default=''):
+
+def _eval_optenv(name, default=""):
     if name in os.environ:
         return os.environ[name]
     return default
+
 
 def _optenv(resolved, a, args, context):
     """
@@ -92,8 +103,13 @@ def _optenv(resolved, a, args, context):
     @raise SubstitutionException: if arg invalidly specified
     """
     if len(args) == 0:
-        raise SubstitutionException("$(optenv var) must specify an environment variable [%s]"%a)
-    return resolved.replace("$(%s)" % a, _eval_optenv(args[0], default=' '.join(args[1:])))
+        raise SubstitutionException(
+            "$(optenv var) must specify an environment variable [%s]" % a
+        )
+    return resolved.replace(
+        "$(%s)" % a, _eval_optenv(args[0], default=" ".join(args[1:]))
+    )
+
 
 def _eval_anon(id, anons):
     if id in anons:
@@ -101,6 +117,7 @@ def _eval_anon(id, anons):
     resolve_to = rosgraph.names.anonymous_name(id)
     anons[id] = resolve_to
     return resolve_to
+
 
 def _anon(resolved, a, args, context):
     """
@@ -111,18 +128,22 @@ def _anon(resolved, a, args, context):
     """
     # #1559 #1660
     if len(args) == 0:
-        raise SubstitutionException("$(anon var) must specify a name [%s]"%a)
+        raise SubstitutionException("$(anon var) must specify a name [%s]" % a)
     elif len(args) > 1:
-        raise SubstitutionException("$(anon var) may only specify one name [%s]"%a)
-    if 'anon' not in context:
-        context['anon'] = {}
-    anon_context = context['anon']
+        raise SubstitutionException("$(anon var) may only specify one name [%s]" % a)
+    if "anon" not in context:
+        context["anon"] = {}
+    anon_context = context["anon"]
     return resolved.replace("$(%s)" % a, _eval_anon(id=args[0], anons=anon_context))
+
 
 def _eval_dirname(filename):
     if not filename:
-        raise SubstitutionException("Cannot substitute $(dirname), no file/directory information available.")
+        raise SubstitutionException(
+            "Cannot substitute $(dirname), no file/directory information available."
+        )
     return os.path.abspath(os.path.dirname(filename))
+
 
 def _dirname(resolved, a, args, context):
     """
@@ -132,11 +153,13 @@ def _dirname(resolved, a, args, context):
     @raise SubstitutionException: if no information about the current launch file is available, for example
            if XML was passed via stdin, or this is a remote launch.
     """
-    return resolved.replace("$(%s)" % a, _eval_dirname(context.get('filename', None)))
+    return resolved.replace("$(%s)" % a, _eval_dirname(context.get("filename", None)))
+
 
 def _eval_find(pkg):
     rp = _get_rospack()
     return rp.get_path(pkg)
+
 
 def _find(resolved, a, args, context):
     """
@@ -149,33 +172,43 @@ def _find(resolved, a, args, context):
     :raises: :exc:`rospkg.ResourceNotFound` If PKG requires resource (e.g. package) that does not exist
     """
     if len(args) != 1:
-        raise SubstitutionException("$(find pkg) command only accepts one argument [%s]" % a)
+        raise SubstitutionException(
+            "$(find pkg) command only accepts one argument [%s]" % a
+        )
     before, after = _split_command(resolved, a)
     path, after = _separate_first_path(after)
-    resolve_without_path = before + ('$(%s)' % a) + after
+    resolve_without_path = before + ("$(%s)" % a) + after
     path = _sanitize_path(path)
-    if path.startswith('/') or path.startswith('\\'):
+    if path.startswith("/") or path.startswith("\\"):
         path = path[1:]
     rp = _get_rospack()
     if path:
-        source_path_to_packages = rp.get_custom_cache('source_path_to_packages', {})
+        source_path_to_packages = rp.get_custom_cache("source_path_to_packages", {})
         res = None
         try:
             res = _find_executable(
-                resolve_without_path, a, [args[0], path], context,
-                source_path_to_packages=source_path_to_packages)
+                resolve_without_path,
+                a,
+                [args[0], path],
+                context,
+                source_path_to_packages=source_path_to_packages,
+            )
         except SubstitutionException:
             pass
         if res is None:
             try:
                 res = _find_resource(
-                    resolve_without_path, a, [args[0], path], context,
-                    source_path_to_packages=source_path_to_packages)
+                    resolve_without_path,
+                    a,
+                    [args[0], path],
+                    context,
+                    source_path_to_packages=source_path_to_packages,
+                )
             except SubstitutionException:
                 pass
         # persist mapping of packages in rospack instance
         if source_path_to_packages:
-            rp.set_custom_cache('source_path_to_packages', source_path_to_packages)
+            rp.set_custom_cache("source_path_to_packages", source_path_to_packages)
         if res is not None:
             return res
     pkg_path = rp.get_path(args[0])
@@ -193,17 +226,23 @@ def _find_executable(resolved, a, args, _context, source_path_to_packages=None):
     :raises: :exc:SubstitutionException: if PKG/PATH invalidly specified or executable is not found for PKG
     """
     if len(args) != 2:
-        raise SubstitutionException("$(find-executable pkg path) command only accepts two argument [%s]" % a)
+        raise SubstitutionException(
+            "$(find-executable pkg path) command only accepts two argument [%s]" % a
+        )
     before, after = _split_command(resolved, a)
     path = _sanitize_path(args[1])
     # we try to find the specific executable in libexec via catkin
     # which will search in install/devel space
     full_path = None
     from catkin.find_in_workspaces import find_in_workspaces
+
     paths = find_in_workspaces(
-        ['libexec'], project=args[0], first_matching_workspace_only=True,
+        ["libexec"],
+        project=args[0],
+        first_matching_workspace_only=True,
         # implicitly first_match_only=True
-        source_path_to_packages=source_path_to_packages)
+        source_path_to_packages=source_path_to_packages,
+    )
     if paths:
         full_path = _get_executable_path(paths[0], os.path.basename(path))
     if not full_path:
@@ -211,7 +250,9 @@ def _find_executable(resolved, a, args, _context, source_path_to_packages=None):
         rp = _get_rospack()
         full_path = _get_executable_path(rp.get_path(args[0]), path)
     if not full_path:
-        raise SubstitutionException("$(find-executable pkg path) could not find executable [%s]" % a)
+        raise SubstitutionException(
+            "$(find-executable pkg path) could not find executable [%s]" % a
+        )
     return before + full_path + after
 
 
@@ -223,39 +264,49 @@ def _find_resource(resolved, a, args, _context, source_path_to_packages=None):
     :raises: :exc:SubstitutionException: if PKG and PATH invalidly specified or relative PATH is not found for PKG
     """
     if len(args) != 2:
-        raise SubstitutionException("$(find-resource pkg path) command only accepts two argument [%s]" % a)
+        raise SubstitutionException(
+            "$(find-resource pkg path) command only accepts two argument [%s]" % a
+        )
     before, after = _split_command(resolved, a)
     path = _sanitize_path(args[1])
     # we try to find the specific path in share via catkin
     # which will search in install/devel space and the source folder of the package
     from catkin.find_in_workspaces import find_in_workspaces
+
     paths = find_in_workspaces(
-        ['share'], project=args[0], path=path, first_matching_workspace_only=True,
-        first_match_only=True, source_path_to_packages=source_path_to_packages)
+        ["share"],
+        project=args[0],
+        path=path,
+        first_matching_workspace_only=True,
+        first_match_only=True,
+        source_path_to_packages=source_path_to_packages,
+    )
     if not paths:
-        raise SubstitutionException("$(find-resource pkg path) could not find path [%s]" % a)
+        raise SubstitutionException(
+            "$(find-resource pkg path) could not find path [%s]" % a
+        )
     return before + paths[0] + after
 
 
 def _split_command(resolved, command_with_args):
-    cmd = '$(%s)' % command_with_args
+    cmd = "$(%s)" % command_with_args
     idx1 = resolved.find(cmd)
     idx2 = idx1 + len(cmd)
     return resolved[0:idx1], resolved[idx2:]
 
 
 def _separate_first_path(value):
-    idx = value.find(' ')
+    idx = value.find(" ")
     if idx < 0:
-        path, rest = value, ''
+        path, rest = value, ""
     else:
         path, rest = value[0:idx], value[idx:]
     return path, rest
 
 
 def _sanitize_path(path):
-    path = path.replace('/', os.sep)
-    path = path.replace('\\', os.sep)
+    path = path.replace("/", os.sep)
+    path = path.replace("\\", os.sep)
     return path
 
 
@@ -279,36 +330,45 @@ def _eval_arg(name, args):
     except KeyError:
         raise ArgException(name)
 
+
 def _arg(resolved, a, args, context):
     """
     process $(arg) arg
-    
+
     :returns: updated resolved argument, ``str``
     :raises: :exc:`ArgException` If arg invalidly specified
     """
     if len(args) == 0:
-        raise SubstitutionException("$(arg var) must specify a variable name [%s]"%(a))
+        raise SubstitutionException(
+            "$(arg var) must specify a variable name [%s]" % (a)
+        )
     elif len(args) > 1:
-        raise SubstitutionException("$(arg var) may only specify one arg [%s]"%(a))
-    
-    if 'arg' not in context:
-        context['arg'] = {}
-    return resolved.replace("$(%s)" % a, _eval_arg(name=args[0], args=context['arg']))
+        raise SubstitutionException("$(arg var) may only specify one arg [%s]" % (a))
+
+    if "arg" not in context:
+        context["arg"] = {}
+    return resolved.replace("$(%s)" % a, _eval_arg(name=args[0], args=context["arg"]))
+
 
 # Create a dictionary of global symbols that will be available in the eval
 # context.  We disable all the builtins, then add back True and False, and also
 # add true and false for convenience (because we accept those lower-case strings
 # as boolean values in XML).
-_eval_dict={
-    'true': True, 'false': False,
-    'True': True, 'False': False,
-    '__builtins__': {k: __builtins__[k] for k in ['list', 'dict', 'map', 'str', 'float', 'int']},
-    'env': _eval_env,
-    'optenv': _eval_optenv,
-    'find': _eval_find
+_eval_dict = {
+    "true": True,
+    "false": False,
+    "True": True,
+    "False": False,
+    "__builtins__": {
+        k: __builtins__[k] for k in ["list", "dict", "map", "str", "float", "int"]
+    },
+    "env": _eval_env,
+    "optenv": _eval_optenv,
+    "find": _eval_find,
 }
 # also define all math symbols and functions
 _eval_dict.update(math.__dict__)
+
 
 class _DictWrapper(object):
     def __init__(self, args, functions):
@@ -319,32 +379,42 @@ class _DictWrapper(object):
         try:
             return self._functions[key]
         except KeyError:
-            return convert_value(self._args[key], 'auto')
+            return convert_value(self._args[key], "auto")
+
 
 def _eval(s, context):
-    if 'anon' not in context:
-        context['anon'] = {}
-    if 'arg' not in context:
-        context['arg'] = {}
+    if "anon" not in context:
+        context["anon"] = {}
+    if "arg" not in context:
+        context["arg"] = {}
 
     # inject correct anon context
-    def _eval_anon_context(id): return _eval_anon(id, anons=context['anon'])
+    def _eval_anon_context(id):
+        return _eval_anon(id, anons=context["anon"])
+
     # inject arg context
-    def _eval_arg_context(name): return convert_value(_eval_arg(name, args=context['arg']), 'auto')
+    def _eval_arg_context(name):
+        return convert_value(_eval_arg(name, args=context["arg"]), "auto")
+
     # inject dirname context
-    def _eval_dirname_context(): return _eval_dirname(context['filename'])
+    def _eval_dirname_context():
+        return _eval_dirname(context["filename"])
+
     functions = {
-        'anon': _eval_anon_context,
-        'arg': _eval_arg_context,
-        'dirname': _eval_dirname_context
+        "anon": _eval_anon_context,
+        "arg": _eval_arg_context,
+        "dirname": _eval_dirname_context,
     }
     functions.update(_eval_dict)
 
     # ignore values containing double underscores (for safety)
     # http://nedbatchelder.com/blog/201206/eval_really_is_dangerous.html
-    if s.find('__') >= 0:
-        raise SubstitutionException("$(eval ...) may not contain double underscore expressions")
-    return str(eval(s, {}, _DictWrapper(context['arg'], functions)))
+    if s.find("__") >= 0:
+        raise SubstitutionException(
+            "$(eval ...) may not contain double underscore expressions"
+        )
+    return str(eval(s, {}, _DictWrapper(context["arg"], functions)))
+
 
 def resolve_args(arg_str, context=None, resolve_anon=True, filename=None):
     """
@@ -374,46 +444,52 @@ def resolve_args(arg_str, context=None, resolve_anon=True, filename=None):
     if not arg_str:
         return arg_str
     # special handling of $(eval ...)
-    if arg_str.startswith('$(eval ') and arg_str.endswith(')'):
+    if arg_str.startswith("$(eval ") and arg_str.endswith(")"):
         return _eval(arg_str[7:-1], context)
     # first resolve variables like 'env' and 'arg'
     commands = {
-        'env': _env,
-        'optenv': _optenv,
-        'dirname': _dirname,
-        'anon': _anon,
-        'arg': _arg,
+        "env": _env,
+        "optenv": _optenv,
+        "dirname": _dirname,
+        "anon": _anon,
+        "arg": _arg,
     }
     resolved = _resolve_args(arg_str, context, resolve_anon, commands)
     # then resolve 'find' as it requires the subsequent path to be expanded already
     commands = {
-        'find': _find,
+        "find": _find,
     }
     resolved = _resolve_args(resolved, context, resolve_anon, commands)
     return resolved
 
+
 def _resolve_args(arg_str, context, resolve_anon, commands):
-    valid = ['find', 'env', 'optenv', 'dirname', 'anon', 'arg']
+    valid = ["find", "env", "optenv", "dirname", "anon", "arg"]
     resolved = arg_str
     for a in _collect_args(arg_str):
-        splits = [s for s in a.split(' ') if s]
+        splits = [s for s in a.split(" ") if s]
         if not splits[0] in valid:
-            raise SubstitutionException("Unknown substitution command [%s]. Valid commands are %s"%(a, valid))
+            raise SubstitutionException(
+                "Unknown substitution command [%s]. Valid commands are %s" % (a, valid)
+            )
         command = splits[0]
         args = splits[1:]
         if command in commands:
             resolved = commands[command](resolved, a, args, context)
     return resolved
 
-_OUT  = 0
+
+_OUT = 0
 _DOLLAR = 1
 _LP = 2
 _IN = 3
+
+
 def _collect_args(arg_str):
     """
     State-machine parser for resolve_args. Substitution args are of the form:
     $(find package_name)/scripts/foo.py $(export some/attribute blar) non-relevant stuff
-    
+
     @param arg_str: argument string to parse args from
     @type  arg_str: str
     @raise SubstitutionException: if args are invalidly specified
@@ -425,21 +501,26 @@ def _collect_args(arg_str):
     state = _OUT
     for c in arg_str:
         # No escapes supported
-        if c == '$':
+        if c == "$":
             if state == _OUT:
                 state = _DOLLAR
             elif state == _DOLLAR:
                 pass
             else:
-                raise SubstitutionException("Dollar signs '$' cannot be inside of substitution args [%s]"%arg_str)
-        elif c == '(':
+                raise SubstitutionException(
+                    "Dollar signs '$' cannot be inside of substitution args [%s]"
+                    % arg_str
+                )
+        elif c == "(":
             if state == _DOLLAR:
                 state = _LP
             elif state != _OUT:
-                raise SubstitutionException("Invalid left parenthesis '(' in substitution args [%s]"%arg_str)
-        elif c == ')':
+                raise SubstitutionException(
+                    "Invalid left parenthesis '(' in substitution args [%s]" % arg_str
+                )
+        elif c == ")":
             if state == _IN:
-                #save contents of collected buffer
+                # save contents of collected buffer
                 args.append(buff.getvalue())
                 buff.truncate(0)
                 buff.seek(0)
@@ -455,5 +536,3 @@ def _collect_args(arg_str):
         if state == _IN:
             buff.write(c)
     return args
-
-

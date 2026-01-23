@@ -41,25 +41,40 @@ See: U{http://wiki.ros.org/Names}
 import sys
 import os
 
-from rosgraph.names import namespace, get_ros_namespace, ns_join, make_global_ns, load_mappings, \
-     SEP, GLOBALNS, REMAP, ANYTYPE, \
-     is_global, is_private
+from rosgraph.names import (
+    namespace,
+    get_ros_namespace,
+    ns_join,
+    make_global_ns,
+    load_mappings,
+    SEP,
+    GLOBALNS,
+    REMAP,
+    ANYTYPE,
+    is_global,
+    is_private,
+)
 import rosgraph.names
 
 from rospy.exceptions import ROSException, ROSInitException
 from rospy.impl.validators import ParameterInvalid
 
-TOPIC_ANYTYPE = ANYTYPE #indicates that a subscriber will connect any datatype given to it
-SERVICE_ANYTYPE = ANYTYPE #indicates that a service client does not have a fixed type
+TOPIC_ANYTYPE = (
+    ANYTYPE  # indicates that a subscriber will connect any datatype given to it
+)
+SERVICE_ANYTYPE = ANYTYPE  # indicates that a service client does not have a fixed type
 
 import struct
 
-if sys.hexversion > 0x03000000: #Python3
+if sys.hexversion > 0x03000000:  # Python3
+
     def isstring(s):
-        return isinstance(s, str) #Python 3.x
+        return isinstance(s, str)  # Python 3.x
 else:
+
     def isstring(s):
-        return isinstance(s, basestring) #Python 2.x
+        return isinstance(s, basestring)  # Python 2.x
+
 
 def canonicalize_name(name):
     """
@@ -71,12 +86,13 @@ def canonicalize_name(name):
     if not name or name == SEP:
         return name
     elif name[0] == SEP:
-        return '/' + '/'.join([x for x in name.split(SEP) if x])
+        return "/" + "/".join([x for x in name.split(SEP) if x])
     else:
-        return '/'.join([x for x in name.split(SEP) if x])        
+        return "/".join([x for x in name.split(SEP) if x])
     ##if len(name) > 1 and name[-1] == SEP:
     ##    return name[:-1]
     ##return name
+
 
 # Mappings override name resolution by substituting fully-qualified
 # names in for local name references. They override any name
@@ -86,16 +102,18 @@ def canonicalize_name(name):
 _mappings = load_mappings(sys.argv)
 _resolved_mappings = {}
 
+
 def reload_mappings(argv):
     """
     Re-initialize the name remapping table.
 
     @param argv: Command line arguments to this program. ROS reads
-        these arguments to find renaming params. 
+        these arguments to find renaming params.
     @type  argv: [str]
     """
     global _mappings
     _mappings = load_mappings(argv)
+
 
 # #1810
 def initialize_mappings(node_name):
@@ -107,13 +125,16 @@ def initialize_mappings(node_name):
     """
     global _resolved_mappings
     _resolved_mappings = {}
-    for m,v in _mappings.items():
+    for m, v in _mappings.items():
         # resolve both parts of the mappings. use the rosgraph.names
         # version of resolve_name to avoid circular mapping.
-        if m.startswith('__'): # __name, __log, etc...
+        if m.startswith("__"):  # __name, __log, etc...
             _resolved_mappings[m] = v
         else:
-            _resolved_mappings[rosgraph.names.resolve_name(m, node_name)] = rosgraph.names.resolve_name(v, node_name)
+            _resolved_mappings[rosgraph.names.resolve_name(m, node_name)] = (
+                rosgraph.names.resolve_name(v, node_name)
+            )
+
 
 def resolve_name_without_node_name(name):
     """
@@ -127,43 +148,51 @@ def resolve_name_without_node_name(name):
     @raise ROSInitException: if name is remapped to a ~name
     """
     if is_private(name):
-        raise ValueError("~name topics cannot be created before init_node() has been called")
+        raise ValueError(
+            "~name topics cannot be created before init_node() has been called"
+        )
 
     # we use the underlying rosgraph.names.resolve_name to avoid dependencies on nodename/remappings
-    fake_caller_id = ns_join(get_namespace(), 'node')
+    fake_caller_id = ns_join(get_namespace(), "node")
     fake_resolved = rosgraph.names.resolve_name(name, fake_caller_id)
 
     for m, v in _mappings.items():
         if rosgraph.names.resolve_name(m, fake_caller_id) == fake_resolved:
             if is_private(name):
-                raise ROSInitException("due to the way this node is written, %s cannot be remapped to a ~name. \nThe declaration of topics/services must be moved after the call to init_node()"%name)
+                raise ROSInitException(
+                    "due to the way this node is written, %s cannot be remapped to a ~name. \nThe declaration of topics/services must be moved after the call to init_node()"
+                    % name
+                )
             else:
                 return rosgraph.names.resolve_name(v, fake_caller_id)
     return fake_resolved
 
+
 def get_mappings():
     """
     Get mapping table with unresolved names
-    
+
     @return: command-line remappings {name: name}
     @rtype: {str: str}
     """
     return _mappings
 
+
 def get_resolved_mappings():
     """
     Get mapping table with resolved names
-    
+
     @return: command-line remappings {name: name}
     @rtype: {str: str}
     """
     return _resolved_mappings
 
-#TODO: port to a wrapped call to rosgraph.names.resolve_name
+
+# TODO: port to a wrapped call to rosgraph.names.resolve_name
 def resolve_name(name, caller_id=None):
     """
     Resolve a ROS name to its global, canonical form. Private ~names
-    are resolved relative to the node name. 
+    are resolved relative to the node name.
 
     @param name: name to resolve.
     @type  name: str
@@ -176,19 +205,21 @@ def resolve_name(name, caller_id=None):
     """
     if not caller_id:
         caller_id = get_name()
-    if not name: #empty string resolves to namespace
+    if not name:  # empty string resolves to namespace
         return namespace(caller_id)
 
-    name = str(name)  # enforce string conversion else struct.pack might raise UnicodeDecodeError (see #3998)
+    name = str(
+        name
+    )  # enforce string conversion else struct.pack might raise UnicodeDecodeError (see #3998)
     name = canonicalize_name(name)
-    if name[0] == SEP: #global name
+    if name[0] == SEP:  # global name
         resolved_name = name
-    elif is_private(name): #~name
+    elif is_private(name):  # ~name
         resolved_name = ns_join(caller_id, name[1:])
-    else: #relative
+    else:  # relative
         resolved_name = namespace(caller_id) + name
 
-    #Mappings override general namespace-based resolution
+    # Mappings override general namespace-based resolution
     # - do this before canonicalization as remappings are meant to
     #   match the name as specified in the code
     if resolved_name in _resolved_mappings:
@@ -204,10 +235,10 @@ def remap_name(name, caller_id=None, resolved=True):
     unless it is remapped.
     @param name: name to remap
     @type  name: str
-    
-    @param resolved: if True (default), use resolved names in remappings, which is the standard for ROS. 
+
+    @param resolved: if True (default), use resolved names in remappings, which is the standard for ROS.
     @type  resolved: bool
-    
+
     @return: Remapped name
     @rtype: str
     """
@@ -216,6 +247,7 @@ def remap_name(name, caller_id=None, resolved=True):
     if name in _mappings:
         return rosgraph.names.resolve_name(_mappings[name], caller_id)
     return name
+
 
 def scoped_name(caller_id, name):
     """
@@ -229,39 +261,50 @@ def scoped_name(caller_id, name):
     @type  caller_id: str
     @param name: name to scope
     @type  name: str
-    @return: name scoped to the caller_id's namespace. 
+    @return: name scoped to the caller_id's namespace.
     @rtype: str
     """
     if not is_global(caller_id):
         raise ROSException("caller_id must be global")
-    return canonicalize_name(name)[len(namespace(caller_id)):]
+    return canonicalize_name(name)[len(namespace(caller_id)) :]
 
 
 ###################################################
 # Name validators      ############################
 
-#Technically XMLRPC will never send a None, but I don't want to code masterslave.py to be
-#XML-RPC specific in this way.
+# Technically XMLRPC will never send a None, but I don't want to code masterslave.py to be
+# XML-RPC specific in this way.
+
 
 def valid_name_validator_resolved(param_name, param_value, caller_id):
     if not param_value or not isstring(param_value):
-        raise ParameterInvalid("ERROR: parameter [%s] must be a non-empty string"%param_name)            
-    #TODO: actual validation of chars
+        raise ParameterInvalid(
+            "ERROR: parameter [%s] must be a non-empty string" % param_name
+        )
+    # TODO: actual validation of chars
     # I added the colon check as the common error will be to send an URI instead of name
-    if ':' in param_value or ' ' in param_value:
-        raise ParameterInvalid("ERROR: parameter [%s] contains illegal chars"%param_name) 
-    #don't use our own resolve_name because we do not want to remap
+    if ":" in param_value or " " in param_value:
+        raise ParameterInvalid(
+            "ERROR: parameter [%s] contains illegal chars" % param_name
+        )
+    # don't use our own resolve_name because we do not want to remap
     return rosgraph.names.resolve_name(param_value, caller_id, remappings=None)
+
 
 def valid_name_validator_unresolved(param_name, param_value, caller_id):
     if not param_value or not isstring(param_value):
-        raise ParameterInvalid("ERROR: parameter [%s] must be a non-empty string"%param_name)            
-    #TODO: actual validation of chars        
+        raise ParameterInvalid(
+            "ERROR: parameter [%s] must be a non-empty string" % param_name
+        )
+    # TODO: actual validation of chars
     # I added the colon check as the common error will be to send an URI instead of name
-    if ':' in param_value or ' ' in param_value:
-        raise ParameterInvalid("ERROR: parameter [%s] contains illegal chars"%param_name) 
+    if ":" in param_value or " " in param_value:
+        raise ParameterInvalid(
+            "ERROR: parameter [%s] contains illegal chars" % param_name
+        )
     return param_value
-    
+
+
 def valid_name(param_name, resolve=True):
     """
     Validator that resolves names and also ensures that they are not empty
@@ -273,11 +316,14 @@ def valid_name(param_name, resolve=True):
     @return: resolved parameter value
     @rtype: str
     """
+
     def validator(param_value, caller_id):
         if resolve:
             return valid_name_validator_resolved(param_name, param_value, caller_id)
-        return valid_name_validator_unresolved(param_name, param_value, caller_id)        
+        return valid_name_validator_unresolved(param_name, param_value, caller_id)
+
     return validator
+
 
 def global_name(param_name):
     """
@@ -285,29 +331,38 @@ def global_name(param_name):
     @return: parameter value
     @rtype: str
     """
+
     def validator(param_value, caller_id):
         if not param_value or not isstring(param_value):
-            raise ParameterInvalid("ERROR: parameter [%s] must be a non-empty string"%param_name)
-        #TODO: actual validation of chars
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] must be a non-empty string" % param_name
+            )
+        # TODO: actual validation of chars
         if not is_global(param_value):
-            raise ParameterInvalid("ERROR: parameter [%s] must be a globally referenced name"%param_name)            
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] must be a globally referenced name" % param_name
+            )
         return param_value
+
     return validator
 
+
 #########################################################
-#Global Namespace Routines
+# Global Namespace Routines
 # - Global state, e.g. singletons and namespace
 
 _caller_namespace = get_ros_namespace()
-_caller_id = _caller_namespace+'unnamed' #default for non-node. 
+_caller_id = _caller_namespace + "unnamed"  # default for non-node.
+
 
 def get_namespace():
     """
-    Get namespace of local node. 
+    Get namespace of local node.
     @return: fully-qualified name of local node or '' if not applicable
     @rtype: str
     """
     return _caller_namespace
+
 
 def get_name():
     """
@@ -315,11 +370,13 @@ def get_name():
     use empty string
     @return: fully-qualified name of local node or '' if not applicable
     @rtype: str
-    """    
+    """
     return _caller_id
+
 
 # backwards compatibility
 get_caller_id = get_name
+
 
 def _set_caller_id(caller_id):
     """
@@ -331,8 +388,7 @@ def _set_caller_id(caller_id):
     call on a remote node.  Invoked by ROSNode constructor
     @param caller_id: new caller ID
     @type  caller_id: str
-    """    
+    """
     global _caller_id, _caller_namespace
     _caller_id = caller_id
     _caller_namespace = namespace(caller_id)
-

@@ -48,6 +48,8 @@ except ImportError:
 import rosunit
 
 from threading import Thread
+
+
 class TestTask(Thread):
     def __init__(self, task):
         Thread.__init__(self)
@@ -55,7 +57,7 @@ class TestTask(Thread):
         self.success = False
         self.done = False
         self.value = None
-        
+
     def run(self):
         try:
             print("STARTING TASK")
@@ -64,18 +66,20 @@ class TestTask(Thread):
             self.success = True
         except:
             import traceback
+
             traceback.print_exc()
         self.done = True
 
+
 class TestRospyClientOnline(unittest.TestCase):
-    
     def __init__(self, *args):
         unittest.TestCase.__init__(self, *args)
         import rospy
-        rospy.init_node('test_rospy_online')
+
+        rospy.init_node("test_rospy_online")
 
     def test_log(self):
-        rosout_logger = logging.getLogger('rosout')
+        rosout_logger = logging.getLogger("rosout")
         import rospy
 
         self.assertTrue(len(rosout_logger.handlers) == 2)
@@ -87,7 +91,9 @@ class TestRospyClientOnline(unittest.TestCase):
         # Remap stdout for testing
         lout = StringIO()
         lerr = StringIO()
-        test_ros_handler = rosgraph.roslogging.RosStreamHandler(colorize=False, stdout=lout, stderr=lerr)
+        test_ros_handler = rosgraph.roslogging.RosStreamHandler(
+            colorize=False, stdout=lout, stderr=lerr
+        )
 
         try:
             # hack to replace the stream handler with a debug version
@@ -95,10 +101,11 @@ class TestRospyClientOnline(unittest.TestCase):
             rosout_logger.addHandler(test_ros_handler)
 
             import rospy
+
             rospy.loginfo("test 1")
             lout_last = lout.getvalue().splitlines()[-1]
             self.assertTrue("test 1" in lout_last)
-            
+
             rospy.logwarn("test 2")
             lerr_last = lerr.getvalue().splitlines()[-1]
             self.assertTrue("[WARN]" in lerr_last)
@@ -304,7 +311,7 @@ class TestRospyClientOnline(unittest.TestCase):
             rospy.loginfo("test child logger 1", logger_name="log1")
             lout_last = lout.getvalue().splitlines()[-1]
             self.assertTrue("test child logger 1" in lout_last)
-            
+
             rospy.logwarn("test child logger 2", logger_name="log2")
             lerr_last = lerr.getvalue().splitlines()[-1]
             self.assertTrue("[WARN]" in lerr_last)
@@ -326,27 +333,29 @@ class TestRospyClientOnline(unittest.TestCase):
             lout.close()
             lerr.close()
             rosout_logger.addHandler(default_ros_handler)
-        
+
     def test_wait_for_service(self):
         # lazy-import for coverage
         import rospy
         import time
 
-        # test wait for service in success case        
+        # test wait for service in success case
         def task1():
-            rospy.wait_for_service('add_two_ints')
-        timeout_t = time.time() + 5.
+            rospy.wait_for_service("add_two_ints")
+
+        timeout_t = time.time() + 5.0
         t1 = TestTask(task1)
         t1.start()
         while not t1.done and time.time() < timeout_t:
             time.sleep(0.5)
         self.assertTrue(t1.success)
-        
+
         # test wait for service with timeout in success case
         def task2():
-            rospy.wait_for_service('add_two_ints', timeout=1.)
-        timeout_t = time.time() + 5.        
-        t2 = TestTask(task2)        
+            rospy.wait_for_service("add_two_ints", timeout=1.0)
+
+        timeout_t = time.time() + 5.0
+        t2 = TestTask(task2)
         t2.start()
         while not t2.done and time.time() < timeout_t:
             time.sleep(0.5)
@@ -354,10 +363,11 @@ class TestRospyClientOnline(unittest.TestCase):
 
         # test wait for service in failure case
         def task3():
-            # #2842 raising bounds from .1 to .3 for amazon VM            
-            rospy.wait_for_service('fake_service', timeout=0.3)
-        timeout_t = time.time() + 2.        
-        t3 = TestTask(task3)        
+            # #2842 raising bounds from .1 to .3 for amazon VM
+            rospy.wait_for_service("fake_service", timeout=0.3)
+
+        timeout_t = time.time() + 2.0
+        t3 = TestTask(task3)
         t3.start()
         while not t3.done and time.time() < timeout_t:
             time.sleep(0.5)
@@ -371,9 +381,9 @@ class TestRospyClientOnline(unittest.TestCase):
 
         # test wait for service with timeout in success case
         def task2():
-            rospy.wait_for_service('add_two_ints',
-                                   timeout=rospy.Duration.from_sec(1.0))
-        timeout_t = time.time() + 5.
+            rospy.wait_for_service("add_two_ints", timeout=rospy.Duration.from_sec(1.0))
+
+        timeout_t = time.time() + 5.0
         t2 = TestTask(task2)
         t2.start()
         while not t2.done and time.time() < timeout_t:
@@ -383,16 +393,16 @@ class TestRospyClientOnline(unittest.TestCase):
         # test wait for service in failure case
         def task3():
             # #2842 raising bounds from .1 to .3 for amazon VM
-            rospy.wait_for_service('fake_service',
-                                   timeout=rospy.Duration.from_sec(0.3))
-        timeout_t = time.time() + 2.
+            rospy.wait_for_service("fake_service", timeout=rospy.Duration.from_sec(0.3))
+
+        timeout_t = time.time() + 2.0
         t3 = TestTask(task3)
         t3.start()
         while not t3.done and time.time() < timeout_t:
             time.sleep(0.5)
         self.assertTrue(t3.done)
         self.assertFalse(t3.success)
-    
+
     def test_ServiceProxy_wait_for_service(self):
         """
         Test ServiceProxy.wait_for_service
@@ -402,36 +412,39 @@ class TestRospyClientOnline(unittest.TestCase):
         import time
         import test_rosmaster.srv
 
-        # test wait for service in success case        
-        proxy = rospy.ServiceProxy('add_two_ints', test_rosmaster.srv.AddTwoInts)
+        # test wait for service in success case
+        proxy = rospy.ServiceProxy("add_two_ints", test_rosmaster.srv.AddTwoInts)
+
         class ProxyTask(object):
             def __init__(self, proxy, timeout=None):
                 self.proxy = proxy
                 self.timeout = timeout
+
             def __call__(self):
                 if self.timeout is None:
                     self.proxy.wait_for_service()
                 else:
                     self.proxy.wait_for_service(timeout=self.timeout)
-        timeout_t = time.time() + 5.
+
+        timeout_t = time.time() + 5.0
         t1 = TestTask(ProxyTask(proxy))
         t1.start()
         while not t1.done and time.time() < timeout_t:
             time.sleep(0.5)
         self.assertTrue(t1.success)
-        
+
         # test wait for service with timeout in success case
-        timeout_t = time.time() + 5.        
-        t2 = TestTask(ProxyTask(proxy, timeout=1.))
+        timeout_t = time.time() + 5.0
+        t2 = TestTask(ProxyTask(proxy, timeout=1.0))
         t2.start()
         while not t2.done and time.time() < timeout_t:
             time.sleep(0.5)
         self.assertTrue(t2.success)
 
         # test wait for service in failure case
-        fake_proxy = rospy.ServiceProxy('fake_service', test_rosmaster.srv.AddTwoInts)
-        timeout_t = time.time() + 2.        
-        t3 = TestTask(ProxyTask(fake_proxy, timeout=0.1))        
+        fake_proxy = rospy.ServiceProxy("fake_service", test_rosmaster.srv.AddTwoInts)
+        timeout_t = time.time() + 2.0
+        t3 = TestTask(ProxyTask(fake_proxy, timeout=0.1))
         t3.start()
         while not t3.done and time.time() < timeout_t:
             time.sleep(0.5)
@@ -448,11 +461,13 @@ class TestRospyClientOnline(unittest.TestCase):
         import test_rosmaster.srv
 
         # test wait for service in success case
-        proxy = rospy.ServiceProxy('add_two_ints', test_rosmaster.srv.AddTwoInts)
+        proxy = rospy.ServiceProxy("add_two_ints", test_rosmaster.srv.AddTwoInts)
+
         class ProxyTask(object):
             def __init__(self, proxy, timeout=None):
                 self.proxy = proxy
                 self.timeout = timeout
+
             def __call__(self):
                 if self.timeout is None:
                     self.proxy.wait_for_service()
@@ -460,16 +475,16 @@ class TestRospyClientOnline(unittest.TestCase):
                     self.proxy.wait_for_service(timeout=self.timeout)
 
         # test wait for service with timeout in success case
-        timeout_t = time.time() + 5.
-        t2 = TestTask(ProxyTask(proxy, timeout=rospy.Duration.from_sec(1.)))
+        timeout_t = time.time() + 5.0
+        t2 = TestTask(ProxyTask(proxy, timeout=rospy.Duration.from_sec(1.0)))
         t2.start()
         while not t2.done and time.time() < timeout_t:
             time.sleep(0.5)
         self.assertTrue(t2.success)
 
         # test wait for service in failure case
-        fake_proxy = rospy.ServiceProxy('fake_service', test_rosmaster.srv.AddTwoInts)
-        timeout_t = time.time() + 2.
+        fake_proxy = rospy.ServiceProxy("fake_service", test_rosmaster.srv.AddTwoInts)
+        timeout_t = time.time() + 2.0
         t3 = TestTask(ProxyTask(fake_proxy, timeout=rospy.Duration.from_sec(0.1)))
         t3.start()
         while not t3.done and time.time() < timeout_t:
@@ -480,10 +495,11 @@ class TestRospyClientOnline(unittest.TestCase):
     def test_sleep(self):
         import rospy
         import time
+
         t = time.time()
         rospy.sleep(0.1)
         dur = time.time() - t
-        # #2842 raising bounds from .01 to .03 for amazon VM 
+        # #2842 raising bounds from .01 to .03 for amazon VM
 
         # make sure sleep is approximately right
         self.assertTrue(abs(dur - 0.1) < 0.03, dur)
@@ -496,7 +512,7 @@ class TestRospyClientOnline(unittest.TestCase):
 
         # sleep for neg duration
         t = time.time()
-        rospy.sleep(rospy.Duration.from_sec(-10.))
+        rospy.sleep(rospy.Duration.from_sec(-10.0))
         dur = time.time() - t
         # make sure returned immediately
         self.assertTrue(abs(dur) < 0.1, dur)
@@ -504,6 +520,7 @@ class TestRospyClientOnline(unittest.TestCase):
     def test_Rate(self):
         import rospy
         import time
+
         t = time.time()
         count = 0
         r = rospy.Rate(10)
@@ -512,45 +529,46 @@ class TestRospyClientOnline(unittest.TestCase):
         dur = time.time() - t
         # make sure sleep is approximately right
         self.assertTrue(abs(dur - 1.0) < 0.5, dur)
-        
 
     def test_param_server(self):
         # this isn't a parameter server test, just checking that the rospy bindings work
         import rospy
 
         try:
-            rospy.get_param('not_a_param')
+            rospy.get_param("not_a_param")
             self.fail("should have raised KeyError")
-        except KeyError: pass
-        self.assertEqual('default_val', rospy.get_param('not_a_param', 'default_val') )
-        
-        p = rospy.get_param('/param')
+        except KeyError:
+            pass
+        self.assertEqual("default_val", rospy.get_param("not_a_param", "default_val"))
+
+        p = rospy.get_param("/param")
         self.assertEqual("value", p)
-        p = rospy.get_param('param')
+        p = rospy.get_param("param")
         self.assertEqual("value", p)
-        p = rospy.get_param('/group/param')
+        p = rospy.get_param("/group/param")
         self.assertEqual("group_value", p)
-        p = rospy.get_param('group/param')
+        p = rospy.get_param("group/param")
         self.assertEqual("group_value", p)
 
-        self.assertEqual('/param', rospy.search_param('param'))
-        
+        self.assertEqual("/param", rospy.search_param("param"))
+
         names = rospy.get_param_names()
-        self.assertTrue('/param' in names)
-        self.assertTrue('/group/param' in names)        
+        self.assertTrue("/param" in names)
+        self.assertTrue("/group/param" in names)
 
-        for p in ['/param', 'param', 'group/param', '/group/param']:
+        for p in ["/param", "param", "group/param", "/group/param"]:
             self.assertTrue(rospy.has_param(p))
-            
-        rospy.set_param('param2', 'value2')
-        self.assertTrue(rospy.has_param('param2'))
-        self.assertEqual('value2', rospy.get_param('param2'))
-        rospy.delete_param('param2')
-        self.assertFalse(rospy.has_param('param2'))
+
+        rospy.set_param("param2", "value2")
+        self.assertTrue(rospy.has_param("param2"))
+        self.assertEqual("value2", rospy.get_param("param2"))
+        rospy.delete_param("param2")
+        self.assertFalse(rospy.has_param("param2"))
         try:
-            rospy.get_param('param2')
+            rospy.get_param("param2")
             self.fail("should have raised KeyError")
-        except KeyError: pass
+        except KeyError:
+            pass
 
     def test_wait_for_message(self):
         # lazy-import for coverage
@@ -560,32 +578,37 @@ class TestRospyClientOnline(unittest.TestCase):
 
         # test standard wait for message
         def task1():
-            return rospy.wait_for_message('chatter', std_msgs.msg.String)
-        timeout_t = time.time() + 5.
+            return rospy.wait_for_message("chatter", std_msgs.msg.String)
+
+        timeout_t = time.time() + 5.0
         t1 = TestTask(task1)
         t1.start()
         while not t1.done and time.time() < timeout_t:
             time.sleep(0.5)
         self.assertTrue(t1.success)
-        self.assertTrue('hello' in t1.value.data)
+        self.assertTrue("hello" in t1.value.data)
 
         # test wait for message with timeout
         def task2():
-            return rospy.wait_for_message('chatter', std_msgs.msg.String, timeout=2.)
-        timeout_t = time.time() + 5.        
-        t2 = TestTask(task2)        
+            return rospy.wait_for_message("chatter", std_msgs.msg.String, timeout=2.0)
+
+        timeout_t = time.time() + 5.0
+        t2 = TestTask(task2)
         t2.start()
         while not t2.done and time.time() < timeout_t:
             time.sleep(0.5)
         self.assertTrue(t2.success)
-        self.assertTrue('hello' in t2.value.data)
-        
+        self.assertTrue("hello" in t2.value.data)
+
         # test wait for message with timeout FAILURE
         def task3():
             # #2842 raising bounds from .1 to .3 for amazon VM
-            return rospy.wait_for_message('fake_topic', std_msgs.msg.String, timeout=.3)
-        timeout_t = time.time() + 2.        
-        t3 = TestTask(task3)        
+            return rospy.wait_for_message(
+                "fake_topic", std_msgs.msg.String, timeout=0.3
+            )
+
+        timeout_t = time.time() + 2.0
+        t3 = TestTask(task3)
         t3.start()
         while not t3.done and time.time() < timeout_t:
             time.sleep(0.5)
@@ -601,22 +624,26 @@ class TestRospyClientOnline(unittest.TestCase):
 
         # test wait for message with timeout
         def task2():
-            return rospy.wait_for_message('chatter', std_msgs.msg.String,
-                                          timeout=rospy.Duration.from_sec(2.))
-        timeout_t = time.time() + 5.
+            return rospy.wait_for_message(
+                "chatter", std_msgs.msg.String, timeout=rospy.Duration.from_sec(2.0)
+            )
+
+        timeout_t = time.time() + 5.0
         t2 = TestTask(task2)
         t2.start()
         while not t2.done and time.time() < timeout_t:
             time.sleep(0.5)
         self.assertTrue(t2.success)
-        self.assertTrue('hello' in t2.value.data)
+        self.assertTrue("hello" in t2.value.data)
 
         # test wait for message with timeout FAILURE
         def task3():
             # #2842 raising bounds from .1 to .3 for amazon VM
-            return rospy.wait_for_message('fake_topic', std_msgs.msg.String,
-                                          timeout=rospy.Duration.from_sec(.3))
-        timeout_t = time.time() + 2.
+            return rospy.wait_for_message(
+                "fake_topic", std_msgs.msg.String, timeout=rospy.Duration.from_sec(0.3)
+            )
+
+        timeout_t = time.time() + 2.0
         t3 = TestTask(task3)
         t3.start()
         while not t3.done and time.time() < timeout_t:
@@ -624,6 +651,12 @@ class TestRospyClientOnline(unittest.TestCase):
         self.assertFalse(t3.success)
         self.assertTrue(t3.done)
         self.assertTrue(t3.value is None)
-    
-if __name__ == '__main__':
-    rosunit.unitrun('test_rospy', sys.argv[0], TestRospyClientOnline, coverage_packages=['rospy.client', 'rospy.msproxy'])
+
+
+if __name__ == "__main__":
+    rosunit.unitrun(
+        "test_rospy",
+        sys.argv[0],
+        TestRospyClientOnline,
+        coverage_packages=["rospy.client", "rospy.msproxy"],
+    )

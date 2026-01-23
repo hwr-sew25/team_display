@@ -45,7 +45,7 @@ from genmsg.msgs import bare_msg_type, is_builtin, resolve_type
 
 pkg_name = sys.argv[1]
 msg_file = sys.argv[2]
-deps = sys.argv[3].split(':') if len(sys.argv) > 3 else []
+deps = sys.argv[3].split(":") if len(sys.argv) > 3 else []
 
 msg_context = MsgContext.create_default()
 full_type_name = compute_full_type_name(pkg_name, os.path.basename(msg_file))
@@ -65,5 +65,9 @@ for unresolved_type in unresolved_types:
     bare_type = bare_msg_type(unresolved_type)
     resolved_type = resolve_type(bare_type, package_context)
     if not is_builtin(resolved_type) and resolved_type not in deps:
-        print("The dependencies of the message/service '%s' have changed. Please rerun cmake." % spec.full_name, file=sys.stderr)
+        print(
+            "The dependencies of the message/service '%s' have changed. Please rerun cmake."
+            % spec.full_name,
+            file=sys.stderr,
+        )
         sys.exit(1)

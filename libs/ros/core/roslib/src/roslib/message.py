@@ -42,6 +42,7 @@ name.
 import genmsg
 
 import genpy.message  # for wrapping get_message_class, get_service_class
+
 # forward a bunch of old symbols from genpy for backwards compat
 from genpy import DeserializationError  # noqa: F401
 from genpy import Duration  # noqa: F401
@@ -63,16 +64,18 @@ def _get_message_or_service_class(type_str, message_type, reload_on_error=False)
     # parse package and local type name for import
     package, base_type = genmsg.package_resource_name(message_type)
     if not package:
-        if base_type == 'Header':
-            package = 'std_msgs'
+        if base_type == "Header":
+            package = "std_msgs"
         else:
-            raise ValueError('message type is missing package name: %s' % str(message_type))
+            raise ValueError(
+                "message type is missing package name: %s" % str(message_type)
+            )
     pypkg = val = None
     try:
         # bootstrap our sys.path
         roslib.launcher.load_manifest(package)
         # import the package and return the class
-        pypkg = __import__('%s.%s' % (package, type_str))
+        pypkg = __import__("%s.%s" % (package, type_str))
         val = getattr(getattr(pypkg, type_str), base_type)
     except rospkg.ResourceNotFound:
         val = None
@@ -112,7 +115,9 @@ def get_message_class(message_type, reload_on_error=False):
     cls = genpy.message.get_message_class(message_type, reload_on_error=reload_on_error)
     if cls is None:
         # try old loader w/ bootstrapping
-        cls = _get_message_or_service_class('msg', message_type, reload_on_error=reload_on_error)
+        cls = _get_message_or_service_class(
+            "msg", message_type, reload_on_error=reload_on_error
+        )
     if cls:
         _message_class_cache[message_type] = cls
     return cls
@@ -125,7 +130,9 @@ def get_service_class(service_type, reload_on_error=False):
     # try w/o bootstrapping
     if cls is None:
         # try old loader w/ bootstrapping
-        cls = _get_message_or_service_class('srv', service_type, reload_on_error=reload_on_error)
+        cls = _get_message_or_service_class(
+            "srv", service_type, reload_on_error=reload_on_error
+        )
     if cls:
         _service_class_cache[service_type] = cls
     return cls

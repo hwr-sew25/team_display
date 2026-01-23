@@ -40,25 +40,25 @@ import rospkg
 
 from .xmlrunner import XMLTestRunner
 
-XML_OUTPUT_FLAG = '--gtest_output=xml:'  # use gtest-compatible flag
+XML_OUTPUT_FLAG = "--gtest_output=xml:"  # use gtest-compatible flag
 
 
 def printlog(msg, *args):
     if args:
         msg = msg % args
-    print('[ROSUNIT]' + msg)
+    print("[ROSUNIT]" + msg)
 
 
 def printlog_bold(msg, *args):
     if args:
         msg = msg % args
-    print('\033[1m[ROSUNIT]' + msg + '\033[0m')
+    print("\033[1m[ROSUNIT]" + msg + "\033[0m")
 
 
 def printerrlog(msg, *args):
     if args:
         msg = msg % args
-    print('[ROSUNIT]' + msg, file=sys.stderr)
+    print("[ROSUNIT]" + msg, file=sys.stderr)
 
 
 # this is a copy of the roslogging utility. it's been moved here as it is a common
@@ -108,17 +108,19 @@ def xml_results_file(test_pkg, test_name, is_rostest=False, env=None):
         try:
             makedirs_with_parent_perms(test_dir)
         except OSError as error:
-            raise IOError('cannot create test results directory [%s]: %s' % (test_dir, str(error)))
+            raise IOError(
+                "cannot create test results directory [%s]: %s" % (test_dir, str(error))
+            )
 
     # #576: strip out chars that would bork the filename
     # this is fairly primitive, but for now just trying to catch some common cases
-    for c in ' "\'&$!`/\\':
+    for c in " \"'&$!`/\\":
         if c in test_name:
-            test_name = test_name.replace(c, '_')
+            test_name = test_name.replace(c, "_")
     if is_rostest:
-        return os.path.join(test_dir, 'rostest-%s.xml' % test_name)
+        return os.path.join(test_dir, "rostest-%s.xml" % test_name)
     else:
-        return os.path.join(test_dir, 'rosunit-%s.xml' % test_name)
+        return os.path.join(test_dir, "rosunit-%s.xml" % test_name)
 
 
 def rostest_name_from_path(pkg_dir, test_file):
@@ -132,12 +134,12 @@ def rostest_name_from_path(pkg_dir, test_file):
     test_file_abs = os.path.abspath(test_file)
     if test_file_abs.startswith(pkg_dir):
         # compute package-relative path
-        test_file = test_file_abs[len(pkg_dir):]
+        test_file = test_file_abs[len(pkg_dir) :]
         if test_file[0] == os.sep:
             test_file = test_file[1:]
-    outname = test_file.replace(os.sep, '_')
-    if '.' in outname:
-        outname = outname[:outname.rfind('.')]
+    outname = test_file.replace(os.sep, "_")
+    if "." in outname:
+        outname = outname[: outname.rfind(".")]
     return outname
 
 
@@ -158,14 +160,21 @@ def create_xml_runner(test_pkg, test_name, results_file=None, is_rostest=False):
     test_dir = os.path.abspath(os.path.dirname(results_file))
     if not os.path.exists(test_dir):
         try:
-            makedirs_with_parent_perms(test_dir)  # NOTE: this will pass up an error exception if it fails
+            makedirs_with_parent_perms(
+                test_dir
+            )  # NOTE: this will pass up an error exception if it fails
         except OSError as error:
-            raise IOError('cannot create test results directory [%s]: %s' % (test_dir, str(error)))
+            raise IOError(
+                "cannot create test results directory [%s]: %s" % (test_dir, str(error))
+            )
 
     elif os.path.isfile(test_dir):
-        raise Exception('ERROR: cannot run test suite, file is preventing creation of test dir: %s' % test_dir)
+        raise Exception(
+            "ERROR: cannot run test suite, file is preventing creation of test dir: %s"
+            % test_dir
+        )
 
-    print('[ROSUNIT] Outputting test results to ' + results_file)
-    outstream = open(results_file, 'w')
+    print("[ROSUNIT] Outputting test results to " + results_file)
+    outstream = open(results_file, "w")
     outstream.write('<?xml version="1.0" encoding="utf-8"?>\n')
     return XMLTestRunner(stream=outstream)

@@ -33,7 +33,7 @@
 #
 
 ## ROS message source code generation for C++
-## 
+##
 ## Converts ROS .msg files in a package into C++ source code implementations.
 
 import msg_gen
@@ -42,15 +42,3 @@ import sys
 
 if __name__ == "__main__":
     msg_gen.generate_messages(sys.argv)
-
-
-
-
-
-
-
-
-
-
-
-

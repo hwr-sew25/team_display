@@ -2,19 +2,16 @@ import unittest
 
 
 class CaseA(unittest.TestCase):
-
     def runTest(self):
         self.assertTrue(True)
 
 
 class CaseB(unittest.TestCase):
-
     def runTest(self):
         self.assertTrue(True)
 
 
 class DotnameLoadingSuite(unittest.TestSuite):
-
     def __init__(self):
         super(DotnameLoadingSuite, self).__init__()
         self.addTest(CaseA())
@@ -22,7 +19,6 @@ class DotnameLoadingSuite(unittest.TestSuite):
 
 
 class DotnameLoadingTest(unittest.TestCase):
-
     def test_a(self):
         self.assertTrue(True)
 
@@ -30,7 +26,6 @@ class DotnameLoadingTest(unittest.TestCase):
         self.assertTrue(True)
 
 
-class NotTestCase():
-
+class NotTestCase:
     def not_test(self):
         pass

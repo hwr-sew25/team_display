@@ -41,7 +41,7 @@
 import os
 import sys
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) != 3:
         raise Exception
     if os.path.realpath(sys.argv[1]) != os.path.realpath(sys.argv[2]):

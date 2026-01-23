@@ -32,63 +32,68 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys 
+import sys
 import unittest
 import time
-        
+
 import rostest
 
 from subprocess import Popen, PIPE, check_call, call
 
-class TestRosserviceOffline(unittest.TestCase):
 
+class TestRosserviceOffline(unittest.TestCase):
     def setUp(self):
         pass
 
     ## test that the usage command works
     def test_cmd_help(self):
-        cmd = 'rosservice'
-        sub = ['args', 'info', 'list', 'call', 'type', 'uri', 'find']
-        
+        cmd = "rosservice"
+        sub = ["args", "info", "list", "call", "type", "uri", "find"]
+
         output = Popen([cmd], stdout=PIPE).communicate()[0]
         output = output.decode()
-        self.assertTrue('Commands' in output)
-        output = Popen([cmd, '-h'], stdout=PIPE).communicate()[0]
+        self.assertTrue("Commands" in output)
+        output = Popen([cmd, "-h"], stdout=PIPE).communicate()[0]
         output = output.decode()
-        self.assertTrue('Commands' in output)
+        self.assertTrue("Commands" in output)
         # make sure all the commands are in the usage
         for c in sub:
-            self.assertTrue("%s %s"%(cmd, c) in output, output)            
+            self.assertTrue("%s %s" % (cmd, c) in output, output)
 
         for c in sub:
-            output = Popen([cmd, c, '-h'], stdout=PIPE).communicate()
+            output = Popen([cmd, c, "-h"], stdout=PIPE).communicate()
             self.assertTrue("Usage:" in output[0].decode(), output)
             # make sure usage refers to the command
             self.assertTrue("%s %s" % (cmd, c) in output[0].decode(), output)
 
     def test_offline(self):
-        cmd = 'rosservice'
+        cmd = "rosservice"
 
         # point at a different 'master'
         env = os.environ.copy()
-        env['ROS_MASTER_URI'] = 'http://localhost:11312'
-        kwds = { 'env': env, 'stdout': PIPE, 'stderr': PIPE}
+        env["ROS_MASTER_URI"] = "http://localhost:11312"
+        kwds = {"env": env, "stdout": PIPE, "stderr": PIPE}
 
         msg = "ERROR: Unable to communicate with master!" + os.linesep
 
-        output = Popen([cmd, 'list'], **kwds).communicate()
+        output = Popen([cmd, "list"], **kwds).communicate()
         self.assertTrue(output[1].decode().endswith(msg))
-        output = Popen([cmd, 'type', 'add_two_ints'], **kwds).communicate()
+        output = Popen([cmd, "type", "add_two_ints"], **kwds).communicate()
         self.assertTrue(output[1].decode().endswith(msg))
-        output = Popen([cmd, 'uri', 'add_two_ints'], **kwds).communicate()
+        output = Popen([cmd, "uri", "add_two_ints"], **kwds).communicate()
         self.assertTrue(output[1].decode().endswith(msg))
-        output = Popen([cmd, 'call', 'add_two_ints', '1', '2'], **kwds).communicate()
+        output = Popen([cmd, "call", "add_two_ints", "1", "2"], **kwds).communicate()
         self.assertTrue(output[1].decode().endswith(msg))
         # - wait should still fail if master is offline
-        output = Popen([cmd, 'call', '--wait', 'add_two_ints', '1', '2'], **kwds).communicate()
+        output = Popen(
+            [cmd, "call", "--wait", "add_two_ints", "1", "2"], **kwds
+        ).communicate()
         self.assertTrue(output[1].decode().endswith(msg))
-        output = Popen([cmd, 'find', 'test_ros/AddTwoInts'], **kwds).communicate()
+        output = Popen([cmd, "find", "test_ros/AddTwoInts"], **kwds).communicate()
         self.assertTrue(output[1].decode().endswith(msg))
-        
-if __name__ == '__main__':
-    rostest.unitrun('test_rosservice', NAME, TestRosserviceOffline, sys.argv, coverage_packages=[])
+
+
+if __name__ == "__main__":
+    rostest.unitrun(
+        "test_rosservice", NAME, TestRosserviceOffline, sys.argv, coverage_packages=[]
+    )

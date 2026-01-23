@@ -44,53 +44,58 @@ import importlib
 import os
 import sys
 
-python_prefix = 'python'
+python_prefix = "python"
 if sys.version_info[0] == 3:
-    python_prefix += '3'
+    python_prefix += "3"
 
-#A dictionary of core ROS python packages and their corresponding .deb packages
+# A dictionary of core ROS python packages and their corresponding .deb packages
 py_to_deb_core_packages = {
-    'catkin_pkg': '%s-catkin-pkg' % python_prefix,
-    'rospkg': '%s-rospkg' % python_prefix,
-    'rosdep2': '%s-rosdep' % python_prefix,
+    "catkin_pkg": "%s-catkin-pkg" % python_prefix,
+    "rospkg": "%s-rospkg" % python_prefix,
+    "rosdep2": "%s-rosdep" % python_prefix,
 }
 # optional ROS python packages and their corresponding .deb packages
 py_to_deb_optional_packages = {
-    'rosinstall': '%s-rosinstall' % python_prefix,
+    "rosinstall": "%s-rosinstall" % python_prefix,
 }
 
-#A dictionary of release ROS python packages and their corresponding .deb packages
+# A dictionary of release ROS python packages and their corresponding .deb packages
 py_to_deb_release_packages = {
-    'bloom': '%s-bloom' % python_prefix,
-    'rosrelease': '%s-rosrelease' % python_prefix,
+    "bloom": "%s-bloom" % python_prefix,
+    "rosrelease": "%s-rosrelease" % python_prefix,
 }
 
 
 def get_host_os():
     """Determines the name of the host operating system"""
     import rospkg.os_detect
+
     os_detector = rospkg.os_detect.OsDetect()
     return (os_detector.detect_os())[0]
 
 
 def is_host_os_ubuntu():
     """Indicates if the host operating system is Ubuntu"""
-    return (get_host_os() == 'ubuntu')
+    return get_host_os() == "ubuntu"
 
 
 def is_debian_package_installed(deb_pkg):
     """Uses dpkg to determine if a package has been installed"""
-    return (subprocess.call(
-        'dpkg -l ' + deb_pkg,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE) == 0)
+    return (
+        subprocess.call(
+            "dpkg -l " + deb_pkg,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        == 0
+    )
 
 
 def is_a_pip_path_on_ubuntu(path):
     """Indicates if a path (either directory or file) is in the same place
     pip installs Python code"""
-    return ('/usr/local' in path)
+    return "/usr/local" in path
 
 
 def is_python_package_installed(python_pkg):
@@ -116,47 +121,54 @@ def is_python_package_installed_via_pip_on_ubuntu(python_pkg):
 # Error/Warning Rules
 def python_module_install_check(ctx):
     """Make sure core Python modules are installed"""
-    warn_str = ''
+    warn_str = ""
     for py_pkg in py_to_deb_core_packages:
         if not is_python_package_installed(py_pkg):
-            warn_str = warn_str + py_pkg + ' -- '
-    if (warn_str != ''):
+            warn_str = warn_str + py_pkg + " -- "
+    if warn_str != "":
         return warn_str
 
 
 def deb_install_check_on_ubuntu(ctx):
     """Make sure on Debian python packages are installed"""
-    if (is_host_os_ubuntu()):
-        warn_str = ''
+    if is_host_os_ubuntu():
+        warn_str = ""
         for py_pkg in py_to_deb_core_packages:
             deb_pkg = py_to_deb_core_packages[py_pkg]
             if not is_debian_package_installed(deb_pkg):
-                warn_str = warn_str + py_pkg + ' (' + deb_pkg + ') -- '
-        if (warn_str != ''):
+                warn_str = warn_str + py_pkg + " (" + deb_pkg + ") -- "
+        if warn_str != "":
             return warn_str
 
 
 def pip_install_check_on_ubuntu(ctx):
     """Make sure on Ubuntu, Python packages are install with apt and not pip"""
-    if (is_host_os_ubuntu()):
-        warn_str = ''
-        pt_to_deb_package_names = list(py_to_deb_core_packages.keys()) + \
-            list(py_to_deb_optional_packages.keys()) + list(py_to_deb_release_packages.keys())
+    if is_host_os_ubuntu():
+        warn_str = ""
+        pt_to_deb_package_names = (
+            list(py_to_deb_core_packages.keys())
+            + list(py_to_deb_optional_packages.keys())
+            + list(py_to_deb_release_packages.keys())
+        )
         for py_pkg in pt_to_deb_package_names:
             if is_python_package_installed_via_pip_on_ubuntu(py_pkg):
-                warn_str = warn_str + py_pkg + ' -- '
-        if (warn_str != ''):
+                warn_str = warn_str + py_pkg + " -- "
+        if warn_str != "":
             return warn_str
 
+
 warnings = [
-    (python_module_install_check,
-     "You are missing core ROS Python modules: "),
-    (pip_install_check_on_ubuntu,
-     "You have pip installed packages on Ubuntu, "
-     "remove and install using Debian packages: "),
-    (deb_install_check_on_ubuntu,
-     "You are missing Debian packages for core ROS Python modules: "),
-    ]
+    (python_module_install_check, "You are missing core ROS Python modules: "),
+    (
+        pip_install_check_on_ubuntu,
+        "You have pip installed packages on Ubuntu, "
+        "remove and install using Debian packages: ",
+    ),
+    (
+        deb_install_check_on_ubuntu,
+        "You are missing Debian packages for core ROS Python modules: ",
+    ),
+]
 
 errors = []
 
@@ -164,6 +176,7 @@ errors = []
 def wtf_check(ctx):
     """Check implementation function for roswtf"""
     from roswtf.rules import warning_rule, error_rule
+
     for r in warnings:
         warning_rule(r, r[0](ctx), ctx)
     for r in errors:

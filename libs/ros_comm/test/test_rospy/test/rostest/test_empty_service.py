@@ -34,8 +34,8 @@
 ## Integration test for empty services to test serializers
 ## and transport
 
-PKG = 'test_rospy'
-NAME = 'empty_service'
+PKG = "test_rospy"
+NAME = "empty_service"
 
 import sys, time
 import unittest
@@ -43,34 +43,40 @@ import unittest
 import rospy, rostest
 from test_rospy.srv import *
 
-EMPTY_SERVICE      = 'empty_service'
-EMPTY_RETURN_SERVICE = 'empty_return_service'
-EMPTY_REQ_SERVICE  = 'empty_req_service'
-EMPTY_RESP_SERVICE = 'empty_resp_service'
+EMPTY_SERVICE = "empty_service"
+EMPTY_RETURN_SERVICE = "empty_return_service"
+EMPTY_REQ_SERVICE = "empty_req_service"
+EMPTY_RESP_SERVICE = "empty_resp_service"
 
 FAKE_SECRET = 123456
 
-WAIT_TIMEOUT = 10.0 #s
+WAIT_TIMEOUT = 10.0  # s
+
 
 def handle_empty(req):
     print("Returning empty")
     return EmptySrvResponse()
 
+
 def handle_return_empty(req):
     "print returning empty list"
     return []
 
-## handle empty request 
+
+## handle empty request
 def handle_empty_req(req):
     print("Returning fake_secret")
     return EmptyReqSrvResponse(FAKE_SECRET)
-## handle empty response 
+
+
+## handle empty response
 def handle_empty_resp(req):
     if req.fake_secret == FAKE_SECRET:
-        print("Request validated, returning empty")     
+        print("Request validated, returning empty")
         return EmptyRespSrvResponse()
     else:
         print("Request did not validate, returning None")
+
 
 def empty_service():
     rospy.init_node(NAME)
@@ -80,10 +86,10 @@ def empty_service():
     s4 = rospy.Service(EMPTY_RETURN_SERVICE, EmptySrv, handle_return_empty)
     rospy.spin()
 
+
 class TestEmptyServiceClient(unittest.TestCase):
-        
     def _test(self, name, srv, req):
-        rospy.wait_for_service(name, WAIT_TIMEOUT)        
+        rospy.wait_for_service(name, WAIT_TIMEOUT)
         s = rospy.ServiceProxy(name, srv)
         resp = s.call(req)
         self.assertTrue(resp is not None)
@@ -91,31 +97,36 @@ class TestEmptyServiceClient(unittest.TestCase):
 
     # test that __call__ and s.call() work with no-args on an empty request
     def test_call_empty(self):
-        rospy.wait_for_service(EMPTY_REQ_SERVICE, WAIT_TIMEOUT)        
+        rospy.wait_for_service(EMPTY_REQ_SERVICE, WAIT_TIMEOUT)
         s = rospy.ServiceProxy(EMPTY_REQ_SERVICE, EmptyReqSrv)
         resp = s()
-        self.assertEqual(FAKE_SECRET, resp.fake_secret, 
-                          "fake_secret fields is not set as expected")        
+        self.assertEqual(
+            FAKE_SECRET, resp.fake_secret, "fake_secret fields is not set as expected"
+        )
         resp = s.call()
-        self.assertEqual(FAKE_SECRET, resp.fake_secret, 
-                          "fake_secret fields is not set as expected")        
-        
+        self.assertEqual(
+            FAKE_SECRET, resp.fake_secret, "fake_secret fields is not set as expected"
+        )
+
     def test_empty(self):
         self._test(EMPTY_SERVICE, EmptySrv, EmptySrvRequest())
+
     # test that an empty return service handler can return an empty list
     def test_return_empty(self):
         self._test(EMPTY_RETURN_SERVICE, EmptySrv, EmptySrvRequest())
+
     def test_empty_req(self):
-        resp = self._test(EMPTY_REQ_SERVICE, EmptyReqSrv,
-                          EmptyReqSrvRequest())
-        self.assertEqual(FAKE_SECRET, resp.fake_secret, 
-                          "fake_secret fields is not set as expected")        
+        resp = self._test(EMPTY_REQ_SERVICE, EmptyReqSrv, EmptyReqSrvRequest())
+        self.assertEqual(
+            FAKE_SECRET, resp.fake_secret, "fake_secret fields is not set as expected"
+        )
+
     def test_empty_resp(self):
-        self._test(EMPTY_RESP_SERVICE, EmptyRespSrv,
-                   EmptyRespSrvRequest(FAKE_SECRET))
-        
-if __name__ == '__main__':
-    if '--service' in sys.argv:
+        self._test(EMPTY_RESP_SERVICE, EmptyRespSrv, EmptyRespSrvRequest(FAKE_SECRET))
+
+
+if __name__ == "__main__":
+    if "--service" in sys.argv:
         empty_service()
     else:
-        rostest.run(PKG, 'rospy_empty_service', TestEmptyServiceClient, sys.argv)
+        rostest.run(PKG, "rospy_empty_service", TestEmptyServiceClient, sys.argv)

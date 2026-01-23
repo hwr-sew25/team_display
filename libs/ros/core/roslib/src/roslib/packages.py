@@ -51,7 +51,7 @@ import roslib.manifest  # noqa: F401
 
 import rospkg
 
-SRC_DIR = 'src'
+SRC_DIR = "src"
 
 # aliases
 ROS_PACKAGE_PATH = rospkg.environment.ROS_PACKAGE_PATH
@@ -62,6 +62,7 @@ class ROSPkgException(Exception):
     """
     Base class of package-related errors.
     """
+
     pass
 
 
@@ -69,6 +70,7 @@ class InvalidROSPkgException(ROSPkgException):
     """
     Exception that indicates that a ROS package does not exist
     """
+
     pass
 
 
@@ -76,18 +78,21 @@ class MultipleNodesException(ROSPkgException):
     """
     Exception that indicates that multiple ROS nodes by the same name are in the same package.
     """
+
     pass
+
 
 # TODO: go through the code and eliminate unused methods -- there's far too many combos here
 
 
-MANIFEST_FILE = 'manifest.xml'
-PACKAGE_FILE = 'package.xml'
+MANIFEST_FILE = "manifest.xml"
+PACKAGE_FILE = "package.xml"
 
 
 #
 # Map package/directory structure
 #
+
 
 def get_dir_pkg(d):
     """
@@ -104,10 +109,16 @@ def get_dir_pkg(d):
 
     parent = os.path.dirname(os.path.realpath(d))
     # walk up until we hit ros root or ros/pkg
-    while not os.path.exists(os.path.join(d, MANIFEST_FILE)) and not os.path.exists(os.path.join(d, PACKAGE_FILE)) and parent != d:
+    while (
+        not os.path.exists(os.path.join(d, MANIFEST_FILE))
+        and not os.path.exists(os.path.join(d, PACKAGE_FILE))
+        and parent != d
+    ):
         d = parent
         parent = os.path.dirname(d)
-    if os.path.exists(os.path.join(d, MANIFEST_FILE)) or os.path.exists(os.path.join(d, PACKAGE_FILE)):
+    if os.path.exists(os.path.join(d, MANIFEST_FILE)) or os.path.exists(
+        os.path.join(d, PACKAGE_FILE)
+    ):
         pkg = os.path.basename(os.path.abspath(d))
         return d, pkg
     return None, None
@@ -150,7 +161,7 @@ def get_pkg_dir(package, required=True, ros_root=None, ros_package_path=None):
             ros_root = os.environ[ROS_ROOT]
 
         # determine rospack exe name
-        rospack = 'rospack'
+        rospack = "rospack"
 
         if ros_package_path is not None:
             ros_package_path = rospkg.environment._resolve_paths(ros_package_path)
@@ -173,28 +184,39 @@ def get_pkg_dir(package, required=True, ros_root=None, ros_package_path=None):
                     # invalidate cache
                     _invalidate_cache(_pkg_dir_cache)
 
-        rpout, rperr = Popen([rospack, 'find', package],
-                             stdout=PIPE, stderr=PIPE, env=penv).communicate()
+        rpout, rperr = Popen(
+            [rospack, "find", package], stdout=PIPE, stderr=PIPE, env=penv
+        ).communicate()
 
-        pkg_dir = (rpout or '').strip()
+        pkg_dir = (rpout or "").strip()
         # python3.1 popen returns as bytes
-        if (isinstance(pkg_dir, bytes)):
+        if isinstance(pkg_dir, bytes):
             pkg_dir = pkg_dir.decode()
         if not pkg_dir:
-            raise InvalidROSPkgException('Cannot locate installation of package %s: %s. ROS_ROOT[%s] ROS_PACKAGE_PATH[%s]' % (package, rperr.strip(), ros_root, ros_package_path))
+            raise InvalidROSPkgException(
+                "Cannot locate installation of package %s: %s. ROS_ROOT[%s] ROS_PACKAGE_PATH[%s]"
+                % (package, rperr.strip(), ros_root, ros_package_path)
+            )
 
         pkg_dir = os.path.normpath(pkg_dir)
         if not os.path.exists(pkg_dir):
-            raise InvalidROSPkgException('Cannot locate installation of package %s: [%s] is not a valid path. ROS_ROOT[%s] ROS_PACKAGE_PATH[%s]' % (package, pkg_dir, ros_root, ros_package_path))
+            raise InvalidROSPkgException(
+                "Cannot locate installation of package %s: [%s] is not a valid path. ROS_ROOT[%s] ROS_PACKAGE_PATH[%s]"
+                % (package, pkg_dir, ros_root, ros_package_path)
+            )
         elif not os.path.isdir(pkg_dir):
-            raise InvalidROSPkgException('Package %s is invalid: file [%s] is in the way' % (package, pkg_dir))
+            raise InvalidROSPkgException(
+                "Package %s is invalid: file [%s] is in the way" % (package, pkg_dir)
+            )
         # don't update cache: this should only be updated from
         # rospack_cache as it will corrupt package list otherwise.
         # _pkg_dir_cache[package] = (pkg_dir, ros_root, ros_package_path)
         return pkg_dir
     except OSError as e:
         if required:
-            raise InvalidROSPkgException('Environment configuration is invalid: cannot locate rospack (%s)' % e)
+            raise InvalidROSPkgException(
+                "Environment configuration is invalid: cannot locate rospack (%s)" % e
+            )
         return None
     except Exception:
         if required:
@@ -223,19 +245,28 @@ def _get_pkg_subdir_by_dir(package_dir, subdir, required=True, env=None):
         env = os.environ
     try:
         if not package_dir:
-            raise Exception("Cannot create a '%(subdir)s' directory in %(package_dir)s: package %(package) cannot be located" % locals())
+            raise Exception(
+                "Cannot create a '%(subdir)s' directory in %(package_dir)s: package %(package) cannot be located"
+                % locals()
+            )
         d = os.path.join(package_dir, subdir)
         if required and os.path.isfile(d):
-            raise Exception("""Package '%(package)s' is improperly configured:
-file %(d)s is preventing the creation of a directory""" % locals())
+            raise Exception(
+                """Package '%(package)s' is improperly configured:
+file %(d)s is preventing the creation of a directory"""
+                % locals()
+            )
         elif required and not os.path.isdir(d):
             try:
                 os.makedirs(d)  # lazy create
             except os.error:
-                raise Exception("""Package '%(package)s' is improperly configured:
+                raise Exception(
+                    """Package '%(package)s' is improperly configured:
 Cannot create a '%(subdir)s' directory in %(package_dir)s.
 Please check permissions and try again.
-""" % locals())
+"""
+                    % locals()
+                )
         return d
     except Exception:
         if required:
@@ -268,6 +299,7 @@ def get_pkg_subdir(package, subdir, required=True, env=None):
 # Map ROS resources to files
 #
 
+
 def resource_file(package, subdir, resource_name):
     """
     @param subdir: name of subdir -- these should be one of the
@@ -297,7 +329,7 @@ def _update_rospack_cache(env=None):
     if cache:
         return True
     ros_root = env[ROS_ROOT]
-    ros_package_path = env.get(ROS_PACKAGE_PATH, '')
+    ros_package_path = env.get(ROS_PACKAGE_PATH, "")
     return _read_rospack_cache(cache, ros_root, ros_package_path)
 
 
@@ -326,18 +358,18 @@ def _read_rospack_cache(cache, ros_root, ros_package_path):
     @rtype: bool
     """
     try:
-        with open(os.path.join(rospkg.get_ros_home(), 'rospack_cache')) as f:
+        with open(os.path.join(rospkg.get_ros_home(), "rospack_cache")) as f:
             for l in f.readlines():
                 l = l[:-1]
                 if not len(l):
                     continue
-                if l[0] == '#':
+                if l[0] == "#":
                     # check that the cache matches our env
-                    if l.startswith('#ROS_ROOT='):
-                        if not l[len('#ROS_ROOT='):] == ros_root:
+                    if l.startswith("#ROS_ROOT="):
+                        if not l[len("#ROS_ROOT=") :] == ros_root:
                             return False
-                    elif l.startswith('#ROS_PACKAGE_PATH='):
-                        if not l[len('#ROS_PACKAGE_PATH='):] == ros_package_path:
+                    elif l.startswith("#ROS_PACKAGE_PATH="):
+                        if not l[len("#ROS_PACKAGE_PATH=") :] == ros_package_path:
                             return False
                 else:
                     cache[os.path.basename(l)] = l, ros_root, ros_package_path
@@ -370,7 +402,7 @@ def list_pkgs_by_path(path, packages=None, cache=None, env=None):
         env = os.environ
     # record settings for cache
     ros_root = env[ROS_ROOT]
-    ros_package_path = env.get(ROS_PACKAGE_PATH, '')
+    ros_package_path = env.get(ROS_PACKAGE_PATH, "")
 
     path = os.path.abspath(path)
     for d, dirs, files in os.walk(path, topdown=True):
@@ -382,14 +414,14 @@ def list_pkgs_by_path(path, packages=None, cache=None, env=None):
                     cache[package] = d, ros_root, ros_package_path
             del dirs[:]
             continue  # leaf
-        elif 'rospack_nosubdirs' in files:
+        elif "rospack_nosubdirs" in files:
             del dirs[:]
             continue  # leaf
         # small optimization
-        elif '.svn' in dirs:
-            dirs.remove('.svn')
-        elif '.git' in dirs:
-            dirs.remove('.git')
+        elif ".svn" in dirs:
+            dirs.remove(".svn")
+        elif ".git" in dirs:
+            dirs.remove(".git")
 
         for sub_d in dirs:
             # followlinks=True only available in Python 2.6, so we
@@ -424,7 +456,7 @@ def _executable_filter(test_path):
     # Python scripts in ROS tend to omit .py extension since they could become executable
     # by adding a shebang line (#!/usr/bin/env python) in Linux environments
     # special handle this case in Windows environment
-    if os.name == 'nt' and os.path.splitext(test_path)[1].lower() in ['.py', '']:
+    if os.name == "nt" and os.path.splitext(test_path)[1].lower() in [".py", ""]:
         flags = stat.S_IRUSR
     return (s.st_mode & flags) == flags
 
@@ -435,7 +467,7 @@ def _find_resource(d, resource_name, filter_fn=None):
     """
     matches = []
     # TODO: figure out how to generalize find_resource to take multiple resource name options
-    if sys.platform in ['win32', 'cygwin']:
+    if sys.platform in ["win32", "cygwin"]:
         # Windows logic requires more file patterns to resolve and is
         # not case-sensitive, so leave it separate
 
@@ -449,7 +481,12 @@ def _find_resource(d, resource_name, filter_fn=None):
         # - We still have to look for bare node_type as user may have
         #   specified extension manually
         resource_name = resource_name.lower()
-        patterns = [resource_name, resource_name+'.exe', resource_name+'.bat', resource_name+'.py']
+        patterns = [
+            resource_name,
+            resource_name + ".exe",
+            resource_name + ".bat",
+            resource_name + ".py",
+        ]
         for p, dirs, files in os.walk(d):
             # case insensitive
             files = [f.lower() for f in files]
@@ -462,7 +499,7 @@ def _find_resource(d, resource_name, filter_fn=None):
                     else:
                         matches.append(test_path)
             # remove .svn/.git/etc
-            to_prune = [x for x in dirs if x.startswith('.')]
+            to_prune = [x for x in dirs if x.startswith(".")]
             for x in to_prune:
                 dirs.remove(x)
     else:  # UNIX
@@ -475,7 +512,7 @@ def _find_resource(d, resource_name, filter_fn=None):
                 else:
                     matches.append(test_path)
             # remove .svn/.git/etc
-            to_prune = [x for x in dirs if x.startswith('.')]
+            to_prune = [x for x in dirs if x.startswith(".")]
             for x in to_prune:
                 dirs.remove(x)
     return [os.path.abspath(m) for m in matches]
@@ -518,18 +555,21 @@ def find_resource(pkg, resource_name, filter_fn=None, rospack=None):
     # lookup package as it *must* exist
     pkg_path = rospack.get_path(pkg)
 
-    source_path_to_packages = rospack.get_custom_cache('source_path_to_packages', {})
+    source_path_to_packages = rospack.get_custom_cache("source_path_to_packages", {})
 
     # if found in binary dir, start with that.  in any case, use matches
     # from ros_package_path
     matches = []
     search_paths = catkin_find(
-        search_dirs=['libexec', 'share'], project=pkg, first_matching_workspace_only=True,
-        source_path_to_packages=source_path_to_packages)
+        search_dirs=["libexec", "share"],
+        project=pkg,
+        first_matching_workspace_only=True,
+        source_path_to_packages=source_path_to_packages,
+    )
 
     # persist mapping of packages in rospack instance
     if source_path_to_packages:
-        rospack.set_custom_cache('source_path_to_packages', source_path_to_packages)
+        rospack.set_custom_cache("source_path_to_packages", source_path_to_packages)
 
     for search_path in search_paths:
         matches.extend(_find_resource(search_path, resource_name, filter_fn=filter_fn))

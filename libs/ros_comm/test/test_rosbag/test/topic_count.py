@@ -33,7 +33,8 @@
 #
 
 import roslib
-roslib.load_manifest('rosbag')
+
+roslib.load_manifest("rosbag")
 
 import unittest
 import rostest
@@ -41,26 +42,32 @@ import sys
 import time
 import subprocess
 
+
 class TopicCount(unittest.TestCase):
+    def test_topic_count(self):
+        # Wait while the recorder creates a bag for us to examine
+        time.sleep(10.0)
 
-  def test_topic_count(self):
-    # Wait while the recorder creates a bag for us to examine
-    time.sleep(10.0)
+        # Check the topic count returned by `rosbag info`
+        # We could probably do this through the rosbag Python API...
+        cmd = [
+            "rosbag",
+            "info",
+            "/tmp/test_rosbag_record_one_publisher_two_topics.bag",
+            "-y",
+            "-k",
+            "topics",
+        ]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        topic_count = 0
+        for l in out.decode().split("\n"):
+            f = l.strip().split(": ")
+            if len(f) == 2 and f[0] == "- topic":
+                topic_count += 1
 
-    # Check the topic count returned by `rosbag info`
-    # We could probably do this through the rosbag Python API...
-    cmd = ['rosbag', 'info', 
-           '/tmp/test_rosbag_record_one_publisher_two_topics.bag',
-           '-y', '-k', 'topics']
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out,err = p.communicate()
-    topic_count = 0
-    for l in out.decode().split('\n'):
-        f = l.strip().split(': ')
-        if len(f) == 2 and f[0] == '- topic':
-            topic_count += 1
+        self.assertEqual(topic_count, 2)
 
-    self.assertEqual(topic_count, 2)
 
-if __name__ == '__main__':
-  rostest.unitrun('test_rosbag', 'topic_count', TopicCount, sys.argv)
+if __name__ == "__main__":
+    rostest.unitrun("test_rosbag", "topic_count", TopicCount, sys.argv)

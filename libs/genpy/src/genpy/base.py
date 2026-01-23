@@ -34,23 +34,23 @@
 # Primitive type handling for ROS builtin types
 
 SIMPLE_TYPES_DICT = {  # see python module struct
-    'int8': 'b',
-    'uint8': 'B',
+    "int8": "b",
+    "uint8": "B",
     # Python 2.6 adds in '?' for C99 _Bool, which appears equivalent to an uint8,
     # thus, we use uint8
-    'bool': 'B',
-    'int16': 'h',
-    'uint16': 'H',
-    'int32': 'i',
-    'uint32': 'I',
-    'int64': 'q',
-    'uint64': 'Q',
-    'float32': 'f',
-    'float64': 'd',
+    "bool": "B",
+    "int16": "h",
+    "uint16": "H",
+    "int32": "i",
+    "uint32": "I",
+    "int64": "q",
+    "uint64": "Q",
+    "float32": "f",
+    "float64": "d",
     # deprecated
-    'char': 'B',  # unsigned
-    'byte': 'b',  # signed
-    }
+    "char": "B",  # unsigned
+    "byte": "b",  # signed
+}
 
 # Simple types are primitives with fixed-serialization length
 SIMPLE_TYPES = list(SIMPLE_TYPES_DICT.keys())  # py3k

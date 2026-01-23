@@ -35,10 +35,10 @@
 
 from __future__ import print_function
 
-PKG = 'test_rospy'
-NAME = 'on_shutdown_test'
+PKG = "test_rospy"
+NAME = "on_shutdown_test"
 
-import sys 
+import sys
 import time
 import unittest
 
@@ -51,20 +51,21 @@ class TestOnShutdown(unittest.TestCase):
     def __init__(self, *args):
         super(TestOnShutdown, self).__init__(*args)
         self.success = False
-        
+
     def callback(self, data):
-        print(rospy.get_caller_id(), "I heard %s"%data.data)
-        #greetings is only sent over peer_publish callback, so hearing it is a success condition
+        print(rospy.get_caller_id(), "I heard %s" % data.data)
+        # greetings is only sent over peer_publish callback, so hearing it is a success condition
         if "I'm dead" in data.data:
             self.success = True
 
     def test_notify(self):
         rospy.Subscriber("chatter", String, self.callback)
         rospy.init_node(NAME, anonymous=True)
-        timeout_t = time.time() + 10.0*1000 #10 seconds
+        timeout_t = time.time() + 10.0 * 1000  # 10 seconds
         while not rospy.is_shutdown() and not self.success and time.time() < timeout_t:
             time.sleep(0.1)
         self.assertTrue(self.success, str(self.success))
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     rostest.rosrun(PKG, NAME, TestOnShutdown, sys.argv)

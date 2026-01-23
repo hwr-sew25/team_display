@@ -32,71 +32,107 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys 
+import sys
 import unittest
 import time
-        
+
 from subprocess import Popen, PIPE, check_call, call
 
 import rospkg
 
+
 def get_test_path():
     return os.path.abspath(os.path.dirname(__file__))
+
+
 def get_roswtf_path():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 
 class TestRoswtfOffline(unittest.TestCase):
-
     def setUp(self):
         pass
 
     ## test that the rosmsg command works
     def test_cmd_help(self):
-        cmd = 'roswtf'
-        output = Popen([cmd, '-h'], stdout=PIPE).communicate()[0]
+        cmd = "roswtf"
+        output = Popen([cmd, "-h"], stdout=PIPE).communicate()[0]
         output = output.decode()
-        self.assertTrue('Options' in output)
-            
+        self.assertTrue("Options" in output)
+
     def test_offline(self):
-        cmd = 'roswtf'
+        cmd = "roswtf"
 
         # point at a different 'master'
         env = os.environ.copy()
-        env['ROS_MASTER_URI'] = 'http://localhost:11312'
+        env["ROS_MASTER_URI"] = "http://localhost:11312"
 
         rospack = rospkg.RosPack()
         # add all dependencies to ros package path
-        pkgs = ['roswtf',
-            'rosgraph', 'roslaunch', 'roslib', 'rosnode', 'rosservice',
-            'rosbag', 'rosbag_storage', 'roslz4', 'rosconsole', 'roscpp', 'rosgraph_msgs', 'roslang', 'rosmaster', 'rosmsg', 'rosout', 'rosparam', 'rospy', 'rostest', 'rostopic', 'topic_tools', 'xmlrpcpp',
-            'std_srvs',  # ros_comm_msgs
-            'cpp_common', 'roscpp_serialization', 'roscpp_traits', 'rostime',  # roscpp_core
-            'rosbuild', 'rosclean', 'rosunit',  # ros
-            'rospack', 'std_msgs', 'message_runtime', 'message_generation', 'gencpp', 'genlisp', 'genpy', 'genmsg', 'catkin',
+        pkgs = [
+            "roswtf",
+            "rosgraph",
+            "roslaunch",
+            "roslib",
+            "rosnode",
+            "rosservice",
+            "rosbag",
+            "rosbag_storage",
+            "roslz4",
+            "rosconsole",
+            "roscpp",
+            "rosgraph_msgs",
+            "roslang",
+            "rosmaster",
+            "rosmsg",
+            "rosout",
+            "rosparam",
+            "rospy",
+            "rostest",
+            "rostopic",
+            "topic_tools",
+            "xmlrpcpp",
+            "std_srvs",  # ros_comm_msgs
+            "cpp_common",
+            "roscpp_serialization",
+            "roscpp_traits",
+            "rostime",  # roscpp_core
+            "rosbuild",
+            "rosclean",
+            "rosunit",  # ros
+            "rospack",
+            "std_msgs",
+            "message_runtime",
+            "message_generation",
+            "gencpp",
+            "genlisp",
+            "genpy",
+            "genmsg",
+            "catkin",
         ]
         paths = [rospack.get_path(pkg) for pkg in pkgs]
         try:
-            path = rospack.get_path('cmake_modules')
+            path = rospack.get_path("cmake_modules")
         except rospkg.ResourceNotFound:
             pass
         else:
             paths.append(path)
         try:
-            path = rospack.get_path('geneus')
+            path = rospack.get_path("geneus")
         except rospkg.ResourceNotFound:
             pass
         else:
             paths.append(path)
         try:
-            path = rospack.get_path('gennodejs')
+            path = rospack.get_path("gennodejs")
         except rospkg.ResourceNotFound:
             pass
         else:
             paths.append(path)
-        env['ROS_PACKAGE_PATH'] = os.pathsep.join(paths)
+        env["ROS_PACKAGE_PATH"] = os.pathsep.join(paths)
 
-        cwd  = get_roswtf_path()
-        kwds = { 'env': env, 'stdout': PIPE, 'stderr': PIPE, 'cwd': cwd}
+        cwd = get_roswtf_path()
+        kwds = {"env": env, "stdout": PIPE, "stderr": PIPE, "cwd": cwd}
 
         # run roswtf nakedly
         output = Popen([cmd], **kwds).communicate()
@@ -107,7 +143,7 @@ class TestRoswtfOffline(unittest.TestCase):
         self._check_output(output[0])
 
         # run roswtf on a simple launch file offline
-        p = os.path.join(get_test_path(), 'min.launch')
+        p = os.path.join(get_test_path(), "min.launch")
         output = Popen([cmd, p], **kwds).communicate()[0]
         output = output.decode()
         self._check_output(output)
@@ -115,12 +151,13 @@ class TestRoswtfOffline(unittest.TestCase):
     def _check_output(self, output):
         # do both a positive and negative test
         self.assertTrue(
-            'No errors or warnings' in output or 'Found 1 error' in output,
-            'OUTPUT[%s]' % output)
-        if 'No errors or warnings' in output:
-            self.assertTrue('ERROR' not in output, 'OUTPUT[%s]' % output)
-        if 'Found 1 error' in output:
-            self.assertTrue(output.count('ERROR') == 1, 'OUTPUT[%s]' % output)
+            "No errors or warnings" in output or "Found 1 error" in output,
+            "OUTPUT[%s]" % output,
+        )
+        if "No errors or warnings" in output:
+            self.assertTrue("ERROR" not in output, "OUTPUT[%s]" % output)
+        if "Found 1 error" in output:
+            self.assertTrue(output.count("ERROR") == 1, "OUTPUT[%s]" % output)
             self.assertTrue(
-                'Error: the rosdep view is empty' not in output,
-                'OUTPUT[%s]' % output)
+                "Error: the rosdep view is empty" not in output, "OUTPUT[%s]" % output
+            )

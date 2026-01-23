@@ -32,19 +32,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys 
+import sys
 import unittest
+
 try:
     from cStringIO import StringIO
 except ImportError:
     from io import StringIO
 import time
-        
+
 import rosunit
 
 from subprocess import Popen, PIPE, check_call, call
 
 from contextlib import contextmanager
+
 
 @contextmanager
 def fakestdout():
@@ -53,284 +55,337 @@ def fakestdout():
     sys.stdout = fakestdout
     yield fakestdout
     sys.stdout = realstdout
-    
+
+
 def todict(s):
     d = {}
-    for l in s.split('\n'):
-        key, p, val = l.partition(':')
+    for l in s.split("\n"):
+        key, p, val = l.partition(":")
         if p:
             d[key] = val.strip()
     return d
-        
-class TestRosservice(unittest.TestCase):
 
+
+class TestRosservice(unittest.TestCase):
     def setUp(self):
         pass
 
     def test_get_service_headers(self):
         import rosservice
-        orig_uri = os.environ['ROS_MASTER_URI']
-        os.environ['ROS_MASTER_URI'] = 'http://fake_host:12356'
+
+        orig_uri = os.environ["ROS_MASTER_URI"]
+        os.environ["ROS_MASTER_URI"] = "http://fake_host:12356"
         try:
-            c = 'rosservice'
+            c = "rosservice"
 
             # test error conditions, integration tests cover success cases
             try:
-                rosservice.get_service_headers('/add_two_ints', 'fake://localhost:1234')
+                rosservice.get_service_headers("/add_two_ints", "fake://localhost:1234")
                 self.fail("should have raised")
-            except rosservice.ROSServiceException: pass
+            except rosservice.ROSServiceException:
+                pass
             try:
-                rosservice.get_service_headers('/add_two_ints', 'rosrpc://fake_host:1234')
+                rosservice.get_service_headers(
+                    "/add_two_ints", "rosrpc://fake_host:1234"
+                )
                 self.fail("should have raised IO exc")
-            except rosservice.ROSServiceIOException: pass
-            
-        
+            except rosservice.ROSServiceIOException:
+                pass
+
         finally:
-            os.environ['ROS_MASTER_URI'] = orig_uri
-        
+            os.environ["ROS_MASTER_URI"] = orig_uri
+
     def test_get_service_type(self):
         import rosservice
-        self.assertEqual('test_rosmaster/AddTwoInts', rosservice.get_service_type('/add_two_ints'))
-        self.assertEqual(None, rosservice.get_service_type('/fake_add_two_ints'))
+
+        self.assertEqual(
+            "test_rosmaster/AddTwoInts", rosservice.get_service_type("/add_two_ints")
+        )
+        self.assertEqual(None, rosservice.get_service_type("/fake_add_two_ints"))
 
     def test_offline(self):
         import rosservice
-        orig_uri = os.environ['ROS_MASTER_URI']
-        os.environ['ROS_MASTER_URI'] = 'http://fake_host:12356'
+
+        orig_uri = os.environ["ROS_MASTER_URI"]
+        os.environ["ROS_MASTER_URI"] = "http://fake_host:12356"
 
         try:
-            c = 'rosservice'
+            c = "rosservice"
 
             try:
-                rosservice.get_service_type('/add_two_ints')
+                rosservice.get_service_type("/add_two_ints")
                 self.fail("should have raised ROSServiceIOException")
             except rosservice.ROSServiceIOException:
                 pass
-            
-            try:
-                rosservice._rosservice_cmd_list([c, 'list'])
-                self.fail("should have raised ROSServiceIOException")
-            except rosservice.ROSServiceIOException: pass
-            
-            try:
-                rosservice._rosservice_cmd_info([c, 'info', '/add_two_ints'])
-                self.fail("should have raised ROSServiceIOException")
-            except rosservice.ROSServiceIOException: pass
 
             try:
-                rosservice._rosservice_cmd_type([c, 'type', '/add_two_ints'])
+                rosservice._rosservice_cmd_list([c, "list"])
                 self.fail("should have raised ROSServiceIOException")
-            except rosservice.ROSServiceIOException: pass
+            except rosservice.ROSServiceIOException:
+                pass
 
             try:
-                rosservice._rosservice_cmd_uri([c, 'uri', '/add_two_ints'])
+                rosservice._rosservice_cmd_info([c, "info", "/add_two_ints"])
                 self.fail("should have raised ROSServiceIOException")
-            except rosservice.ROSServiceIOException: pass
+            except rosservice.ROSServiceIOException:
+                pass
 
             try:
-                rosservice._rosservice_cmd_find([c, 'find', 'test_ros/AddTwoInts'])
+                rosservice._rosservice_cmd_type([c, "type", "/add_two_ints"])
                 self.fail("should have raised ROSServiceIOException")
-            except rosservice.ROSServiceIOException: pass
-            
+            except rosservice.ROSServiceIOException:
+                pass
+
             try:
-                rosservice._rosservice_cmd_call([c, 'call', '/add_two_ints', '1', '2'])
+                rosservice._rosservice_cmd_uri([c, "uri", "/add_two_ints"])
                 self.fail("should have raised ROSServiceIOException")
-            except rosservice.ROSServiceIOException: pass
+            except rosservice.ROSServiceIOException:
+                pass
+
+            try:
+                rosservice._rosservice_cmd_find([c, "find", "test_ros/AddTwoInts"])
+                self.fail("should have raised ROSServiceIOException")
+            except rosservice.ROSServiceIOException:
+                pass
+
+            try:
+                rosservice._rosservice_cmd_call([c, "call", "/add_two_ints", "1", "2"])
+                self.fail("should have raised ROSServiceIOException")
+            except rosservice.ROSServiceIOException:
+                pass
 
         finally:
-            os.environ['ROS_MASTER_URI'] = orig_uri
-        
+            os.environ["ROS_MASTER_URI"] = orig_uri
+
     def test_cmd_type(self):
         import rosservice
-        cmd = 'rosservice'
-        s = '/add_two_ints'
+
+        cmd = "rosservice"
+        s = "/add_two_ints"
         try:
-            rosservice.rosservicemain([cmd, 'type', '/fake_service'])
+            rosservice.rosservicemain([cmd, "type", "/fake_service"])
             self.fail("should have triggered error exit")
         except SystemExit:
             pass
 
-        for s in ['/add_two_ints', 'add_two_ints', 'foo/add_two_ints']:
+        for s in ["/add_two_ints", "add_two_ints", "foo/add_two_ints"]:
             with fakestdout() as b:
-                rosservice.rosservicemain([cmd, 'type', s])
+                rosservice.rosservicemain([cmd, "type", s])
                 v = b.getvalue().strip()
-                self.assertEqual('test_rosmaster/AddTwoInts', v)
+                self.assertEqual("test_rosmaster/AddTwoInts", v)
 
     def test_cmd_uri(self):
         import rosservice
-        cmd = 'rosservice'
+
+        cmd = "rosservice"
         with fakestdout() as b:
             try:
-                rosservice.rosservicemain([cmd, 'uri', '/fake_service'])
+                rosservice.rosservicemain([cmd, "uri", "/fake_service"])
                 self.fail("should have triggered error exit")
             except SystemExit:
                 pass
 
-        for s in ['/add_two_ints', 'add_two_ints', 'foo/add_two_ints']:
+        for s in ["/add_two_ints", "add_two_ints", "foo/add_two_ints"]:
             with fakestdout() as b:
-                rosservice.rosservicemain([cmd, 'uri', s])
+                rosservice.rosservicemain([cmd, "uri", s])
                 v = b.getvalue().strip()
-                self.assertTrue(v.startswith('rosrpc://'), v)
-                
+                self.assertTrue(v.startswith("rosrpc://"), v)
 
     def test_cmd_node(self):
         import rosservice
-        cmd = 'rosservice'
-        for s in ['/add_two_ints', 'add_two_ints', 'foo/add_two_ints']:
+
+        cmd = "rosservice"
+        for s in ["/add_two_ints", "add_two_ints", "foo/add_two_ints"]:
             with fakestdout() as b:
-                rosservice.rosservicemain([cmd, 'node', s])
+                rosservice.rosservicemain([cmd, "node", s])
                 v = b.getvalue().strip()
-                if 'foo' in s:
-                    self.assertEqual('/foo/a2iserver', v)
+                if "foo" in s:
+                    self.assertEqual("/foo/a2iserver", v)
                 else:
-                    self.assertEqual('/a2iserver', v)
+                    self.assertEqual("/a2iserver", v)
         try:
-            rosservice.rosservicemain([cmd, 'node', '/fake_two_ints'])
+            rosservice.rosservicemain([cmd, "node", "/fake_two_ints"])
             self.fail("should have exited with error")
-        except SystemExit: pass
+        except SystemExit:
+            pass
 
     def test_full_usage(self):
         import rosservice
+
         try:
             rosservice._fullusage()
             self.fail("should have caused system exit")
-        except SystemExit: pass
-        
+        except SystemExit:
+            pass
+
     def test_cmd_info(self):
         import rosservice
-        cmd = 'rosservice'
+
+        cmd = "rosservice"
 
         try:
-            rosservice.rosservicemain([cmd, 'info'])
+            rosservice.rosservicemain([cmd, "info"])
             self.fail("should have exited with error")
-        except SystemExit: pass
+        except SystemExit:
+            pass
         try:
-            rosservice.rosservicemain([cmd, 'info', '/fake_service'])
+            rosservice.rosservicemain([cmd, "info", "/fake_service"])
             self.fail("should have exited with error")
-        except SystemExit: pass
+        except SystemExit:
+            pass
         try:
-            rosservice.rosservicemain([cmd, 'info', '/add_two_ints', '/foo/add_two_ints'])
+            rosservice.rosservicemain(
+                [cmd, "info", "/add_two_ints", "/foo/add_two_ints"]
+            )
             self.fail("should have exited with error")
-        except SystemExit: pass
-        
-        for s in ['/add_two_ints', 'add_two_ints', 'foo/add_two_ints']:
+        except SystemExit:
+            pass
+
+        for s in ["/add_two_ints", "add_two_ints", "foo/add_two_ints"]:
             with fakestdout() as b:
-                rosservice.rosservicemain([cmd, 'info', s])
+                rosservice.rosservicemain([cmd, "info", s])
                 d = todict(b.getvalue())
-                if 'foo' in s:
-                    self.assertEqual('/foo/a2iserver', d['Node'])
+                if "foo" in s:
+                    self.assertEqual("/foo/a2iserver", d["Node"])
                 else:
-                    self.assertEqual('/a2iserver', d['Node'], repr(d['Node']))
-                self.assertEqual('test_rosmaster/AddTwoInts', d['Type'])
-                self.assertEqual('a b', d['Args'])
-                self.assertTrue('URI' in d)
+                    self.assertEqual("/a2iserver", d["Node"], repr(d["Node"]))
+                self.assertEqual("test_rosmaster/AddTwoInts", d["Type"])
+                self.assertEqual("a b", d["Args"])
+                self.assertTrue("URI" in d)
 
     def test_cmd_find(self):
         import rosservice
-        cmd = 'rosservice'
+
+        cmd = "rosservice"
 
         try:
-            rosservice.rosservicemain([cmd, 'find'])
+            rosservice.rosservicemain([cmd, "find"])
             self.fail("arg parsing should have failed")
-        except SystemExit: pass
+        except SystemExit:
+            pass
         try:
-            rosservice.rosservicemain([cmd, 'find', 'test_ros/AddTwoInts', 'test/AddThreeInts'])
+            rosservice.rosservicemain(
+                [cmd, "find", "test_ros/AddTwoInts", "test/AddThreeInts"]
+            )
             self.fail("arg parsing should have failed")
-        except SystemExit: pass
-        
-        v = set(['/add_two_ints', '/bar/add_two_ints', '/foo/add_two_ints'])
+        except SystemExit:
+            pass
+
+        v = set(["/add_two_ints", "/bar/add_two_ints", "/foo/add_two_ints"])
         with fakestdout() as b:
-            rosservice.rosservicemain([cmd, 'find', 'test_rosmaster/AddTwoInts'])
-            d = set([x for x in b.getvalue().split('\n') if x.strip()])
+            rosservice.rosservicemain([cmd, "find", "test_rosmaster/AddTwoInts"])
+            d = set([x for x in b.getvalue().split("\n") if x.strip()])
             self.assertEqual(v, d)
 
         with fakestdout() as b:
-            rosservice.rosservicemain([cmd, 'find', 'fake/AddTwoInts'])
-            self.assertEqual('', b.getvalue().strip())
+            rosservice.rosservicemain([cmd, "find", "fake/AddTwoInts"])
+            self.assertEqual("", b.getvalue().strip())
 
     def test_get_service_class_by_name(self):
         import rosservice
+
         try:
-            rosservice.get_service_class_by_name('fake')
+            rosservice.get_service_class_by_name("fake")
             self.fail("should have raised")
         except rosservice.ROSServiceException as e:
             self.assertEqual("Service [fake] is not available.", str(e))
-        
+
     def test_cmd_call(self):
         import rosservice
-        cmd = 'rosservice'
+
+        cmd = "rosservice"
 
         try:
-            rosservice.rosservicemain([cmd, 'call'])
+            rosservice.rosservicemain([cmd, "call"])
             self.fail("arg parsing should have failed")
-        except SystemExit: pass
+        except SystemExit:
+            pass
         try:
-            rosservice.rosservicemain([cmd, 'call', 'add_two_ints', '1', '2', '3'])
+            rosservice.rosservicemain([cmd, "call", "add_two_ints", "1", "2", "3"])
             self.fail("should have failed with too many args")
-        except SystemExit: pass
+        except SystemExit:
+            pass
 
-            
     def setUp(self):
         # wait for all services to come up
 
-        import rosservice        
-        services = ['/add_two_ints',
-                    '/foo/add_two_ints',
-                    '/bar/add_two_ints',
-                    ]
+        import rosservice
+
+        services = [
+            "/add_two_ints",
+            "/foo/add_two_ints",
+            "/bar/add_two_ints",
+        ]
 
         import time
-        timeout_t = time.time() + 10.
+
+        timeout_t = time.time() + 10.0
         while time.time() < timeout_t:
             with fakestdout() as b:
-                rosservice._rosservice_cmd_list(['rosservice', 'list'])
-                v = [x.strip() for x in b.getvalue().split('\n') if x.strip()]
-                if not (set(services) - set(v) ):
+                rosservice._rosservice_cmd_list(["rosservice", "list"])
+                v = [x.strip() for x in b.getvalue().split("\n") if x.strip()]
+                if not (set(services) - set(v)):
                     return
         self.fail("timeout")
-        
+
     def test_cmd_list(self):
         import rosservice
-        cmd = 'rosservice'
-        s = '/add_two_ints'
-        
+
+        cmd = "rosservice"
+        s = "/add_two_ints"
+
         # test main entry
-        rosservice.rosservicemain([cmd, 'list'])
+        rosservice.rosservicemain([cmd, "list"])
 
         # test directly
-        services = ['/add_two_ints',
-                    '/foo/add_two_ints',
-                    '/bar/add_two_ints',
-                    '/header_echo',
-                    ]
-        services_nodes = ['/add_two_ints /a2iserver',
-                          '/foo/add_two_ints /foo/a2iserver',
-                          '/bar/add_two_ints /bar/a2iserver',
-                          '/header_echo /headerserver',
-                          ]
+        services = [
+            "/add_two_ints",
+            "/foo/add_two_ints",
+            "/bar/add_two_ints",
+            "/header_echo",
+        ]
+        services_nodes = [
+            "/add_two_ints /a2iserver",
+            "/foo/add_two_ints /foo/a2iserver",
+            "/bar/add_two_ints /bar/a2iserver",
+            "/header_echo /headerserver",
+        ]
 
         with fakestdout() as b:
-            rosservice._rosservice_cmd_list([cmd, 'list'])
-            v = [x.strip() for x in b.getvalue().split('\n') if x.strip()]
-            v = [x for x in v if not x.startswith('/rosout/')]
-            v = [x for x in v if not x.endswith('/get_loggers') and not x.endswith('/set_logger_level')]
+            rosservice._rosservice_cmd_list([cmd, "list"])
+            v = [x.strip() for x in b.getvalue().split("\n") if x.strip()]
+            v = [x for x in v if not x.startswith("/rosout/")]
+            v = [
+                x
+                for x in v
+                if not x.endswith("/get_loggers")
+                and not x.endswith("/set_logger_level")
+            ]
             self.assertEqual(set(services), set(v))
         with fakestdout() as b:
-            rosservice._rosservice_cmd_list([cmd, 'list', '-n'])
-            v = [x.strip() for x in b.getvalue().split('\n') if x.strip()]
-            v = [x for x in v if not x.startswith('/rosout/')]
-            v = [x for x in v if x.find('/get_loggers ') == -1 and x.find('/set_logger_level ') == -1]
+            rosservice._rosservice_cmd_list([cmd, "list", "-n"])
+            v = [x.strip() for x in b.getvalue().split("\n") if x.strip()]
+            v = [x for x in v if not x.startswith("/rosout/")]
+            v = [
+                x
+                for x in v
+                if x.find("/get_loggers ") == -1 and x.find("/set_logger_level ") == -1
+            ]
             self.assertEqual(set(services_nodes), set(v))
-        with fakestdout() as b:            
-            rosservice._rosservice_cmd_list([cmd, 'list', '--nodes'])
-            v = [x.strip() for x in b.getvalue().split('\n') if x.strip()]
-            v = [x for x in v if not x.startswith('/rosout/')]
-            v = [x for x in v if x.find('/get_loggers ') == -1 and x.find('/set_logger_level ') == -1]
+        with fakestdout() as b:
+            rosservice._rosservice_cmd_list([cmd, "list", "--nodes"])
+            v = [x.strip() for x in b.getvalue().split("\n") if x.strip()]
+            v = [x for x in v if not x.startswith("/rosout/")]
+            v = [
+                x
+                for x in v
+                if x.find("/get_loggers ") == -1 and x.find("/set_logger_level ") == -1
+            ]
             self.assertEqual(set(services_nodes), set(v))
 
         # test with multiple service names
         try:
-            rosservice._rosservice_cmd_list([cmd, 'list', s, s])
+            rosservice._rosservice_cmd_list([cmd, "list", s, s])
             self.fail("should have caused parser error")
         except SystemExit:
             pass
@@ -338,32 +393,38 @@ class TestRosservice(unittest.TestCase):
         # test with resolved service names
         for s in services:
             with fakestdout() as b:
-                rosservice._rosservice_cmd_list([cmd, 'list', s])
+                rosservice._rosservice_cmd_list([cmd, "list", s])
                 self.assertEqual(s, b.getvalue().strip())
 
         # test with relative service names
-        s = 'add_two_ints'       
+        s = "add_two_ints"
         with fakestdout() as b:
-            rosservice._rosservice_cmd_list([cmd, 'list', s])
-            self.assertEqual('/add_two_ints', b.getvalue().strip())
+            rosservice._rosservice_cmd_list([cmd, "list", s])
+            self.assertEqual("/add_two_ints", b.getvalue().strip())
         with fakestdout() as b:
-            rosservice._rosservice_cmd_list([cmd, 'list', s, '-n'])
-            self.assertEqual('/add_two_ints /a2iserver', b.getvalue().strip())
-        with fakestdout() as b:            
-            rosservice._rosservice_cmd_list([cmd, 'list', s, '--nodes'])
-            self.assertEqual('/add_two_ints /a2iserver', b.getvalue().strip())
-            
-        # test with namespaces
-        s = '/foo'
-        rosservice._rosservice_cmd_list([cmd, 'list', s])
-        rosservice._rosservice_cmd_list([cmd, 'list', s, '-n'])
-        rosservice._rosservice_cmd_list([cmd, 'list', s, '--nodes'])
-        s = 'foo'
-        rosservice._rosservice_cmd_list([cmd, 'list', s])
-        rosservice._rosservice_cmd_list([cmd, 'list', s, '-n'])
-        rosservice._rosservice_cmd_list([cmd, 'list', s, '--nodes'])
-        
+            rosservice._rosservice_cmd_list([cmd, "list", s, "-n"])
+            self.assertEqual("/add_two_ints /a2iserver", b.getvalue().strip())
+        with fakestdout() as b:
+            rosservice._rosservice_cmd_list([cmd, "list", s, "--nodes"])
+            self.assertEqual("/add_two_ints /a2iserver", b.getvalue().strip())
 
-NAME = 'test_rosservice'
-if __name__ == '__main__':
-    rosunit.unitrun('test_rosservice', NAME, TestRosservice, sys.argv, coverage_packages=['rosservice'])
+        # test with namespaces
+        s = "/foo"
+        rosservice._rosservice_cmd_list([cmd, "list", s])
+        rosservice._rosservice_cmd_list([cmd, "list", s, "-n"])
+        rosservice._rosservice_cmd_list([cmd, "list", s, "--nodes"])
+        s = "foo"
+        rosservice._rosservice_cmd_list([cmd, "list", s])
+        rosservice._rosservice_cmd_list([cmd, "list", s, "-n"])
+        rosservice._rosservice_cmd_list([cmd, "list", s, "--nodes"])
+
+
+NAME = "test_rosservice"
+if __name__ == "__main__":
+    rosunit.unitrun(
+        "test_rosservice",
+        NAME,
+        TestRosservice,
+        sys.argv,
+        coverage_packages=["rosservice"],
+    )

@@ -44,6 +44,7 @@ import traceback
 from threading import Lock
 from threading import RLock
 from threading import Thread
+
 try:
     from queue import Empty, Queue
 except ImportError:
@@ -63,6 +64,7 @@ class FatalProcessLaunch(PmonException):
     Exception to indicate that a process launch has failed in a fatal
     manner (i.e. relaunch is unlikely to succeed)
     """
+
     pass
 
 
@@ -78,7 +80,7 @@ def start_process_monitor():
     if _shutting_down:
         return None
     _pmon_counter += 1
-    name = 'ProcessMonitor-%s' % _pmon_counter
+    name = "ProcessMonitor-%s" % _pmon_counter
     process_monitor = ProcessMonitor(name)
     with _shutdown_lock:
         # prevent race condition with pmon_shutdown() being triggered
@@ -132,6 +134,7 @@ atexit.register(pmon_shutdown)
 
 # ##############################################################
 
+
 class Process(object):
     """
     Basic process representation for L{ProcessMonitor}. Must be subclassed
@@ -151,7 +154,7 @@ class Process(object):
         self.spawn_count = 0
 
     def __str__(self):
-        return 'Process<%s>' % (self.name)
+        return "Process<%s>" % (self.name)
 
     # NOTE: get_info() is going to have to be sufficient for
     # generating respawn requests, so we must be complete about it
@@ -163,17 +166,17 @@ class Process(object):
         @rtype: dict { str: val }
         """
         info = {
-            'spawn_count': self.spawn_count,
-            'args': self.args,
-            'env': self.env,
-            'package': self.package,
-            'name': self.name,
-            'alive': self.is_alive(),
-            'respawn': self.respawn,
-            'required': self.required,
-            }
+            "spawn_count": self.spawn_count,
+            "args": self.args,
+            "env": self.env,
+            "package": self.package,
+            "name": self.name,
+            "alive": self.is_alive(),
+            "respawn": self.respawn,
+            "required": self.required,
+        }
         if self.exit_code is not None:
-            info['exit_code'] = self.exit_code
+            info["exit_code"] = self.exit_code
         return info
 
     def start(self):
@@ -194,12 +197,12 @@ class Process(object):
     def get_exit_description(self):
         if self.exit_code is not None:
             if self.exit_code:
-                return 'process has died [exit code %s]' % self.exit_code
+                return "process has died [exit code %s]" % self.exit_code
             else:
                 # try not to scare users about process exit
-                return 'process has finished cleanly'
+                return "process has finished cleanly"
         else:
-            return 'process has died'
+            return "process has died"
 
 
 class DeadProcess(Process):
@@ -207,6 +210,7 @@ class DeadProcess(Process):
     Container class to maintain information about a process that has died. This
     container allows us to delete the actual Process but still maintain the metadata
     """
+
     def __init__(self, p):
         super(DeadProcess, self).__init__(p.package, p.name, p.args, p.env, p.respawn)
         self.exit_code = p.exit_code
@@ -218,7 +222,7 @@ class DeadProcess(Process):
         return self.info
 
     def start(self):
-        raise Exception('cannot call start on a dead process!')
+        raise Exception("cannot call start on a dead process!")
 
     def is_alive(self):
         return False
@@ -245,8 +249,7 @@ class ProcessListener(object):
 
 
 class ProcessMonitor(Thread):
-
-    def __init__(self, name='ProcessMonitor'):
+    def __init__(self, name="ProcessMonitor"):
         Thread.__init__(self, name=name)
         self.procs = []
         self.plock = RLock()
@@ -279,9 +282,14 @@ class ProcessMonitor(Thread):
         e = None
         with self.plock:
             if self.has_process(p.name):
-                e = PmonException("cannot add process with duplicate name '%s'" % p.name)
+                e = PmonException(
+                    "cannot add process with duplicate name '%s'" % p.name
+                )
             elif self.is_shutdown:
-                e = PmonException('cannot add process [%s] after process monitor has been shut down' % p.name)
+                e = PmonException(
+                    "cannot add process [%s] after process monitor has been shut down"
+                    % p.name
+                )
             else:
                 self.procs.append(p)
         if e:
@@ -341,14 +349,18 @@ class ProcessMonitor(Thread):
         method was called.
         @rtype: bool
         """
+
         def is_string_type(obj):
             try:
                 return isinstance(obj, basestring)
             except NameError:
                 return isinstance(obj, str)
+
         if not is_string_type(name):
-            raise PmonException('kill_process takes in a process name but was given: %s' % name)
-        printlog('[%s] kill requested' % name)
+            raise PmonException(
+                "kill_process takes in a process name but was given: %s" % name
+            )
+        printlog("[%s] kill requested" % name)
         with self.plock:
             p = self.get_process(name)
             if p:
@@ -356,7 +368,7 @@ class ProcessMonitor(Thread):
                     # no need to accumulate errors, so pass in []
                     p.stop([])
                 except Exception as e:
-                    printerrlog('Exception: %s' % (str(e)))
+                    printerrlog("Exception: %s" % (str(e)))
                 return True
             else:
                 return False
@@ -420,16 +432,23 @@ class ProcessMonitor(Thread):
                     if not p.is_alive():
                         exit_code_str = p.get_exit_description()
                         if p.respawn:
-                            printlog_bold('[%s] %s\nrespawning...' % (p.name, exit_code_str))
+                            printlog_bold(
+                                "[%s] %s\nrespawning..." % (p.name, exit_code_str)
+                            )
                             respawn.append(p)
                         elif p.required:
-                            printerrlog('=' * 80 + 'REQUIRED process [%s] has died!\n%s\nInitiating shutdown!\n' % (p.name, exit_code_str) + '=' * 80)
+                            printerrlog(
+                                "=" * 80
+                                + "REQUIRED process [%s] has died!\n%s\nInitiating shutdown!\n"
+                                % (p.name, exit_code_str)
+                                + "=" * 80
+                            )
                             self.is_shutdown = True
                         else:
                             if p.exit_code:
-                                printerrlog('[%s] %s' % (p.name, exit_code_str))
+                                printerrlog("[%s] %s" % (p.name, exit_code_str))
                             else:
-                                printlog_bold('[%s] %s' % (p.name, exit_code_str))
+                                printlog_bold("[%s] %s" % (p.name, exit_code_str))
                             dead.append(p)
 
                         # no need for lock as we require listeners be
@@ -453,19 +472,19 @@ class ProcessMonitor(Thread):
                     with plock:
                         self.dead_list.append(DeadProcess(d))
                 except Exception as e:
-                    printerrlog('Exception: %s' % (str(e)))
+                    printerrlog("Exception: %s" % (str(e)))
 
             # dead check is to make sure that ProcessMonitor at least
             # waits until its had at least one process before exiting
             if self._registrations_complete and dead and not self.procs and not respawn:
-                printlog('all processes on machine have died, roslaunch will exit')
+                printlog("all processes on machine have died, roslaunch will exit")
                 self.is_shutdown = True
             del dead[:]
             for r in respawn:
                 try:
                     if self.is_shutdown:
                         break
-                    printlog('[%s] restarting process' % r.name)
+                    printlog("[%s] restarting process" % r.name)
                     # stop process, don't accumulate errors
                     r.stop([])
                     r.start()
@@ -522,7 +541,9 @@ class ProcessMonitor(Thread):
         self.done = True
 
         if shutdown_errors:
-            printerrlog('Shutdown errors:\n' + '\n'.join([' * %s' % e for e in shutdown_errors]))
+            printerrlog(
+                "Shutdown errors:\n" + "\n".join([" * %s" % e for e in shutdown_errors])
+            )
 
 
 def _kill_process(p, errors):
@@ -535,17 +556,16 @@ def _kill_process(p, errors):
     @type  errors: [str]
     """
     try:
-        printlog('[%s] killing on exit' % p.name)
+        printlog("[%s] killing on exit" % p.name)
         # we accumulate errors from each process so that we can print these at the end
         p.stop(errors)
     except Exception as e:
-        printerrlog('Exception: %s' % (str(e)))
+        printerrlog("Exception: %s" % (str(e)))
 
 
 class _ProcessKiller(Thread):
-
     def __init__(self, q, i):
-        Thread.__init__(self, name='ProcessKiller-%s' % i)
+        Thread.__init__(self, name="ProcessKiller-%s" % i)
         self.q = q
         self.errors = []
 

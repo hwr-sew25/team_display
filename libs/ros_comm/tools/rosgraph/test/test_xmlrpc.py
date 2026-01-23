@@ -35,50 +35,53 @@ import sys
 import time
 import mock
 
+
 def test_XmlRpcHandler():
-    from rosgraph.xmlrpc import XmlRpcHandler    
+    from rosgraph.xmlrpc import XmlRpcHandler
+
     # tripwire
     h = XmlRpcHandler()
     # noop
-    h._ready('http://localhost:1234')
-    
+    h._ready("http://localhost:1234")
+
+
 def test_XmlRpcNode():
     from rosgraph.xmlrpc import XmlRpcNode, XmlRpcHandler
+
     # not a very comprehensive test (yet)
-    #port, handler
+    # port, handler
     tests = [
         (None, None, None),
         (8080, None, 8080),
-        ('8080', None, 8080),
-        (u'8080', None, 8080),
-      ]
-    
-    for port, handler,true_port in tests:
+        ("8080", None, 8080),
+        ("8080", None, 8080),
+    ]
+
+    for port, handler, true_port in tests:
         n = XmlRpcNode(port, handler)
         assert true_port == n.port
         assert handler == n.handler
         assert None == n.uri
         assert None == n.server
-        n.set_uri('http://fake:1234')
-        assert 'http://fake:1234' == n.uri
+        n.set_uri("http://fake:1234")
+        assert "http://fake:1234" == n.uri
 
         n.start()
         start = time.time()
-        while not n.uri and time.time() - start < 5.:
-            time.sleep(0.00001) #poll for XMLRPC init
+        while not n.uri and time.time() - start < 5.0:
+            time.sleep(0.00001)  # poll for XMLRPC init
 
         assert n.uri
-        n.shutdown('test case')
+        n.shutdown("test case")
 
     # get coverage on run init
     n = XmlRpcNode(0, XmlRpcHandler())
     n._run_init()
-    n.shutdown('test case')
+    n.shutdown("test case")
 
     # mock in server in order to play with _run()
     n.server = mock.Mock()
     n.is_shutdown = False
     n._run_init = mock.Mock()
-    n.server.serve_forever.side_effect = IOError(1, 'boom')
+    n.server.serve_forever.side_effect = IOError(1, "boom")
     n._run()
-

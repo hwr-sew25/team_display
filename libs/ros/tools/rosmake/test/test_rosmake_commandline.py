@@ -34,4 +34,4 @@ import subprocess
 
 
 def test_Rosmake_commandline_usage():
-    assert 0 == subprocess.call(['rosmake', '-h'])
+    assert 0 == subprocess.call(["rosmake", "-h"])

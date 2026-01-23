@@ -35,15 +35,18 @@ from __future__ import print_function
 
 import rosbag
 
+
 def fastrebag(inbag, outbag):
-    rebag = rosbag.Bag(outbag, 'w')
+    rebag = rosbag.Bag(outbag, "w")
     for i, (topic, msg, t) in enumerate(rosbag.Bag(inbag).read_messages(raw=True)):
         rebag.write(topic, msg, t, raw=True)
     rebag.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import sys
+
     if len(sys.argv) == 3:
         fastrebag(sys.argv[1], sys.argv[2])
     else:
-        print('usage: fastrebag.py <inbag> <outbag>')
+        print("usage: fastrebag.py <inbag> <outbag>")

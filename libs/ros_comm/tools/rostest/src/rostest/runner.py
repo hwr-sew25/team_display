@@ -41,58 +41,81 @@ import unittest
 import rospkg
 from rospkg.environment import ROS_TEST_RESULTS_DIR
 import roslaunch
-import roslib.packages 
+import roslib.packages
 
-from rostest.rostestutil import createXMLRunner, printSummary, printRostestSummary, \
-    xmlResultsFile, printlog, printlogerr
+from rostest.rostestutil import (
+    createXMLRunner,
+    printSummary,
+    printRostestSummary,
+    xmlResultsFile,
+    printlog,
+    printlogerr,
+)
 from rostest.rostest_parent import ROSTestLaunchParent
 import rosunit.junitxml
 
 # NOTE: ignoring Python style guide as unittest is sadly written with Java-like camel casing
 
-_results = rosunit.junitxml.Result('rostest', 0, 0, 0)
+_results = rosunit.junitxml.Result("rostest", 0, 0, 0)
+
+
 def _accumulateResults(results):
     _results.accumulate(results)
+
 
 def getResults():
     return _results
 
+
 _textMode = False
+
+
 def setTextMode(val):
-    global _textMode 
+    global _textMode
     _textMode = val
+
 
 # global store of all ROSLaunchRunners so we can do an extra shutdown
 # in the rare event a tearDown fails to execute
 _test_parents = []
 _config = None
+
+
 def _addRostestParent(runner):
     global _test_parents, _config
-    logging.getLogger('rostest').info("_addRostestParent [%s]", runner)
+    logging.getLogger("rostest").info("_addRostestParent [%s]", runner)
     _test_parents.append(runner)
     _config = runner.config
+
 
 def getConfig():
     return _config
 
+
 def getRostestParents():
     return _test_parents
-    
+
+
 # TODO: convert most of this into a run() routine of a RoslaunchRunner subclass
+
 
 ## generate test failure if tests with same name in launch file
 def failDuplicateRunner(testName):
     def fn(self):
-        print("Duplicate tests named [%s] in rostest suite"%testName)
-        self.fail("Duplicate tests named [%s] in rostest suite"%testName)
+        print("Duplicate tests named [%s] in rostest suite" % testName)
+        self.fail("Duplicate tests named [%s] in rostest suite" % testName)
+
     return fn
+
 
 def failRunner(testName, message):
     def fn(self):
         print(message, file=sys.stderr)
         self.fail(message)
+
     return fn
-    
+
+
 def rostestRunner(test, test_pkg, results_base_dir=None):
     """
     Test function generator that takes in a roslaunch Test object and
@@ -105,22 +128,26 @@ def rostestRunner(test, test_pkg, results_base_dir=None):
     @return: function object to run testObj
     @rtype: fn
     """
-    
+
     ## test case pass/fail is a measure of whether or not the test ran
     def fn(self):
         done = False
         while not done:
-            self.assertTrue(self.test_parent is not None, "ROSTestParent initialization failed")
+            self.assertTrue(
+                self.test_parent is not None, "ROSTestParent initialization failed"
+            )
 
             test_name = test.test_name
 
             printlog("Running test [%s]", test_name)
 
-            #launch the other nodes
+            # launch the other nodes
             succeeded, failed = self.test_parent.launch()
-            self.assertTrue(not failed, "Test Fixture Nodes %s failed to launch"%failed)
+            self.assertTrue(
+                not failed, "Test Fixture Nodes %s failed to launch" % failed
+            )
 
-            #setup the test
+            # setup the test
             # - we pass in the output test_file name so we can scrape it
             env = None
             if results_base_dir:
@@ -134,15 +161,15 @@ def rostestRunner(test, test_pkg, results_base_dir=None):
             # needs to be renamed as it aliases the module where the
             # constant is elsewhere defined. The fix is to rename
             # rostest.py
-            XML_OUTPUT_FLAG='--gtest_output=xml:' #use gtest-compatible flag
-            
-            test.args = "%s %s%s"%(test.args, XML_OUTPUT_FLAG, test_file)
+            XML_OUTPUT_FLAG = "--gtest_output=xml:"  # use gtest-compatible flag
+
+            test.args = "%s %s%s" % (test.args, XML_OUTPUT_FLAG, test_file)
             if _textMode:
-                test.output = 'screen'
+                test.output = "screen"
                 test.args = test.args + " --text"
 
             # run the test, blocks until completion
-            printlog("running test %s"%test_name)
+            printlog("running test %s" % test_name)
             timeout_failure = False
             try:
                 self.test_parent.run_test(test)
@@ -153,15 +180,17 @@ def rostestRunner(test, test_pkg, results_base_dir=None):
                     raise
 
             if not timeout_failure:
-                printlog("test [%s] finished"%test_name)
+                printlog("test [%s] finished" % test_name)
             else:
-                printlogerr("test [%s] timed out"%test_name)                
-        
+                printlogerr("test [%s] timed out" % test_name)
+
             # load in test_file
             if not _textMode or timeout_failure:
-                
                 if not timeout_failure:
-                    self.assertTrue(os.path.isfile(test_file), "test [%s] did not generate test results"%test_name)
+                    self.assertTrue(
+                        os.path.isfile(test_file),
+                        "test [%s] did not generate test results" % test_name,
+                    )
                     printlog("test [%s] results are in [%s]", test_name, test_file)
                     results = rosunit.junitxml.read(test_file, test_name)
                     test_fail = results.num_errors or results.num_failures
@@ -170,17 +199,25 @@ def rostestRunner(test, test_pkg, results_base_dir=None):
 
                 if test.retry > 0 and test_fail:
                     test.retry -= 1
-                    printlog("test [%s] failed, retrying. Retries left: %s"%(test_name, test.retry))
+                    printlog(
+                        "test [%s] failed, retrying. Retries left: %s"
+                        % (test_name, test.retry)
+                    )
                     self.tearDown()
                     self.setUp()
                 else:
                     done = True
                     _accumulateResults(results)
-                    printlog("test [%s] results summary: %s errors, %s failures, %s tests",
-                             test_name, results.num_errors, results.num_failures, results.num_tests)
+                    printlog(
+                        "test [%s] results summary: %s errors, %s failures, %s tests",
+                        test_name,
+                        results.num_errors,
+                        results.num_failures,
+                        results.num_tests,
+                    )
 
-                    #self.assertEqual(0, results.num_errors, "unit test reported errors")
-                    #self.assertEqual(0, results.num_failures, "unit test reported failures")
+                    # self.assertEqual(0, results.num_errors, "unit test reported errors")
+                    # self.assertEqual(0, results.num_failures, "unit test reported failures")
             else:
                 if test.retry:
                     printlogerr("retry is disabled in --text mode")
@@ -189,34 +226,41 @@ def rostestRunner(test, test_pkg, results_base_dir=None):
 
     return fn
 
+
 ## Function that becomes TestCase.setup()
 def setUp(self):
     # new test_parent for each run. we are a bit inefficient as it would be possible to
     # reuse the roslaunch base infrastructure for each test, but the roslaunch code
     # is not abstracted well enough yet
-    self.test_parent = ROSTestLaunchParent(self.config, [self.test_file], reuse_master=self.reuse_master, clear=self.clear)
-    
+    self.test_parent = ROSTestLaunchParent(
+        self.config, [self.test_file], reuse_master=self.reuse_master, clear=self.clear
+    )
+
     printlog("setup[%s] run_id[%s] starting", self.test_file, self.test_parent.run_id)
 
     self.test_parent.setUp()
-    
+
     # the config attribute makes it easy for tests to access the ROSLaunchConfig instance
     self.config = self.test_parent.config
 
     _addRostestParent(self.test_parent)
-    
+
     printlog("setup[%s] run_id[%s] done", self.test_file, self.test_parent.run_id)
-    
-## Function that becomes TestCase.tearDown()    
+
+
+## Function that becomes TestCase.tearDown()
 def tearDown(self):
     printlog("tearDown[%s]", self.test_file)
-    
+
     if self.test_parent:
         self.test_parent.tearDown()
-        
+
     printlog("rostest teardown %s complete", self.test_file)
-    
-def createUnitTest(pkg, test_file, reuse_master=False, clear=False, results_base_dir=None):
+
+
+def createUnitTest(
+    pkg, test_file, reuse_master=False, clear=False, results_base_dir=None
+):
     """
     Unit test factory. Constructs a unittest class based on the roslaunch
 
@@ -229,10 +273,16 @@ def createUnitTest(pkg, test_file, reuse_master=False, clear=False, results_base
     config = roslaunch.parent.load_config_default([test_file], None)
 
     # pass in config to class as a property so that test_parent can be initialized
-    classdict = { 'setUp': setUp, 'tearDown': tearDown, 'config': config,
-                  'test_parent': None, 'test_file': test_file,
-                  'reuse_master': reuse_master, 'clear': clear }
-    
+    classdict = {
+        "setUp": setUp,
+        "tearDown": tearDown,
+        "config": config,
+        "test_parent": None,
+        "test_file": test_file,
+        "reuse_master": reuse_master,
+        "clear": clear,
+    }
+
     # add in the tests
     testNames = []
     for test in config.tests:
@@ -242,19 +292,27 @@ def createUnitTest(pkg, test_file, reuse_master=False, clear=False, results_base
             rp = rospkg.RosPack()
             cmd = roslib.packages.find_node(test.package, test.type, rp)
             if not cmd:
-                err_msg = "Test node [%s/%s] does not exist or is not executable"%(test.package, test.type)
+                err_msg = "Test node [%s/%s] does not exist or is not executable" % (
+                    test.package,
+                    test.type,
+                )
         except rospkg.ResourceNotFound as e:
-            err_msg = "Package [%s] for test node [%s/%s] does not exist"%(test.package, test.package, test.type)
+            err_msg = "Package [%s] for test node [%s/%s] does not exist" % (
+                test.package,
+                test.package,
+                test.type,
+            )
 
-        testName = 'test%s'%(test.test_name)
+        testName = "test%s" % (test.test_name)
         if err_msg:
             classdict[testName] = failRunner(test.test_name, err_msg)
         elif testName in testNames:
             classdict[testName] = failDuplicateRunner(test.test_name)
         else:
-            classdict[testName] = rostestRunner(test, pkg, results_base_dir=results_base_dir)
+            classdict[testName] = rostestRunner(
+                test, pkg, results_base_dir=results_base_dir
+            )
             testNames.append(testName)
 
     # instantiate the TestCase instance with our magically-created tests
-    return type('RosTest',(unittest.TestCase,),classdict)
-
+    return type("RosTest", (unittest.TestCase,), classdict)

@@ -36,10 +36,10 @@
 
 from __future__ import print_function
 
-PKG = 'test_rospy'
-NAME = 'test_pubsub_order'
+PKG = "test_rospy"
+NAME = "test_pubsub_order"
 
-import sys 
+import sys
 import time
 import unittest
 
@@ -48,20 +48,20 @@ import rostest
 from std_msgs.msg import String
 
 PUBTOPIC = "chatter"
-LPNODE = 'listenerpublisher'
-LPTOPIC = 'listenerpublisher'
+LPNODE = "listenerpublisher"
+LPTOPIC = "listenerpublisher"
 MSG = String
 
-TIMEOUT = 10.0 #seconds
+TIMEOUT = 10.0  # seconds
+
 
 class TestPubSubOrder(unittest.TestCase):
-
     def setUp(self):
         self.callback_data = None
-        
+
     def _test_subscriber_first_callback(self, data):
         self.callback_data = data
-    
+
     ## Test subscriber first makes sure that if a subscriber is up first
     ## that it is able to successfully receive messages from a new publisher
     def test_subscriber_first(self):
@@ -69,32 +69,46 @@ class TestPubSubOrder(unittest.TestCase):
 
         # wait at most 5 seconds for listenerpublisher to be registered
         timeout_t = time.time() + 5.0
-        while not rostest.is_subscriber(
-            rospy.resolve_name(PUBTOPIC),
-            rospy.resolve_name(LPNODE)) and time.time() < timeout_t:
+        while (
+            not rostest.is_subscriber(
+                rospy.resolve_name(PUBTOPIC), rospy.resolve_name(LPNODE)
+            )
+            and time.time() < timeout_t
+        ):
             time.sleep(0.1)
 
-        self.assertTrue(rostest.is_subscriber(
-            rospy.resolve_name(PUBTOPIC),
-            rospy.resolve_name(LPNODE)), "%s is not up"%LPNODE)
-        
+        self.assertTrue(
+            rostest.is_subscriber(
+                rospy.resolve_name(PUBTOPIC), rospy.resolve_name(LPNODE)
+            ),
+            "%s is not up" % LPNODE,
+        )
+
         print("Publishing to ", PUBTOPIC)
         pub = rospy.Publisher(PUBTOPIC, MSG, queue_size=0)
-        rospy.Subscriber(LPTOPIC, MSG, self._test_subscriber_first_callback) 
+        rospy.Subscriber(LPTOPIC, MSG, self._test_subscriber_first_callback)
 
         # publish about 10 messages for fun
         import random
+
         val = random.randint(0, 109812312)
-        msg = "hi [%s]"%val
+        msg = "hi [%s]" % val
         for i in range(0, 10):
             pub.publish(MSG(msg))
             time.sleep(0.1)
 
         # listenerpublisher is supposed to repeat our messages back onto /listenerpublisher,
         # make sure we got it
-        self.assertTrue(self.callback_data is not None, "no callback data from listenerpublisher")
-        self.assertEqual(msg, self.callback_data.data, "callback data from listenerpublisher does not match")
-        
-if __name__ == '__main__':
+        self.assertTrue(
+            self.callback_data is not None, "no callback data from listenerpublisher"
+        )
+        self.assertEqual(
+            msg,
+            self.callback_data.data,
+            "callback data from listenerpublisher does not match",
+        )
+
+
+if __name__ == "__main__":
     rospy.init_node(NAME)
     rostest.run(PKG, NAME, TestPubSubOrder, sys.argv)

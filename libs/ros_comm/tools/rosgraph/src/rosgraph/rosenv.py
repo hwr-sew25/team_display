@@ -33,15 +33,16 @@
 import os
 import sys
 
-ROS_MASTER_URI   = "ROS_MASTER_URI"
+ROS_MASTER_URI = "ROS_MASTER_URI"
 
-ROS_IP           ="ROS_IP"
-ROS_IPV6         ="ROS_IPV6"
-ROS_HOSTNAME     ="ROS_HOSTNAME"
-ROS_NAMESPACE    ="ROS_NAMESPACE"
+ROS_IP = "ROS_IP"
+ROS_IPV6 = "ROS_IPV6"
+ROS_HOSTNAME = "ROS_HOSTNAME"
+ROS_NAMESPACE = "ROS_NAMESPACE"
 
 DEFAULT_MASTER_PORT = 11311  # default port for master's to bind to
-DEFAULT_MASTER_URI = 'http://localhost:%s/' % DEFAULT_MASTER_PORT
+DEFAULT_MASTER_URI = "http://localhost:%s/" % DEFAULT_MASTER_PORT
+
 
 def get_master_uri(env=None, argv=None):
     """
@@ -51,26 +52,27 @@ def get_master_uri(env=None, argv=None):
     :param env: override environment dictionary, ``dict``
     :param argv: override ``sys.argv``, ``[str]``
     :raises: :exc:`ValueError` If :envvar:`ROS_MASTER_URI` value is invalidly
-      specified 
-    """    
+      specified
+    """
     if env is None:
         env = os.environ
     if argv is None:
         argv = sys.argv
-    
+
     for arg in argv:
-        if arg.startswith('__master:='):
+        if arg.startswith("__master:="):
             val = None
             try:
-                _, val = arg.split(':=')
+                _, val = arg.split(":=")
             except:
                 pass
-            
+
             # we ignore required here because there really is no
             # correct return value as the configuration is bad
             # rather than unspecified
             if not val:
-                raise ValueError("__master remapping argument '%s' improperly specified"%arg)
+                raise ValueError(
+                    "__master remapping argument '%s' improperly specified" % arg
+                )
             return val
     return env.get(ROS_MASTER_URI, DEFAULT_MASTER_URI)
-        

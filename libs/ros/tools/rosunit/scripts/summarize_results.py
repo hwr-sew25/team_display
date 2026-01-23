@@ -41,6 +41,7 @@ when running several tests across a package.
 from __future__ import print_function
 
 import sys
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -54,49 +55,53 @@ import rosunit.junitxml as junitxml
 def create_summary(result, packages):
     buff = StringIO()
 
-    buff.write('-' * 80 + '\n')
-    buff.write('\033[1m[AGGREGATED TEST RESULTS SUMMARY]\033[0m\n\n')
+    buff.write("-" * 80 + "\n")
+    buff.write("\033[1m[AGGREGATED TEST RESULTS SUMMARY]\033[0m\n\n")
 
     errors_failures = [r for r in result.test_case_results if r.errors or r.failures]
     if errors_failures:
-        buff.write('ERRORS/FAILURES:\n')
+        buff.write("ERRORS/FAILURES:\n")
         for tc_result in errors_failures:
             buff.write(tc_result.description)
 
-    buff.write('PACKAGES: \n%s\n\n' % '\n'.join([' * %s' % p for p in packages]))
+    buff.write("PACKAGES: \n%s\n\n" % "\n".join([" * %s" % p for p in packages]))
 
-    buff.write('\nSUMMARY\n')
+    buff.write("\nSUMMARY\n")
     if (result.num_errors + result.num_failures) == 0:
-        buff.write('\033[32m * RESULT: SUCCESS\033[0m\n')
+        buff.write("\033[32m * RESULT: SUCCESS\033[0m\n")
     else:
-        buff.write('\033[1;31m * RESULT: FAIL\033[0m\n')
+        buff.write("\033[1;31m * RESULT: FAIL\033[0m\n")
 
     # TODO: still some issues with the numbers adding up if tests fail to launch
 
     # number of errors from the inner tests, plus add in count for tests
     # that didn't run properly ('result' object).
-    buff.write(' * TESTS: %s\n' % result.num_tests)
+    buff.write(" * TESTS: %s\n" % result.num_tests)
     if result.num_errors:
-        buff.write('\033[1;31m * ERRORS: %s\033[0m\n' % result.num_errors)
+        buff.write("\033[1;31m * ERRORS: %s\033[0m\n" % result.num_errors)
     else:
-        buff.write(' * ERRORS: 0\n')
+        buff.write(" * ERRORS: 0\n")
     if result.num_failures:
-        buff.write('\033[1;31m * FAILURES: %s\033[0m\n' % result.num_failures)
+        buff.write("\033[1;31m * FAILURES: %s\033[0m\n" % result.num_failures)
     else:
-        buff.write(' * FAILURES: 0\n')
+        buff.write(" * FAILURES: 0\n")
     return buff.getvalue()
 
 
 def main():
     from optparse import OptionParser
-    parser = OptionParser(usage='usage: summarize_results.py [options] package')
-    parser.add_option('--nodeps',
-                      dest='no_deps', default=False,
-                      action='store_true',
-                      help="don't compute test results for the specified package only")
+
+    parser = OptionParser(usage="usage: summarize_results.py [options] package")
+    parser.add_option(
+        "--nodeps",
+        dest="no_deps",
+        default=False,
+        action="store_true",
+        help="don't compute test results for the specified package only",
+    )
     (options, args) = parser.parse_args()
     if len(args) != 1:
-        parser.error('Only one package may be specified')
+        parser.error("Only one package may be specified")
 
     package = args[0]
     r = rospkg.RosPack()
@@ -112,5 +117,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

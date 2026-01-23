@@ -42,4 +42,5 @@ class ROSLibException(Exception):
     """
     Base class for exceptions in roslib
     """
+
     pass

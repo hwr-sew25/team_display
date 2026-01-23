@@ -31,8 +31,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'test_rosmaster'
-NAME = 'test_ps_scope_up'
+PKG = "test_rosmaster"
+NAME = "test_ps_scope_up"
 
 import sys
 
@@ -41,10 +41,12 @@ import rostest
 
 from param_server import ParamServerTestCase
 
+
 class PsScopeUpTestCase(ParamServerTestCase):
     def testScopeUp(self):
         return self._testScopeUp()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     rospy.init_node(NAME)
     rostest.rosrun(PKG, NAME, PsScopeUpTestCase, sys.argv)

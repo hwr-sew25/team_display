@@ -34,4 +34,4 @@ is very likely to change in future releases and is not stable.
 from .engine import Printer  # noqa: F401
 from .engine import RosMakeAll  # noqa: F401
 
-__version__ = '1.7.0'
+__version__ = "1.7.0"

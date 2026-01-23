@@ -40,6 +40,7 @@ import sys
 import string
 import time
 import unittest
+
 try:
     from xmlrpc.client import Fault, ServerProxy
 except ImportError:
@@ -48,25 +49,26 @@ except ImportError:
 import rosunit
 import rosgraph
 
-TCPROS = 'TCPROS'
+TCPROS = "TCPROS"
 
-CALLER_ID = '/test_harness'
-TEST_NODE_NAME = '/test_node' #default
+CALLER_ID = "/test_harness"
+TEST_NODE_NAME = "/test_node"  # default
+
 
 class TopicDescription(object):
     def __init__(self, topic_name, topic_type):
         self.topic_name = topic_name
         self.topic_type = topic_type
 
-        #validate topic
+        # validate topic
         if not rosgraph.names.is_legal_name(topic_name):
-            raise ValueError('topic name: %s'%(topic_name))
-        
+            raise ValueError("topic name: %s" % (topic_name))
+
         # validate type
-        p, t = topic_type.split('/')
+        p, t = topic_type.split("/")
+
 
 class TopicDescriptionList(object):
-    
     def __init__(self, xmlrpcvalue):
         # [ [topic1, topicType1]...[topicN, topicTypeN]]]
         if not type(xmlrpcvalue) == list:
@@ -81,35 +83,36 @@ class TopicDescriptionList(object):
             d[t.topic_name] = t.topic_type
         return d
 
-class TestSlaveApi(unittest.TestCase):
 
+class TestSlaveApi(unittest.TestCase):
     def __init__(self, *args, **kwds):
         super(TestSlaveApi, self).__init__(*args)
-        
+
         self.ns = os.environ.get(rosgraph.ROS_NAMESPACE, rosgraph.names.GLOBALNS)
 
         # load in name of test node
-        self.test_node = 'test_node' #default
+        self.test_node = "test_node"  # default
         self.required_pubs = TopicDescriptionList([])
         self.required_subs = TopicDescriptionList([])
 
         for arg in sys.argv:
             if arg.startswith("--node="):
-                self.test_node = arg[len("--node="):]
+                self.test_node = arg[len("--node=") :]
             if arg.startswith("--profile="):
-                self.test_node_profile = arg[len("--profile="):]
+                self.test_node_profile = arg[len("--profile=") :]
                 self.load_profile(self.test_node_profile)
-                
+
         # resolve
         self.test_node = rosgraph.names.ns_join(self.ns, self.test_node)
-                
+
     def load_profile(self, filename):
         import yaml
+
         with open(filename) as f:
             d = yaml.safe_load(f)
-        self.required_pubs = d.get('pubs', {})
-        self.required_subs = d.get('subs', {})
-        
+        self.required_pubs = d.get("pubs", {})
+        self.required_subs = d.get("subs", {})
+
     def setUp(self):
         self.caller_id = CALLER_ID
         # retrieve handle on node
@@ -123,14 +126,17 @@ class TestSlaveApi(unittest.TestCase):
             except:
                 time.sleep(0.1)
         if not self.node_api:
-            self.fail("master did not return XML-RPC API for [%s, %s]"%(self.caller_id, self.test_node))
-        print("[%s] API  = %s"%(self.test_node, self.node_api))
-        self.assertTrue(self.node_api.startswith('http'))
+            self.fail(
+                "master did not return XML-RPC API for [%s, %s]"
+                % (self.caller_id, self.test_node)
+            )
+        print("[%s] API  = %s" % (self.test_node, self.node_api))
+        self.assertTrue(self.node_api.startswith("http"))
         self.node = ServerProxy(self.node_api)
 
         # hack: sleep for a couple seconds just in case the node is
         # still registering with the master.
-        time.sleep(2.)
+        time.sleep(2.0)
 
     def apiSuccess(self, args):
         """
@@ -139,9 +145,11 @@ class TestSlaveApi(unittest.TestCase):
         @type  args: [int, str, val]
         @return: value parameter from args (arg[2] for master/slave API)
         """
-        self.assertTrue(len(args) == 3, "invalid API return value triplet: %s"%str(args))
+        self.assertTrue(
+            len(args) == 3, "invalid API return value triplet: %s" % str(args)
+        )
         self.last_code, self.last_msg, self.last_val = args
-        assert self.last_code == 1, "status code is not 1: %s"%self.last_msg
+        assert self.last_code == 1, "status code is not 1: %s" % self.last_msg
         return self.last_val
 
     def apiFail(self, args):
@@ -151,9 +159,13 @@ class TestSlaveApi(unittest.TestCase):
         @type  args: [int, str, val]
         @return: True if status code is 0
         """
-        self.assertTrue(len(args) == 3, "invalid API return value triplet: %s"%str(args))
+        self.assertTrue(
+            len(args) == 3, "invalid API return value triplet: %s" % str(args)
+        )
         self.last_code, self.last_msg, self.last_val = args
-        assert self.last_code == 0, "Call should have failed with status code 0: %s"%self.last_msg
+        assert self.last_code == 0, (
+            "Call should have failed with status code 0: %s" % self.last_msg
+        )
 
     def apiError(self, args, msg=None):
         """
@@ -162,12 +174,16 @@ class TestSlaveApi(unittest.TestCase):
         @type  args: [int, str, val]
         @return: True if status code is -1
         """
-        self.assertTrue(len(args) == 3, "invalid API return value triplet: %s"%str(args))
+        self.assertTrue(
+            len(args) == 3, "invalid API return value triplet: %s" % str(args)
+        )
         self.last_code, self.last_msg, self.last_val = args
         if msg:
-            assert self.last_code == -1, "%s (return msg was %s)"%(msg, self.last_msg)
+            assert self.last_code == -1, "%s (return msg was %s)" % (msg, self.last_msg)
         else:
-            assert self.last_code == -1, "Call should have returned error -1 code: %s"%self.last_msg
+            assert self.last_code == -1, (
+                "Call should have returned error -1 code: %s" % self.last_msg
+            )
 
     def check_uri(self, uri):
         """
@@ -178,15 +194,18 @@ class TestSlaveApi(unittest.TestCase):
         except ImportError:
             import urlparse
         parsed = urlparse.urlparse(uri)
-        self.assertTrue(parsed[0] in ['http', 'https'], 'protocol [%s] is [%s] invalid'%(parsed[0], uri))
-        self.assertTrue(parsed[1], 'host missing [%s]'%uri)
-        self.assertTrue(parsed.port, 'port missing/invalid [%s]'%uri)        
+        self.assertTrue(
+            parsed[0] in ["http", "https"],
+            "protocol [%s] is [%s] invalid" % (parsed[0], uri),
+        )
+        self.assertTrue(parsed[1], "host missing [%s]" % uri)
+        self.assertTrue(parsed.port, "port missing/invalid [%s]" % uri)
 
     def test_getPid(self):
         """
-        validate node.getPid(caller_id)        
+        validate node.getPid(caller_id)
         """
-        # test success        
+        # test success
         pid = self.apiSuccess(self.node.getPid(self.caller_id))
         self.assertTrue(pid > 0)
 
@@ -202,9 +221,11 @@ class TestSlaveApi(unittest.TestCase):
         """
         val = self.apiSuccess(self.node.getPublications(self.caller_id))
         pubs_d = TopicDescriptionList(val).as_dict()
-        self.assertTrue('/rosout' in pubs_d, "node is not publishing to rosout")
-        self.assertEqual('rosgraph_msgs/Log', pubs_d['/rosout'], "/rosout is not correct type")
-        
+        self.assertTrue("/rosout" in pubs_d, "node is not publishing to rosout")
+        self.assertEqual(
+            "rosgraph_msgs/Log", pubs_d["/rosout"], "/rosout is not correct type"
+        )
+
     def test_simtime(self):
         """
         test that node obeys simtime (/Clock) contract
@@ -212,17 +233,22 @@ class TestSlaveApi(unittest.TestCase):
         http://wiki.ros.org/Clock
         """
         try:
-            use_sim_time = self.master.getParam('/use_sim_time')
+            use_sim_time = self.master.getParam("/use_sim_time")
         except:
             use_sim_time = False
-            
+
         val = self.apiSuccess(self.node.getSubscriptions(self.caller_id))
         subs_d = TopicDescriptionList(val).as_dict()
         if use_sim_time:
-            self.assertTrue('/clock' in subs_d, "node is not subscribing to clock")
-            self.assertEqual('rosgraph_msgs/Clock', subs_d['/clock'], "/clock is not correct type")
+            self.assertTrue("/clock" in subs_d, "node is not subscribing to clock")
+            self.assertEqual(
+                "rosgraph_msgs/Clock", subs_d["/clock"], "/clock is not correct type"
+            )
         else:
-            self.assertFalse('/clock' in subs_d, "node is subscribed to /clock even though /use_sim_time is false")
+            self.assertFalse(
+                "/clock" in subs_d,
+                "node is subscribed to /clock even though /use_sim_time is false",
+            )
 
     def test_getPublications(self):
         """
@@ -234,25 +260,25 @@ class TestSlaveApi(unittest.TestCase):
 
         pubs_dict = pubs.as_dict()
         # this is separately tested by test_rosout
-        if '/rosout' in pubs_dict:
-            del pubs_dict['/rosout']
+        if "/rosout" in pubs_dict:
+            del pubs_dict["/rosout"]
         self.assertEqual(self.required_pubs, pubs_dict)
-        
+
         # test with bad arity: accept error or fault
         try:
             self.apiError(self.node.getPublications())
         except Fault:
             pass
         try:
-            self.apiError(self.node.getPublications(self.caller_id, 'something extra'))
+            self.apiError(self.node.getPublications(self.caller_id, "something extra"))
         except Fault:
             pass
-        
+
     def test_getSubscriptions(self):
         """
         validate node.getSubscriptions(caller_id)
         """
-        
+
         # test success
         value = self.apiSuccess(self.node.getSubscriptions(self.caller_id))
         subs = TopicDescriptionList(value)
@@ -266,38 +292,38 @@ class TestSlaveApi(unittest.TestCase):
         except Fault:
             pass
         try:
-            self.apiError(self.node.getSubscriptions(self.caller_id, 'something extra'))        
+            self.apiError(self.node.getSubscriptions(self.caller_id, "something extra"))
         except Fault:
             pass
 
     ## validate node.paramUpdate(caller_id, key, value)
     def test_paramUpdate(self):
         node = self.node
-        good_key = rosgraph.names.ns_join(self.ns, 'good_key')
-        bad_key = rosgraph.names.ns_join(self.ns, 'bad_key')
-        
+        good_key = rosgraph.names.ns_join(self.ns, "good_key")
+        bad_key = rosgraph.names.ns_join(self.ns, "bad_key")
+
         # node is not subscribed to good_key (yet)
-        self.apiError(node.paramUpdate(self.caller_id, good_key, 'good_value'))
+        self.apiError(node.paramUpdate(self.caller_id, good_key, "good_value"))
 
         # test bad key
-        self.apiError(node.paramUpdate(self.caller_id, '', 'bad'))
-        self.apiError(node.paramUpdate(self.caller_id, 'no_namespace', 'bad'))
+        self.apiError(node.paramUpdate(self.caller_id, "", "bad"))
+        self.apiError(node.paramUpdate(self.caller_id, "no_namespace", "bad"))
 
         # test with bad arity: accept error or fault
         try:
-            self.apiError(node.paramUpdate(self.caller_id, bad_key))     
+            self.apiError(node.paramUpdate(self.caller_id, bad_key))
         except Fault:
             pass
 
         try:
-            self.apiError(node.paramUpdate(self.caller_id)) 
+            self.apiError(node.paramUpdate(self.caller_id))
         except Fault:
             pass
 
         # we can't actually test success cases without forcing node to subscribe
-        #self.apiSuccess(node.paramUpdate(self.caller_id, good_key, 1))
-        #self.apiSuccess(node.paramUpdate(self.caller_id, good_key, True))
-        #self.apiSuccess(node.paramUpdate(self.caller_id, good_key, 10.0))
+        # self.apiSuccess(node.paramUpdate(self.caller_id, good_key, 1))
+        # self.apiSuccess(node.paramUpdate(self.caller_id, good_key, True))
+        # self.apiSuccess(node.paramUpdate(self.caller_id, good_key, 10.0))
 
     def xtest_getUri(self):
         """
@@ -306,20 +332,20 @@ class TestSlaveApi(unittest.TestCase):
         """
         # test success
         self.check_uri(self.apiSuccess(self.node.getUri(self.caller_id)))
-        
+
         # test bad arity
         try:
-            self.apiError(self.node.getUri(self.caller_id, 'bad'))
+            self.apiError(self.node.getUri(self.caller_id, "bad"))
         except Fault:
             pass
         try:
             self.apiError(self.node.getUri())
         except Fault:
             pass
-            
+
     def test_getMasterUri(self):
         """
-        validate node.getMasterUri(caller_id)                
+        validate node.getMasterUri(caller_id)
         """
         # test success
         uri = self.apiSuccess(self.node.getMasterUri(self.caller_id))
@@ -331,13 +357,13 @@ class TestSlaveApi(unittest.TestCase):
         except ImportError:
             import urlparse
         master_env = rosgraph.get_master_uri()
-        if not master_env.endswith('/'):
-            master_env = master_env + '/'
+        if not master_env.endswith("/"):
+            master_env = master_env + "/"
         self.assertEqual(urlparse.urlparse(master_env), urlparse.urlparse(uri))
 
         # test bad arity
         try:
-            self.apiError(self.node.getMasterUri(self.caller_id, 'bad'))
+            self.apiError(self.node.getMasterUri(self.caller_id, "bad"))
         except Fault:
             pass
         try:
@@ -347,42 +373,48 @@ class TestSlaveApi(unittest.TestCase):
 
     def test_publisherUpdate(self):
         """
-        validate node.publisherUpdate(caller_id, topic, uris) 
+        validate node.publisherUpdate(caller_id, topic, uris)
         """
         node = self.node
-        probe_topic = rosgraph.names.ns_join(self.ns, 'probe_topic')
-        fake_topic = rosgraph.names.ns_join(self.ns, 'fake_topic')        
-        
+        probe_topic = rosgraph.names.ns_join(self.ns, "probe_topic")
+        fake_topic = rosgraph.names.ns_join(self.ns, "fake_topic")
+
         # test success
         # still success even if not actually interested in topic
-        self.apiSuccess(node.publisherUpdate(self.caller_id, fake_topic,
-                                             ['http://localhost:1234', 'http://localhost:5678']))
-        self.apiSuccess(node.publisherUpdate(self.caller_id, fake_topic,
-                                             []))
+        self.apiSuccess(
+            node.publisherUpdate(
+                self.caller_id,
+                fake_topic,
+                ["http://localhost:1234", "http://localhost:5678"],
+            )
+        )
+        self.apiSuccess(node.publisherUpdate(self.caller_id, fake_topic, []))
         # try it with it the /probe_topic, which will exercise some error branches in the client
-        self.apiSuccess(node.publisherUpdate(self.caller_id, probe_topic,
-                                             ['http://unroutablefakeservice:1234']))
+        self.apiSuccess(
+            node.publisherUpdate(
+                self.caller_id, probe_topic, ["http://unroutablefakeservice:1234"]
+            )
+        )
         # give it some time to make sure it's attempted contact
         time.sleep(1.0)
         # check that it's still there
-        self.apiSuccess(node.publisherUpdate(self.caller_id, probe_topic,
-                                                  []))
-        
+        self.apiSuccess(node.publisherUpdate(self.caller_id, probe_topic, []))
+
         # test bad args
         try:
-            self.apiError(node.publisherUpdate(self.caller_id, '/bad_topic', 'bad'))
+            self.apiError(node.publisherUpdate(self.caller_id, "/bad_topic", "bad"))
         except Fault:
             pass
         try:
-            self.apiError(node.publisherUpdate(self.caller_id, '/bad_topic', 2))
+            self.apiError(node.publisherUpdate(self.caller_id, "/bad_topic", 2))
         except Fault:
             pass
         try:
-            self.apiError(node.publisherUpdate(self.caller_id, '/bad_topic', False))                
+            self.apiError(node.publisherUpdate(self.caller_id, "/bad_topic", False))
         except Fault:
             pass
         try:
-            self.apiError(node.publisherUpdate(self.caller_id, '/bad_topic', ['bad']))
+            self.apiError(node.publisherUpdate(self.caller_id, "/bad_topic", ["bad"]))
         except Fault:
             pass
 
@@ -392,7 +424,7 @@ class TestSlaveApi(unittest.TestCase):
         except Fault:
             pass
         try:
-            self.apiError(node.getBusStats(self.caller_id, 'bad'))
+            self.apiError(node.getBusStats(self.caller_id, "bad"))
         except Fault:
             pass
         try:
@@ -402,35 +434,50 @@ class TestSlaveApi(unittest.TestCase):
 
     def check_TCPROS(self, protocol_params):
         self.assertTrue(protocol_params, "no protocol params returned")
-        self.assertTrue(type(protocol_params) == list, "protocol params must be a list: %s"%protocol_params)
-        self.assertEqual(3, len(protocol_params), "TCPROS params should have length 3: %s"%protocol_params)
+        self.assertTrue(
+            type(protocol_params) == list,
+            "protocol params must be a list: %s" % protocol_params,
+        )
+        self.assertEqual(
+            3,
+            len(protocol_params),
+            "TCPROS params should have length 3: %s" % protocol_params,
+        )
         self.assertEqual(protocol_params[0], TCPROS)
         # expect ['TCPROS', 1.2.3.4, 1234]
-        self.assertEqual(protocol_params[0], TCPROS)            
-        
+        self.assertEqual(protocol_params[0], TCPROS)
+
     def testRequestTopic(self):
         node = self.node
         protocols = [[TCPROS]]
 
         publications = node.getPublications(self.caller_id)
-        
+
         topics = self.required_pubs.keys()
         probe_topic = topics[0] if topics else None
-        fake_topic = rosgraph.names.ns_join(self.ns, 'fake_topic')
-        
+        fake_topic = rosgraph.names.ns_join(self.ns, "fake_topic")
+
         # currently only support TCPROS as we require all clients to support this
         protocols = [[TCPROS]]
         for topic in topics:
-            self.check_TCPROS(self.apiSuccess(node.requestTopic(self.caller_id, topic, protocols)))
-        protocols = [['FakeTransport', 1234, 5678], [TCPROS], ['AnotherFakeTransport']]
+            self.check_TCPROS(
+                self.apiSuccess(node.requestTopic(self.caller_id, topic, protocols))
+            )
+        protocols = [["FakeTransport", 1234, 5678], [TCPROS], ["AnotherFakeTransport"]]
         # try each one more time, this time with more protocol choices
         for topic in topics:
-            self.check_TCPROS(self.apiSuccess(node.requestTopic(self.caller_id, topic, protocols)))
-            
+            self.check_TCPROS(
+                self.apiSuccess(node.requestTopic(self.caller_id, topic, protocols))
+            )
+
         # test bad arity
         if probe_topic:
             try:
-                self.apiError(node.requestTopic(self.caller_id, probe_topic, protocols, 'extra stuff'))
+                self.apiError(
+                    node.requestTopic(
+                        self.caller_id, probe_topic, protocols, "extra stuff"
+                    )
+                )
             except Fault:
                 pass
             try:
@@ -452,7 +499,7 @@ class TestSlaveApi(unittest.TestCase):
         except Fault:
             pass
         try:
-            self.apiError(node.requestTopic(self.caller_id, '', protocols))
+            self.apiError(node.requestTopic(self.caller_id, "", protocols))
         except Fault:
             pass
         try:
@@ -460,18 +507,19 @@ class TestSlaveApi(unittest.TestCase):
         except Fault:
             pass
         try:
-            self.apiError(node.requestTopic(self.caller_id, probe_topic, 'fake-protocols')) 
+            self.apiError(
+                node.requestTopic(self.caller_id, probe_topic, "fake-protocols")
+            )
         except Fault:
             pass
 
-        
     def test_getBusInfo(self):
-        #TODO: finish
+        # TODO: finish
         # there should be a connection to rosout
-        
+
         # test bad arity
         try:
-            self.apiError(self.node.getBusInfo(self.caller_id, 'bad'))
+            self.apiError(self.node.getBusInfo(self.caller_id, "bad"))
         except Fault:
             pass
         try:
@@ -479,7 +527,6 @@ class TestSlaveApi(unittest.TestCase):
         except Fault:
             pass
 
-        
     ## test the state of the master based on expected node registration
     def test_registrations(self):
         # setUp() ensures the node has registered with the master
@@ -489,23 +536,32 @@ class TestSlaveApi(unittest.TestCase):
         pubs, subs, srvs = self.master.getSystemState()
         pub_topics = [t for t, _ in pubs]
         sub_topics = [t for t, _ in subs]
-        
+
         # make sure all required topics are registered
         for t in self.required_pubs:
-            self.assertTrue(t in pub_topics, "node did not register publication %s on master"%(t))
+            self.assertTrue(
+                t in pub_topics, "node did not register publication %s on master" % (t)
+            )
         for t in self.required_subs:
-            self.assertTrue(t in sub_topics, "node did not register subscription %s on master"%(t))
-        
+            self.assertTrue(
+                t in sub_topics, "node did not register subscription %s on master" % (t)
+            )
+
         # check for node URI on master
         for topic, node_list in pubs:
             if topic in self.required_pubs:
-                self.assertTrue(node_name in node_list, "%s not in %s"%(self.node_api, node_list))
+                self.assertTrue(
+                    node_name in node_list, "%s not in %s" % (self.node_api, node_list)
+                )
         for topic, node_list in subs:
             if topic in self.required_subs:
-                self.assertTrue(node_name in node_list, "%s not in %s"%(self.node_api, node_list))
+                self.assertTrue(
+                    node_name in node_list, "%s not in %s" % (self.node_api, node_list)
+                )
         for service, srv_list in srvs:
-            #TODO: no service tests yet
+            # TODO: no service tests yet
             pass
 
-if __name__ == '__main__':
-    rosunit.unitrun('test_rosmaster', sys.argv[0], TestSlaveApi)
+
+if __name__ == "__main__":
+    rosunit.unitrun("test_rosmaster", sys.argv[0], TestSlaveApi)

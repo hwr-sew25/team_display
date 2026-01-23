@@ -35,6 +35,7 @@ import os
 import sys
 import struct
 import unittest
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -44,103 +45,107 @@ import random
 
 import genpy
 
-class TestRospyMsg(unittest.TestCase):
 
+class TestRospyMsg(unittest.TestCase):
     def test_args_kwds_to_message(self):
         import rospy
         from rospy.msg import args_kwds_to_message
         from test_rospy.msg import Val, Empty
-        
-        v = Val('hello world-1')
+
+        v = Val("hello world-1")
         d = args_kwds_to_message(Val, (v,), None)
         self.assertTrue(d == v)
-        d = args_kwds_to_message(Val, ('hello world-2',), None)
-        self.assertEqual(d.val, 'hello world-2')
-        d = args_kwds_to_message(Val, (), {'val':'hello world-3'})
-        self.assertEqual(d.val, 'hello world-3')
+        d = args_kwds_to_message(Val, ("hello world-2",), None)
+        self.assertEqual(d.val, "hello world-2")
+        d = args_kwds_to_message(Val, (), {"val": "hello world-3"})
+        self.assertEqual(d.val, "hello world-3")
 
         # error cases
         try:
-            args_kwds_to_message(Val, 'hi', val='hello world-3')
+            args_kwds_to_message(Val, "hi", val="hello world-3")
             self.fail("should not allow args and kwds")
-        except TypeError: pass
+        except TypeError:
+            pass
         try:
-            args_kwds_to_message(Empty, (Val('hola'),), None)
+            args_kwds_to_message(Empty, (Val("hola"),), None)
             self.fail("should raise TypeError when publishing Val msg to Empty topic")
-        except TypeError: pass
+        except TypeError:
+            pass
 
     def test_serialize_message(self):
         import rospy.msg
         import rospy.rostime
+
         # have to fake-init rostime so that Header can be stamped
         rospy.rostime.set_rostime_initialized(True)
-        
+
         buff = StringIO()
         seq = random.randint(1, 1000)
-        
-        #serialize_message(seq, msg)
+
+        # serialize_message(seq, msg)
         from test_rospy.msg import Val
 
-        #serialize a simple 'Val' with a string in it
-        teststr = 'foostr-%s'%time.time()
+        # serialize a simple 'Val' with a string in it
+        teststr = "foostr-%s" % time.time()
         val = Val(teststr)
 
-        fmt = "<II%ss"%len(teststr)
+        fmt = "<II%ss" % len(teststr)
         size = struct.calcsize(fmt) - 4
         valid = struct.pack(fmt, size, len(teststr), teststr.encode())
-        
+
         rospy.msg.serialize_message(buff, seq, val)
 
         self.assertEqual(valid, buff.getvalue())
-        
-        #test repeated serialization
+
+        # test repeated serialization
         rospy.msg.serialize_message(buff, seq, val)
-        rospy.msg.serialize_message(buff, seq, val)        
-        self.assertEqual(valid*3, buff.getvalue())
+        rospy.msg.serialize_message(buff, seq, val)
+        self.assertEqual(valid * 3, buff.getvalue())
 
         # - once more just to make sure that the buffer position is
         # being preserved properly
         buff.seek(0)
         rospy.msg.serialize_message(buff, seq, val)
-        self.assertEqual(valid*3, buff.getvalue())        
+        self.assertEqual(valid * 3, buff.getvalue())
         rospy.msg.serialize_message(buff, seq, val)
-        self.assertEqual(valid*3, buff.getvalue()) 
-        rospy.msg.serialize_message(buff, seq, val)        
-        self.assertEqual(valid*3, buff.getvalue())        
+        self.assertEqual(valid * 3, buff.getvalue())
+        rospy.msg.serialize_message(buff, seq, val)
+        self.assertEqual(valid * 3, buff.getvalue())
 
-        #test sequence parameter
+        # test sequence parameter
         buff.truncate(0)
 
         from test_rospy.msg import HeaderVal
+
         t = rospy.Time.now()
-        t.secs = t.secs - 1 # move it back in time
+        t.secs = t.secs - 1  # move it back in time
         h = rospy.Header(None, rospy.Time.now(), teststr)
         h.stamp = t
         val = HeaderVal(h, teststr)
         seq += 1
-        
+
         rospy.msg.serialize_message(buff, seq, val)
         self.assertEqual(val.header, h)
         self.assertEqual(seq, h.seq)
-        #should not have been changed
-        self.assertEqual(t, h.stamp) 
-        self.assertEqual(teststr, h.frame_id) 
-        
-        #test frame_id setting
+        # should not have been changed
+        self.assertEqual(t, h.stamp)
+        self.assertEqual(teststr, h.frame_id)
+
+        # test frame_id setting
         h.frame_id = None
         rospy.msg.serialize_message(buff, seq, val)
         self.assertEqual(val.header, h)
-        self.assertEqual('0', h.frame_id) 
-        
+        self.assertEqual("0", h.frame_id)
 
     def test_deserialize_messages(self):
         import rospy.msg
         from test_rospy.msg import Val
+
         num_tests = 10
-        teststrs = ['foostr-%s'%random.randint(0, 10000) for i in range(0, num_tests)]
+        teststrs = ["foostr-%s" % random.randint(0, 10000) for i in range(0, num_tests)]
         valids = []
         for t in teststrs:
-            fmt = "<II%ss"%len(t)
+            fmt = "<II%ss" % len(t)
             size = struct.calcsize(fmt) - 4
             valids.append(struct.pack(fmt, size, len(t), t.encode()))
         data_class = Val
@@ -148,68 +153,72 @@ class TestRospyMsg(unittest.TestCase):
         def validate_vals(vals, teststrs=teststrs):
             for i, v in zip(range(0, len(vals)), vals):
                 self.assertTrue(isinstance(v, Val))
-                self.assertEqual(teststrs[i], v.val)        
-        
+                self.assertEqual(teststrs[i], v.val)
+
         b = StringIO()
         msg_queue = []
-        
-        #test with null buff
+
+        # test with null buff
         try:
             rospy.msg.deserialize_messages(None, msg_queue, data_class)
-        except genpy.DeserializationError: pass
-        #test will null msg_queue
+        except genpy.DeserializationError:
+            pass
+        # test will null msg_queue
         try:
             rospy.msg.deserialize_messages(b, None, data_class)
-        except genpy.DeserializationError: pass
-        #test with empty buff
+        except genpy.DeserializationError:
+            pass
+        # test with empty buff
         rospy.msg.deserialize_messages(b, msg_queue, data_class)
         self.assertEqual(0, len(msg_queue))
         self.assertEqual(0, b.tell())
 
-        #deserialize a simple value
+        # deserialize a simple value
         b.truncate(0)
         b.write(valids[0])
         rospy.msg.deserialize_messages(b, msg_queue, data_class)
         self.assertEqual(1, len(msg_queue))
         validate_vals(msg_queue)
         # - buffer should be reset
-        self.assertEqual(0, b.tell())         
+        self.assertEqual(0, b.tell())
         del msg_queue[:]
 
-        #verify deserialize does not read past b.tell()
+        # verify deserialize does not read past b.tell()
         b.truncate(0)
         b.write(valids[0])
-        b.write(valids[1])        
+        b.write(valids[1])
         b.seek(len(valids[0]))
         rospy.msg.deserialize_messages(b, msg_queue, data_class)
         self.assertEqual(1, len(msg_queue))
         validate_vals(msg_queue)
         # - buffer should be reset
-        self.assertEqual(0, b.tell())        
+        self.assertEqual(0, b.tell())
 
         del msg_queue[:]
 
-        #deserialize an incomplete message
+        # deserialize an incomplete message
         b.truncate(0)
-        b.write(valids[0][:-1])        
-        rospy.msg.deserialize_messages(b, msg_queue, data_class)        
-        self.assertFalse(msg_queue, "deserialize of an incomplete buffer returned %s"%msg_queue)
-        
+        b.write(valids[0][:-1])
+        rospy.msg.deserialize_messages(b, msg_queue, data_class)
+        self.assertFalse(
+            msg_queue, "deserialize of an incomplete buffer returned %s" % msg_queue
+        )
+
         del msg_queue[:]
-        
-        #deserialize with extra data leftover
+
+        # deserialize with extra data leftover
         b.truncate(0)
         b.seek(0)
-        b.write(valids[0]+b'leftovers')
+        b.write(valids[0] + b"leftovers")
         rospy.msg.deserialize_messages(b, msg_queue, data_class)
         self.assertEqual(1, len(msg_queue))
         validate_vals(msg_queue)
         # - leftovers should be pushed to the front of the buffer
-        self.assertEqual(b'leftovers', b.getvalue())
-        
+        self.assertEqual(b"leftovers", b.getvalue())
+
         del msg_queue[:]
 
-        #deserialize multiple values
+        # deserialize multiple values
         b.truncate(0)
         b.seek(0)
         for v in valids:
@@ -218,11 +227,11 @@ class TestRospyMsg(unittest.TestCase):
         self.assertEqual(len(valids), len(msg_queue))
         validate_vals(msg_queue)
         # - buffer should be reset
-        self.assertEqual(0, b.tell())        
-        
+        self.assertEqual(0, b.tell())
+
         del msg_queue[:]
 
-        #deserialize multiple values with max_msgs
+        # deserialize multiple values with max_msgs
         max_msgs = 5
         b.truncate(0)
         for v in valids:
@@ -236,14 +245,14 @@ class TestRospyMsg(unittest.TestCase):
             b2.write(v)
         self.assertEqual(b.getvalue(), b2.getvalue())
 
-        #deserialize rest and verify that msg_queue is appended to
+        # deserialize rest and verify that msg_queue is appended to
         rospy.msg.deserialize_messages(b, msg_queue, data_class)
         self.assertEqual(len(valids), len(msg_queue))
         validate_vals(msg_queue)
-        
+
         del msg_queue[:]
-        
-        #deserialize multiple values with queue_size
+
+        # deserialize multiple values with queue_size
         queue_size = 5
         b.truncate(0)
         for v in valids:
@@ -255,9 +264,9 @@ class TestRospyMsg(unittest.TestCase):
         # - msg_queue should have the most recent values only
         validate_vals(msg_queue, teststrs[-queue_size:])
         # - buffer should be reset
-        self.assertEqual(0, b.tell())        
-        
-        #deserialize multiple values with max_msgs and queue_size
+        self.assertEqual(0, b.tell())
+
+        # deserialize multiple values with max_msgs and queue_size
         queue_size = 5
         max_msgs = 5
         b.truncate(0)
@@ -265,13 +274,14 @@ class TestRospyMsg(unittest.TestCase):
             b.write(v)
         # fill queue with junk
         msg_queue = [1, 2, 3, 4, 5, 6, 7, 9, 10, 11]
-        rospy.msg.deserialize_messages(b, msg_queue, data_class, max_msgs=max_msgs, queue_size=queue_size)
+        rospy.msg.deserialize_messages(
+            b, msg_queue, data_class, max_msgs=max_msgs, queue_size=queue_size
+        )
         self.assertEqual(queue_size, len(msg_queue))
-        # - msg_queue should have the oldest messages 
+        # - msg_queue should have the oldest messages
         validate_vals(msg_queue)
         # - buffer should be have remaining msgs
         b2 = StringIO()
         for v in valids[max_msgs:]:
             b2.write(v)
         self.assertEqual(b.getvalue(), b2.getvalue())
-

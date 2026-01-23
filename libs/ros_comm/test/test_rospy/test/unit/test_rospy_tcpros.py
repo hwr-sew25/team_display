@@ -37,15 +37,22 @@ import struct
 import unittest
 import time
 
-class TestRospyTcpros(unittest.TestCase):
 
+class TestRospyTcpros(unittest.TestCase):
     def test_init_tcpros(self):
         import rospy.impl.tcpros
+
         rospy.impl.tcpros.init_tcpros()
         # nothing to validate here other than make sure no exceptions
-        
+
     def test_syms(self):
         import rospy.impl.tcpros
         import rospy.impl.transport
+
         self.assertEqual(int, type(rospy.impl.tcpros.DEFAULT_BUFF_SIZE))
-        self.assertTrue(isinstance(rospy.impl.tcpros.get_tcpros_handler(), rospy.impl.transport.ProtocolHandler))
+        self.assertTrue(
+            isinstance(
+                rospy.impl.tcpros.get_tcpros_handler(),
+                rospy.impl.transport.ProtocolHandler,
+            )
+        )

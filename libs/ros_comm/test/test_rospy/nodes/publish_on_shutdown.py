@@ -38,23 +38,28 @@ import rospy
 from std_msgs.msg import String
 
 pub = None
+
+
 # publish a message to subscribers when we die
 def talker_shutdown():
     print("I'm dead!")
     pub.publish("I'm dead!")
-    
+
+
 def talker():
     global pub
-    pub = rospy.Publisher('chatter', String, queue_size=0)
-    rospy.init_node('talker', anonymous=True)
+    pub = rospy.Publisher("chatter", String, queue_size=0)
+    rospy.init_node("talker", anonymous=True)
 
     # register talker_shutdown() to be called when rospy exits
     rospy.on_shutdown(talker_shutdown)
-    
+
     import time
+
     time.sleep(2.0)
 
-    rospy.signal_shutdown('test done')
-        
-if __name__ == '__main__':
+    rospy.signal_shutdown("test done")
+
+
+if __name__ == "__main__":
     talker()

@@ -42,7 +42,6 @@ import roslib  # noqa: F401
 
 # @internal
 class Module(object):
-
     def __init__(self, wrapped):
         self.wrapped = wrapped
 
@@ -51,8 +50,9 @@ class Module(object):
             return getattr(self.wrapped, name)
         except AttributeError:
             import roslib.packages
+
             try:
-                roslib.load_manifest(name.split('.')[0])
+                roslib.load_manifest(name.split(".")[0])
             except roslib.packages.InvalidROSPkgException as e:
                 raise ImportError("Cannot import module '%s': \n%s" % (name, str(e)))
             return __import__(name)

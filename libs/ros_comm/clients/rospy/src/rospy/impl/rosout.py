@@ -38,7 +38,7 @@ import logging
 import sys
 import traceback
 
-import rospy.names 
+import rospy.names
 
 from rospy.core import get_caller_id
 from rospy.exceptions import ROSException
@@ -47,10 +47,10 @@ from rospy.rostime import Time
 
 from rospy.impl.registration import get_topic_manager
 
-#Log message for rosout
+# Log message for rosout
 from rosgraph_msgs.msg import Log
 
-_ROSOUT = '/rosout'
+_ROSOUT = "/rosout"
 _rosout_pub = None
 
 _rospy_to_logging_levels = {
@@ -61,20 +61,26 @@ _rospy_to_logging_levels = {
     Log.FATAL: logging.CRITICAL,
 }
 
+
 def init_rosout():
     logger = logging.getLogger("rospy.rosout")
     try:
         global _rosout_pub
         if _rosout_pub is None:
-            logger.info("initializing %s core topic"%_ROSOUT)
+            logger.info("initializing %s core topic" % _ROSOUT)
             _rosout_pub = Publisher(_ROSOUT, Log, latch=True, queue_size=100)
-            logger.info("connected to core topic %s"%_ROSOUT)
+            logger.info("connected to core topic %s" % _ROSOUT)
         return True
     except Exception as e:
-        logger.error("Unable to initialize %s: %s\n%s", _ROSOUT, e, traceback.format_exc())
+        logger.error(
+            "Unable to initialize %s: %s\n%s", _ROSOUT, e, traceback.format_exc()
+        )
         return False
 
+
 _in_rosout = False
+
+
 ## log an error to the /rosout topic
 def _rosout(level, msg, fname, line, func):
     global _in_rosout
@@ -88,42 +94,60 @@ def _rosout(level, msg, fname, line, func):
 
                     # check parameter server/cache for omit_topics flag
                     # the same parameter is checked in rosout_appender.cpp for the same purpose
-                    disable_topics_ = rospy.get_param_cached("/rosout_disable_topics_generation", False)
+                    disable_topics_ = rospy.get_param_cached(
+                        "/rosout_disable_topics_generation", False
+                    )
 
                     if not disable_topics_:
                         topics = get_topic_manager().get_topics()
                     else:
                         topics = ""
 
-                    l = Log(level=level, name=str(rospy.names.get_caller_id()), msg=str(msg), topics=topics, file=fname, line=line, function=func)
+                    l = Log(
+                        level=level,
+                        name=str(rospy.names.get_caller_id()),
+                        msg=str(msg),
+                        topics=topics,
+                        file=fname,
+                        line=line,
+                        function=func,
+                    )
                     l.header.stamp = Time.now()
                     _rosout_pub.publish(l)
                 finally:
                     _in_rosout = False
     except Exception as e:
-        #traceback.print_exc()
+        # traceback.print_exc()
         # don't use logerr in this case as that is recursive here
-        logger = logging.getLogger("rospy.rosout")        
+        logger = logging.getLogger("rospy.rosout")
         logger.error("Unable to report rosout: %s\n%s", e, traceback.format_exc())
         return False
 
+
 _logging_to_rospy_levels = {
-      logging.DEBUG: Log.DEBUG,
-      logging.INFO: Log.INFO,
-      logging.WARNING: Log.WARN,
-      logging.ERROR: Log.ERROR,
-      logging.CRITICAL: Log.FATAL,
-      }
+    logging.DEBUG: Log.DEBUG,
+    logging.INFO: Log.INFO,
+    logging.WARNING: Log.WARN,
+    logging.ERROR: Log.ERROR,
+    logging.CRITICAL: Log.FATAL,
+}
+
 
 class RosOutHandler(logging.Handler):
-   def emit(self, record):
-      _rosout(_logging_to_rospy_levels[record.levelno], self.format(record),
-            record.filename, record.lineno, record.funcName)
+    def emit(self, record):
+        _rosout(
+            _logging_to_rospy_levels[record.levelno],
+            self.format(record),
+            record.filename,
+            record.lineno,
+            record.funcName,
+        )
+
 
 ## Load loggers for publishing to /rosout
 ## @param level int: Log level. Loggers >= level will be loaded.
 def load_rosout_handlers(level):
-    logger = logging.getLogger('rosout')
+    logger = logging.getLogger("rosout")
     logger.addHandler(RosOutHandler())
     if level != None:
         logger.setLevel(_rospy_to_logging_levels[level])

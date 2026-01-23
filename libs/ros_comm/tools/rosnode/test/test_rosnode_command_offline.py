@@ -32,57 +32,64 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys 
+import sys
 import unittest
 import time
-        
+
 from subprocess import Popen, PIPE, check_call, call
 
-class TestRosnodeOffline(unittest.TestCase):
 
+class TestRosnodeOffline(unittest.TestCase):
     def setUp(self):
         pass
 
     ## test that the rosmsg command works
     def test_cmd_help(self):
-        cmd = 'rosnode'
-        sub = ['ping', 'machine', 'list', 'info', 'kill']
-        
+        cmd = "rosnode"
+        sub = ["ping", "machine", "list", "info", "kill"]
+
         output = Popen([cmd], stdout=PIPE).communicate()[0]
-        self.assertTrue('Commands' in output)
-        output = Popen([cmd, '-h'], stdout=PIPE).communicate()[0]
-        self.assertTrue('Commands' in output)
+        self.assertTrue("Commands" in output)
+        output = Popen([cmd, "-h"], stdout=PIPE).communicate()[0]
+        self.assertTrue("Commands" in output)
         for c in sub:
             # make sure command is in usage statement
-            self.assertTrue("%s %s"%(cmd, c) in output)
+            self.assertTrue("%s %s" % (cmd, c) in output)
 
         for c in sub:
-            output = Popen([cmd, c, '-h'], stdout=PIPE, stderr=PIPE).communicate()
-            self.assertTrue("Usage:" in output[0], "[%s]: %s"%(c, output))
-            self.assertTrue("%s %s"%(cmd, c) in output[0], "%s: %s"%(c, output[0]))
-            
+            output = Popen([cmd, c, "-h"], stdout=PIPE, stderr=PIPE).communicate()
+            self.assertTrue("Usage:" in output[0], "[%s]: %s" % (c, output))
+            self.assertTrue("%s %s" % (cmd, c) in output[0], "%s: %s" % (c, output[0]))
+
         # test no args on commands that require args
-        for c in ['ping', 'info']:
+        for c in ["ping", "info"]:
             output = Popen([cmd, c], stdout=PIPE, stderr=PIPE).communicate()
-            self.assertTrue("Usage:" in output[0] or "Usage:" in output[1], "[%s]: %s"%(c, output))
-            
+            self.assertTrue(
+                "Usage:" in output[0] or "Usage:" in output[1], "[%s]: %s" % (c, output)
+            )
+
     def test_offline(self):
-        cmd = 'rosnode'
+        cmd = "rosnode"
 
         # point at a different 'master'
         env = os.environ.copy()
-        env['ROS_MASTER_URI'] = 'http://localhost:11312'
-        kwds = { 'env': env, 'stdout': PIPE, 'stderr': PIPE}
+        env["ROS_MASTER_URI"] = "http://localhost:11312"
+        kwds = {"env": env, "stdout": PIPE, "stderr": PIPE}
 
         msg = "ERROR: Unable to communicate with master!\n"
 
-        output = Popen([cmd, 'list',], **kwds).communicate()
+        output = Popen(
+            [
+                cmd,
+                "list",
+            ],
+            **kwds,
+        ).communicate()
         self.assertTrue(msg in output[1])
-        output = Popen([cmd, 'ping', 'talker'], **kwds).communicate()
+        output = Popen([cmd, "ping", "talker"], **kwds).communicate()
         self.assertEqual(msg, output[1])
-        output = Popen([cmd, 'info', 'talker'], **kwds).communicate()
+        output = Popen([cmd, "info", "talker"], **kwds).communicate()
         self.assertTrue(msg in output[1])
 
-        output = Popen([cmd, 'kill', 'talker'], **kwds).communicate()
+        output = Popen([cmd, "kill", "talker"], **kwds).communicate()
         self.assertTrue(msg in output[1])
-        

@@ -37,18 +37,19 @@ import os
 import sys
 import rosbag.migration
 
+
 def fixbag_batch(inbags):
     mm = rosbag.migration.MessageMigrator()
 
     for b in inbags:
-        print('Trying to migrate: %s' % b)
-        outbag = b + '.tmp'
+        print("Trying to migrate: %s" % b)
+        outbag = b + ".tmp"
         if not rosbag.migration.fixbag(mm, b, outbag):
             os.remove(outbag)
-            print(' Migration failed.')
+            print(" Migration failed.")
             continue
 
-        oldnamebase = b + '.old'
+        oldnamebase = b + ".old"
         oldname = oldnamebase
         i = 1
         while os.path.isfile(oldname):
@@ -56,12 +57,14 @@ def fixbag_batch(inbags):
             oldname = oldnamebase + str(i)
         os.rename(b, oldname)
         os.rename(outbag, b)
-        print(' Migration successful.  Original stored as: %s' % oldname)
+        print(" Migration successful.  Original stored as: %s" % oldname)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import sys
+
     if len(sys.argv) >= 2:
         fixbag_batch(sys.argv[1:])
     else:
-        print('usage: fixbag_batch.py bag1 [bag2 bag3 ...]')
+        print("usage: fixbag_batch.py bag1 [bag2 bag3 ...]")
         exit(2)

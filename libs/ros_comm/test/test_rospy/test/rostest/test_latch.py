@@ -31,8 +31,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'test_rospy'
-NAME = 'test_latch'
+PKG = "test_rospy"
+NAME = "test_latch"
 
 import sys
 import time
@@ -40,53 +40,59 @@ import unittest
 
 from std_msgs.msg import String
 
+
 class TestLatch(unittest.TestCase):
-        
     def setUp(self):
         self.callback_invoked = {}
         for i in range(0, 6):
             self.callback_invoked[i] = False
-        
+
     def callback_args(self, msg, i):
-        self.assertEqual('foo', msg.data)
+        self.assertEqual("foo", msg.data)
         self.callback_invoked[i] = True
-        
+
     def callback(self, msg):
-        self.assertEqual('foo', msg.data)
+        self.assertEqual("foo", msg.data)
         self.callback_invoked[0] = True
 
     def test_latch(self):
         import rospy
-        
+
         # multi-part test. First check that we get latched message, then check
         # that subscribers to same topic also receive latched message
         # #1852
         rospy.init_node(NAME)
-        s0 = rospy.Subscriber('s', String, self.callback)
+        s0 = rospy.Subscriber("s", String, self.callback)
         # 20 seconds to receive first latched message
-        timeout_t = time.time() + 20.
+        timeout_t = time.time() + 20.0
         print("waiting for 20 seconds")
-        while not self.callback_invoked[0] and \
-                not rospy.is_shutdown() and \
-                timeout_t > time.time():
+        while (
+            not self.callback_invoked[0]
+            and not rospy.is_shutdown()
+            and timeout_t > time.time()
+        ):
             time.sleep(0.2)
 
         self.assertFalse(timeout_t < time.time(), "timeout exceeded")
-        self.assertFalse(rospy.is_shutdown(), "node shutdown")            
+        self.assertFalse(rospy.is_shutdown(), "node shutdown")
         self.assertTrue(self.callback_invoked[0], "callback not invoked")
-        
+
         # register three more callbacks, make sure they get invoked with message
         # - callbacks are actually called inline, but in spirit of test, async callback is allowed
         for i in range(1, 5):
             self.assertFalse(self.callback_invoked[i])
-            s = rospy.Subscriber('s', String, self.callback_args, i)
+            s = rospy.Subscriber("s", String, self.callback_args, i)
             timeout_t = time.time() + 0.5
-            while not self.callback_invoked[i] and \
-                    not rospy.is_shutdown() and \
-                    timeout_t > time.time():
+            while (
+                not self.callback_invoked[i]
+                and not rospy.is_shutdown()
+                and timeout_t > time.time()
+            ):
                 time.sleep(0.1)
             self.assertTrue(self.callback_invoked[i])
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     import rostest
+
     rostest.run(PKG, NAME, TestLatch, sys.argv)

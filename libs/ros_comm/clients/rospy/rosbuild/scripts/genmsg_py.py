@@ -44,4 +44,4 @@ import sys
 import genutil
 
 if __name__ == "__main__":
-    genutil.genmain(sys.argv, 'msg')
+    genutil.genmain(sys.argv, "msg")

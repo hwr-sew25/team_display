@@ -42,22 +42,24 @@ import rosunit
 
 from threading import Thread
 
+
 class TestRospyTimerOnline(unittest.TestCase):
-    
     def __init__(self, *args):
         unittest.TestCase.__init__(self, *args)
         import rospy
-        rospy.init_node('test_rospy_timer_online')
+
+        rospy.init_node("test_rospy_timer_online")
         self.timer_callbacks = 0
         self.timer_event = None
 
     def test_sleep(self):
         import rospy
         import time
+
         t = time.time()
         rospy.sleep(0.1)
         dur = time.time() - t
-        # #2842 raising bounds from .01 to .03 for amazon VM 
+        # #2842 raising bounds from .01 to .03 for amazon VM
 
         # make sure sleep is approximately right
         self.assertTrue(abs(dur - 0.1) < 0.03, dur)
@@ -70,7 +72,7 @@ class TestRospyTimerOnline(unittest.TestCase):
 
         # sleep for neg duration
         t = time.time()
-        rospy.sleep(rospy.Duration.from_sec(-10.))
+        rospy.sleep(rospy.Duration.from_sec(-10.0))
         dur = time.time() - t
         # make sure returned immediately
         self.assertTrue(abs(dur) < 0.1, dur)
@@ -78,6 +80,7 @@ class TestRospyTimerOnline(unittest.TestCase):
     def test_Rate(self):
         import rospy
         import time
+
         t = time.time()
         count = 0
         r = rospy.Rate(10)
@@ -86,34 +89,48 @@ class TestRospyTimerOnline(unittest.TestCase):
         dur = time.time() - t
         # make sure sleep is approximately right
         self.assertTrue(abs(dur - 1.0) < 0.5, dur)
-        
+
     def _Timer_callback(self, event):
         self.timer_callbacks += 1
         self.timer_event = event
 
     def callback(event):
-        print('last_expected:        ', event.last_expected)
-        print('last_real:            ', event.last_real)
-        print('current_expected:     ', event.current_expected)
-        print('current_real:         ', event.current_real)
-        print('current_error:        ', (event.current_real - event.current_expected).to_sec())
-        print('profile.last_duration:', event.last_duration)
+        print("last_expected:        ", event.last_expected)
+        print("last_real:            ", event.last_real)
+        print("current_expected:     ", event.current_expected)
+        print("current_real:         ", event.current_real)
+        print(
+            "current_error:        ",
+            (event.current_real - event.current_expected).to_sec(),
+        )
+        print("profile.last_duration:", event.last_duration)
         if event.last_real:
-            print('last_error:           ', (event.last_real - event.last_expected).to_sec(), 'secs')
+            print(
+                "last_error:           ",
+                (event.last_real - event.last_expected).to_sec(),
+                "secs",
+            )
 
     def test_Timer(self):
         import rospy
+
         timer = rospy.Timer(rospy.Duration(1), self._Timer_callback)
         time.sleep(10)
         timer.shutdown()
-        
+
         # make sure we got an approximately correct number of callbacks
         self.assertTrue(abs(self.timer_callbacks - 10) < 2)
         # make sure error is approximately correct.  the Timer
         # implementation tracks error in accumulated real time.
         ev = self.timer_event
         self.assertTrue(ev is not None)
-        self.assertTrue(abs((ev.current_real - ev.current_expected).to_sec()) < 2.)
-        
-if __name__ == '__main__':
-    rosunit.unitrun('test_rospy', sys.argv[0], TestRospyTimerOnline, coverage_packages=['rospy.timer'])
+        self.assertTrue(abs((ev.current_real - ev.current_expected).to_sec()) < 2.0)
+
+
+if __name__ == "__main__":
+    rosunit.unitrun(
+        "test_rospy",
+        sys.argv[0],
+        TestRospyTimerOnline,
+        coverage_packages=["rospy.timer"],
+    )

@@ -35,46 +35,53 @@
 """Base-classes and management of ROS services.
 See L{rospy.tcpros_service} for actual implementation."""
 
-
-
 import logging
 import traceback
 
 from rospy.core import *
 
-from rospy.impl.registration import set_service_manager, Registration, get_registration_listeners
+from rospy.impl.registration import (
+    set_service_manager,
+    Registration,
+    get_registration_listeners,
+)
 from rospy.impl.transport import *
 
-logger = logging.getLogger('rospy.service')
+logger = logging.getLogger("rospy.service")
+
 
 class ServiceException(Exception):
     """Exception class for service-related errors"""
+
     pass
+
 
 class _Service(object):
     """Internal-use superclass for storing service information"""
+
     def __init__(self, name, service_class):
-        self.resolved_name = resolve_name(name) #services remap as well
+        self.resolved_name = resolve_name(name)  # services remap as well
         self.service_class = service_class
         self.request_class = service_class._request_class
         self.response_class = service_class._response_class
-        self.uri = None #initialize attr
+        self.uri = None  # initialize attr
+
 
 class ServiceManager(object):
     """Keeps track of currently registered services in the ROS system"""
-    
+
     def __init__(self, registration_listeners=None):
         """
         ctor
         @param registration_listeners: override default registration listener.
         @type  registration_listeners: RegistrationListeners
         """
-        self.map = {} # {name : Service}
+        self.map = {}  # {name : Service}
         self.lock = threading.RLock()
         if registration_listeners is None:
             self.registration_listeners = get_registration_listeners()
         else:
-            self.registration_listeners = registration_listeners       
+            self.registration_listeners = registration_listeners
 
     def get_services(self):
         """
@@ -87,13 +94,13 @@ class ServiceManager(object):
                 ret_val.append((name, service.uri))
             services = list(self.map.values())
         return ret_val
-    
+
     def unregister_all(self):
         """
         Unregister all registered services
         """
         self.map.clear()
-    
+
     def register(self, resolved_service_name, service):
         """
         Register service with ServiceManager and ROS master
@@ -105,16 +112,18 @@ class ServiceManager(object):
         err = None
         with self.lock:
             if resolved_service_name in self.map:
-                err = "service [%s] already registered"%resolved_service_name
+                err = "service [%s] already registered" % resolved_service_name
             else:
                 self.map[resolved_service_name] = service
-                
+
             # NOTE: this call can potentially take a long time under lock and thus needs to be reimplmented
-            self.registration_listeners.notify_added(resolved_service_name, service.uri, Registration.SRV)
+            self.registration_listeners.notify_added(
+                resolved_service_name, service.uri, Registration.SRV
+            )
 
         if err:
             raise ServiceException(err)
-        
+
     def unregister(self, resolved_service_name, service):
         """
         Unregister service with L{ServiceManager} and ROS Master
@@ -122,14 +131,16 @@ class ServiceManager(object):
         @type  resolved_service_name: str
         @param service: service implementation
         @type  service: L{_Service}
-        """        
+        """
         with self.lock:
             curr = self.map.get(resolved_service_name, None)
             if curr == service:
                 del self.map[resolved_service_name]
-                
+
             # NOTE: this call can potentially take a long time under lock
-            self.registration_listeners.notify_removed(resolved_service_name, service.uri, Registration.SRV)                
+            self.registration_listeners.notify_removed(
+                resolved_service_name, service.uri, Registration.SRV
+            )
 
     def get_service(self, resolved_service_name):
         """
@@ -139,5 +150,6 @@ class ServiceManager(object):
         @rtype: _Service
         """
         return self.map.get(resolved_service_name, None)
+
 
 set_service_manager(ServiceManager())

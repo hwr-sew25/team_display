@@ -39,13 +39,13 @@ state of the ROS Parameter Server using YAML files.
 
 from __future__ import print_function
 
-NAME = 'rosparam'
+NAME = "rosparam"
 
 ## namespace key. Use of this in a YAML document specifies the
 ## namespace of all the params.  NOTE: phasing out most use of this
 ## key. It's still useful in corner cases, but most of its
 ## functionality can be achieved with command-line arguments.
-NS = '_ns'
+NS = "_ns"
 
 import base64
 import math
@@ -53,6 +53,7 @@ import os
 import re
 import sys
 import socket
+
 try:
     from xmlrpc.client import Binary
 except ImportError:
@@ -63,31 +64,47 @@ from optparse import OptionParser
 import yaml
 
 import rosgraph
-from rosgraph.names import script_resolve_name, ns_join, get_ros_namespace, make_caller_id, make_global_ns, GLOBALNS
+from rosgraph.names import (
+    script_resolve_name,
+    ns_join,
+    get_ros_namespace,
+    make_caller_id,
+    make_global_ns,
+    GLOBALNS,
+)
+
 
 class RosParamException(Exception):
     """
     rosparam base exception type
     """
+
     pass
+
+
 class RosParamIOException(RosParamException):
     """
     Exception for communication-based (i/o) errors.
     """
+
     pass
 
+
 # pyyaml customizations for binary and angle data
+
 
 def represent_xml_binary(loader, data):
     """
     Adds a pyyaml serializer to handle xmlrpclib.Binary objects
     """
     data = base64.b64encode(data.data)
-    return loader.represent_scalar(u'tag:yaml.org,2002:binary', data, style='|')
+    return loader.represent_scalar("tag:yaml.org,2002:binary", data, style="|")
+
 
 def represent_foo(loader, data):
-    return loader.represent_scalar(u'#', data)
-    
+    return loader.represent_scalar("#", data)
+
+
 def construct_yaml_binary(loader, node):
     """
     Overrides pyaml's constructor for binary data. Wraps binary data in
@@ -95,24 +112,27 @@ def construct_yaml_binary(loader, node):
     representation.
     """
     return Binary(loader.construct_yaml_binary(node))
-        
+
+
 # register the (de)serializers with pyyaml
-yaml.add_representer(Binary,represent_xml_binary)
-yaml.add_constructor(u'tag:yaml.org,2002:binary', construct_yaml_binary)
-yaml.SafeLoader.add_constructor(u'tag:yaml.org,2002:binary', construct_yaml_binary)
+yaml.add_representer(Binary, represent_xml_binary)
+yaml.add_constructor("tag:yaml.org,2002:binary", construct_yaml_binary)
+yaml.SafeLoader.add_constructor("tag:yaml.org,2002:binary", construct_yaml_binary)
+
 
 def construct_angle_radians(loader, node):
     """
     python-yaml utility for converting rad(num) into float value
     """
     value = loader.construct_scalar(node).strip()
-    exprvalue = value.replace('pi', 'math.pi')
+    exprvalue = value.replace("pi", "math.pi")
     if exprvalue.startswith("rad("):
         exprvalue = exprvalue[4:-1]
     try:
         return float(eval(exprvalue))
     except SyntaxError as e:
-        raise RosParamException("invalid radian expression: %s"%value)
+        raise RosParamException("invalid radian expression: %s" % value)
+
 
 def construct_angle_degrees(loader, node):
     """
@@ -125,16 +145,18 @@ def construct_angle_degrees(loader, node):
     try:
         return float(exprvalue) * math.pi / 180.0
     except ValueError:
-        raise RosParamException("invalid degree value: %s"%value)
+        raise RosParamException("invalid degree value: %s" % value)
 
 
 # utilities
+
 
 def _get_caller_id():
     """
     :returns: caller ID for rosparam ROS client calls, ``str``
     """
-    return make_caller_id('rosparam-%s'%os.getpid())
+    return make_caller_id("rosparam-%s" % os.getpid())
+
 
 def print_params(params, ns):
     """
@@ -145,39 +167,46 @@ def print_params(params, ns):
             if type(v) == dict:
                 print_params(v, ns_join(ns, k))
             else:
-                print("%s=%s"%(ns_join(ns, k), v))
+                print("%s=%s" % (ns_join(ns, k), v))
     else:
         print(params)
-    
+
+
 # yaml processing
+
 
 def load_file(filename, default_namespace=None, verbose=False):
     """
     Load the YAML document from the specified file
-    
+
     :param filename: name of filename, ``str``
     :param default_namespace: namespace to load filename into, ``str``
     :returns [(dict, str)...]: list of parameter dictionary and
       corresponding namespaces for each YAML document in the file
     :raises: :exc:`RosParamException`: if unable to load contents of filename
     """
-    if not filename or filename == '-':
+    if not filename or filename == "-":
         f = sys.stdin
         if verbose:
             print("reading parameters from stdin")
-        return load_str(f.read(), filename, default_namespace=default_namespace, verbose=verbose)
+        return load_str(
+            f.read(), filename, default_namespace=default_namespace, verbose=verbose
+        )
     else:
         if not os.path.isfile(filename):
-            raise RosParamException("file [%s] does not exist"%filename)
+            raise RosParamException("file [%s] does not exist" % filename)
         if verbose:
-            print("reading parameters from [%s]"%filename)
-        with open(filename, 'r') as f:
-            return load_str(f.read(), filename, default_namespace=default_namespace, verbose=verbose)
-        
+            print("reading parameters from [%s]" % filename)
+        with open(filename, "r") as f:
+            return load_str(
+                f.read(), filename, default_namespace=default_namespace, verbose=verbose
+            )
+
+
 def load_str(str, filename, default_namespace=None, verbose=False):
     """
     Load the YAML document as a string
-    
+
     :param filename: name of filename, only used for debugging, ``str``
     :param default_namespace: namespace to load filename into, ``str``
     :param str: YAML text, ``str``
@@ -190,7 +219,7 @@ def load_str(str, filename, default_namespace=None, verbose=False):
         if NS in doc:
             ns = ns_join(default_namespace, doc.get(NS, None))
             if verbose:
-                print("reading parameters into namespace [%s]"%ns)
+                print("reading parameters into namespace [%s]" % ns)
             del doc[NS]
         else:
             ns = default_namespace
@@ -200,8 +229,10 @@ def load_str(str, filename, default_namespace=None, verbose=False):
 
 # DUMP/GET
 
+
 def get_param_server():
     return rosgraph.Master(_get_caller_id())
+
 
 def get_param(param):
     """
@@ -215,9 +246,10 @@ def get_param(param):
         return get_param_server().getParam(param)
     except socket.error:
         raise RosParamIOException("Unable to communicate with master!")
-    
+
+
 # #698
-def _pretty_print(value, indent=''):
+def _pretty_print(value, indent=""):
     """
     Pretty print get value
     :param value: value to print
@@ -228,15 +260,15 @@ def _pretty_print(value, indent=''):
     for k in keys:
         v = value[k]
         if type(v) == dict:
-            print("%s%s:"%(indent, k))
-            _pretty_print(v, indent+'  ')
+            print("%s%s:" % (indent, k))
+            _pretty_print(v, indent + "  ")
         elif type(v) == str:
-            if '\n' in v:
-                print(indent+'%s: |'%k)
-                for l in v.split('\n'):
-                    print(indent+'  '+l)
+            if "\n" in v:
+                print(indent + "%s: |" % k)
+                for l in v.split("\n"):
+                    print(indent + "  " + l)
             else:
-                print("%s%s: %s"%(indent, k, v))
+                print("%s%s: %s" % (indent, k, v))
         else:
             dump = yaml.dump(v)
             # #1617
@@ -244,11 +276,12 @@ def _pretty_print(value, indent=''):
             # syntax.  as YAML functions fine w/o it, and as it is
             # confusing to users who are just getting a single scalar, we
             # strip it
-            if dump.endswith('\n...\n'):
+            if dump.endswith("\n...\n"):
                 dump = dump[:-4]
-            
-            sys.stdout.write("%s%s: %s"%(indent, k, dump))
-            
+
+            sys.stdout.write("%s%s: %s" % (indent, k, dump))
+
+
 def _rosparam_cmd_get_param(param, pretty=False, verbose=False):
     """
     Download a parameter tree and print to screen
@@ -258,7 +291,7 @@ def _rosparam_cmd_get_param(param, pretty=False, verbose=False):
     """
     # yaml.dump has a \n at the end, so use stdout.write instead of print
     if verbose:
-        print("getting parameter [%s]"%param)
+        print("getting parameter [%s]" % param)
     try:
         val = get_param(param)
     except rosgraph.masterapi.Error as e:
@@ -275,11 +308,12 @@ def _rosparam_cmd_get_param(param, pretty=False, verbose=False):
         # syntax.  as YAML functions fine w/o it, and as it is
         # confusing to users who are just getting a single scalar, we
         # strip it
-        if dump.endswith('\n...\n'):
+        if dump.endswith("\n...\n"):
             dump = dump[:-5]
 
         # #3761 add newline in output
-        sys.stdout.write("%s\n"%(dump))
+        sys.stdout.write("%s\n" % (dump))
+
 
 def dump_params(filename, param, verbose=False):
     """
@@ -296,7 +330,7 @@ def dump_params(filename, param, verbose=False):
         f = sys.stdout
         yaml.dump(tree, f)
     else:
-        f = open(filename, 'w')
+        f = open(filename, "w")
         try:
             yaml.dump(tree, f)
         finally:
@@ -321,17 +355,19 @@ def delete_param(param, verbose=False):
         else:
             get_param_server().deleteParam(param)
             if verbose:
-                print("deleted parameter [%s]"%param)
+                print("deleted parameter [%s]" % param)
     except socket.error:
         raise RosParamIOException("Unable to communicate with master!")
-    
+
+
 # LOAD/SET
+
 
 def set_param_raw(param, value, verbose=False):
     """
     Set param on the Parameter Server. Unlike L{set_param()}, this
     takes in a Python value to set instead of YAML.
-    
+
     :param param: parameter name, ``str``
     :param value XmlRpcLegalValue: value to upload, ``XmlRpcLegalValue``
     """
@@ -343,32 +379,40 @@ def set_param_raw(param, value, verbose=False):
             if isinstance(k, str):
                 set_param_raw(ns_join(param, k), v, verbose=verbose)
             else:
-                raise RosParamException("YAML dictionaries must have string keys. Invalid dictionary is:\n%s"%value)
+                raise RosParamException(
+                    "YAML dictionaries must have string keys. Invalid dictionary is:\n%s"
+                    % value
+                )
     else:
         try:
             expected_type = long
-        except NameError :
+        except NameError:
             expected_type = int
-      
+
         if type(value) == expected_type:
             if value > sys.maxsize:
-                raise RosParamException("Overflow: Parameter Server integers must be 32-bit signed integers:\n\t-%s <= value <= %s"%(maxint - 1, maxint))
-            
+                raise RosParamException(
+                    "Overflow: Parameter Server integers must be 32-bit signed integers:\n\t-%s <= value <= %s"
+                    % (maxint - 1, maxint)
+                )
+
         try:
             get_param_server().setParam(param, value)
         except socket.error:
             raise RosParamIOException("Unable to communicate with master!")
         if verbose:
-            print("set parameter [%s] to [%s]"%(param, value))
+            print("set parameter [%s] to [%s]" % (param, value))
+
 
 def set_param(param, value, verbose=False):
     """
     Set param on the ROS parameter server using a YAML value.
-    
+
     :param param: parameter name, ``str``
     :param value: yaml-encoded value, ``str``
     """
     set_param_raw(param, yaml.safe_load(value), verbose=verbose)
+
 
 def upload_params(ns, values, verbose=False):
     """
@@ -376,7 +420,7 @@ def upload_params(ns, values, verbose=False):
     :param values: key/value dictionary, where keys are parameter names and values are parameter values, ``dict``
     :param ns: namespace to load parameters into, ``str``
     """
-    if ns == '/' and not type(values) == dict:
+    if ns == "/" and not type(values) == dict:
         raise RosParamException("global / can only be set to a dictionary")
     if verbose:
         print_params(values, ns)
@@ -384,6 +428,7 @@ def upload_params(ns, values, verbose=False):
 
 
 # LIST
+
 
 def list_params(ns):
     """
@@ -399,8 +444,10 @@ def list_params(ns):
     except socket.error:
         raise RosParamIOException("Unable to communicate with master!")
 
+
 # COMMAND-LINE PARSING
-    
+
+
 def _rosparam_cmd_get_dump(cmd, argv):
     """
     Process command line for rosparam get/dump, e.g.::
@@ -411,37 +458,54 @@ def _rosparam_cmd_get_dump(cmd, argv):
     :param argv: command-line args, ``str``
     """
     # get and dump are equivalent functionality, just different arguments
-    if cmd == 'dump':
-        parser = OptionParser(usage="usage: %prog dump [options] file [namespace]", prog=NAME)
-    elif cmd == 'get':
-        parser = OptionParser(usage="usage: %prog get [options] parameter", prog=NAME)        
-        parser.add_option("-p", dest="pretty", default=False,
-                          action="store_true", help="pretty print. WARNING: not YAML-safe")
+    if cmd == "dump":
+        parser = OptionParser(
+            usage="usage: %prog dump [options] file [namespace]", prog=NAME
+        )
+    elif cmd == "get":
+        parser = OptionParser(usage="usage: %prog get [options] parameter", prog=NAME)
+        parser.add_option(
+            "-p",
+            dest="pretty",
+            default=False,
+            action="store_true",
+            help="pretty print. WARNING: not YAML-safe",
+        )
 
-    parser.add_option("-v", dest="verbose", default=False,
-                      action="store_true", help="turn on verbose output")
+    parser.add_option(
+        "-v",
+        dest="verbose",
+        default=False,
+        action="store_true",
+        help="turn on verbose output",
+    )
     options, args = parser.parse_args(argv[2:])
 
     arg = None
-    ns = ''
-    
+    ns = ""
+
     if len(args) == 0:
-        if cmd == 'get':
+        if cmd == "get":
             parser.error("invalid arguments. Please specify a parameter name")
     elif len(args) == 1:
         arg = args[0]
-    elif len(args) == 2 and cmd == 'dump':
+    elif len(args) == 2 and cmd == "dump":
         arg = args[0]
         ns = args[1]
     else:
         parser.error("too many arguments")
 
-    if cmd == 'get':
-        _rosparam_cmd_get_param(script_resolve_name(NAME, arg), pretty=options.pretty, verbose=options.verbose)
+    if cmd == "get":
+        _rosparam_cmd_get_param(
+            script_resolve_name(NAME, arg),
+            pretty=options.pretty,
+            verbose=options.verbose,
+        )
     else:
         if options.verbose:
-            print("dumping namespace [%s] to file [%s]"%(ns, arg))
+            print("dumping namespace [%s] to file [%s]" % (ns, arg))
         dump_params(arg, script_resolve_name(NAME, ns), verbose=options.verbose)
+
 
 def _set_optparse_neg_args(parser, argv):
     # we don't use optparse to parse actual arguments, just options,
@@ -452,24 +516,25 @@ def _set_optparse_neg_args(parser, argv):
     optparse_args = []
     skip = False
     for s in argv[2:]:
-        if s.startswith('-'):
-            if s in ['-t', '--textfile', '-b', '--binfile']:
+        if s.startswith("-"):
+            if s in ["-t", "--textfile", "-b", "--binfile"]:
                 skip = True
                 optparse_args.append(s)
             elif skip:
                 parser.error("-t and --textfile options require an argument")
-            elif len(s) > 1 and ord(s[1]) >= ord('0') and ord(s[1]) <= ord('9'):
+            elif len(s) > 1 and ord(s[1]) >= ord("0") and ord(s[1]) <= ord("9"):
                 args.append(s)
             else:
                 optparse_args.append(s)
         else:
             if skip:
                 skip = False
-                optparse_args.append(s)                
+                optparse_args.append(s)
             else:
                 args.append(s)
     options, _ = parser.parse_args(optparse_args)
     return options, args
+
 
 # TODO: break this into separate routines, has gotten too ugly to multiplex
 def _rosparam_cmd_set_load(cmd, argv):
@@ -481,18 +546,39 @@ def _rosparam_cmd_set_load(cmd, argv):
     :param cmd: command name, ``str``
     :param argv: command-line args, ``str``
     """
-    if cmd == 'load':
-        parser = OptionParser(usage="usage: %prog load [options] file [namespace]", prog=NAME)
-    elif cmd == 'set':
-        parser = OptionParser(usage="usage: %prog set [options] parameter value", prog=NAME)
-        parser.add_option("-t", "--textfile", dest="text_file", default=None,
-                          metavar="TEXT_FILE", help="set parameters to contents of text file")
-        parser.add_option("-b", "--binfile", dest="bin_file", default=None,
-                          metavar="BINARY_FILE", help="set parameters to contents of binary file")
+    if cmd == "load":
+        parser = OptionParser(
+            usage="usage: %prog load [options] file [namespace]", prog=NAME
+        )
+    elif cmd == "set":
+        parser = OptionParser(
+            usage="usage: %prog set [options] parameter value", prog=NAME
+        )
+        parser.add_option(
+            "-t",
+            "--textfile",
+            dest="text_file",
+            default=None,
+            metavar="TEXT_FILE",
+            help="set parameters to contents of text file",
+        )
+        parser.add_option(
+            "-b",
+            "--binfile",
+            dest="bin_file",
+            default=None,
+            metavar="BINARY_FILE",
+            help="set parameters to contents of binary file",
+        )
 
-    parser.add_option("-v", dest="verbose", default=False,
-                      action="store_true", help="turn on verbose output")
-    if cmd == 'set':
+    parser.add_option(
+        "-v",
+        dest="verbose",
+        default=False,
+        action="store_true",
+        help="turn on verbose output",
+    )
+    if cmd == "set":
         options, args = _set_optparse_neg_args(parser, argv)
         if options.text_file and options.bin_file:
             parser.error("you may only specify one of --textfile or --binfile")
@@ -501,13 +587,13 @@ def _rosparam_cmd_set_load(cmd, argv):
 
     arg2 = None
     if len(args) == 0:
-        if cmd == 'load':
+        if cmd == "load":
             parser.error("invalid arguments. Please specify a file name or - for stdin")
-        elif cmd == 'set':
+        elif cmd == "set":
             parser.error("invalid arguments. Please specify a parameter name")
     elif len(args) == 1:
         arg = args[0]
-        if cmd == 'set' and not (options.text_file or options.bin_file):
+        if cmd == "set" and not (options.text_file or options.bin_file):
             parser.error("invalid arguments. Please specify a parameter value")
     elif len(args) == 2:
         arg = args[0]
@@ -515,32 +601,37 @@ def _rosparam_cmd_set_load(cmd, argv):
     else:
         parser.error("too many arguments")
 
-    if cmd == 'set':
+    if cmd == "set":
         name = script_resolve_name(NAME, arg)
         # #2647
         if options.text_file:
             if not os.path.isfile(options.text_file):
-                parser.error("file '%s' does not exist"%(options.text_file))
+                parser.error("file '%s' does not exist" % (options.text_file))
             with open(options.text_file) as f:
                 arg2 = f.read()
-            set_param_raw(name, arg2, verbose=options.verbose) 
+            set_param_raw(name, arg2, verbose=options.verbose)
         elif options.bin_file:
-            with open(options.bin_file, 'rb') as f:
+            with open(options.bin_file, "rb") as f:
                 arg2 = Binary(f.read())
-            set_param_raw(name, arg2, verbose=options.verbose)                
+            set_param_raw(name, arg2, verbose=options.verbose)
         else:
             # #2237: the empty string is really hard to specify on the
             # command-line due to bash quoting rules. We cheat here and
             # let an empty Python string be an empty YAML string (instead
             # of YAML null, which has no meaning to the Parameter Server
             # anyway).
-            if arg2 == '':
-                arg2 = '!!str'
+            if arg2 == "":
+                arg2 = "!!str"
             set_param(name, arg2, verbose=options.verbose)
     else:
-        paramlist = load_file(arg, default_namespace=script_resolve_name(NAME, arg2), verbose=options.verbose)
-        for params,ns in paramlist:
+        paramlist = load_file(
+            arg,
+            default_namespace=script_resolve_name(NAME, arg2),
+            verbose=options.verbose,
+        )
+        for params, ns in paramlist:
             upload_params(ns, params, verbose=options.verbose)
+
 
 def _rosparam_cmd_list(argv):
     """
@@ -559,20 +650,25 @@ def _rosparam_cmd_list(argv):
     elif len(args) == 2:
         parser.error("too many arguments")
 
-    print('\n'.join(list_params(ns)))
+    print("\n".join(list_params(ns)))
 
 
 def _rosparam_cmd_delete(argv):
     """
     Process command line for rosparam delete, e.g.::
-      rosparam delete param 
+      rosparam delete param
 
     :param cmd: command name, ``str``
     :param argv: command-line args, ``str``
     """
     parser = OptionParser(usage="usage: %prog delete [options] parameter", prog=NAME)
-    parser.add_option("-v", dest="verbose", default=False,
-                      action="store_true", help="turn on verbose output")
+    parser.add_option(
+        "-v",
+        dest="verbose",
+        default=False,
+        action="store_true",
+        help="turn on verbose output",
+    )
     options, args = parser.parse_args(argv[2:])
 
     arg2 = None
@@ -587,6 +683,7 @@ def _rosparam_cmd_delete(argv):
         delete_param(script_resolve_name(NAME, arg), verbose=options.verbose)
     except rosgraph.masterapi.Error as e:
         raise RosParamException(str(e))
+
 
 def _fullusage():
     """
@@ -604,10 +701,11 @@ Commands:
 """)
     sys.exit(0)
 
+
 def yamlmain(argv=None):
     """
     Command-line main routine. Loads in one or more input files
-    
+
     :param argv: command-line arguments or None to use sys.argv, ``[str]``
     """
     if argv is None:
@@ -616,32 +714,32 @@ def yamlmain(argv=None):
         _fullusage()
     try:
         command = argv[1]
-        if command in ['get', 'dump']:
+        if command in ["get", "dump"]:
             _rosparam_cmd_get_dump(command, argv)
-        elif command in ['set', 'load']:
+        elif command in ["set", "load"]:
             _rosparam_cmd_set_load(command, argv)
-        elif command in ['delete']:
+        elif command in ["delete"]:
             _rosparam_cmd_delete(argv)
-        elif command == 'list':
+        elif command == "list":
             _rosparam_cmd_list(argv)
         else:
             _fullusage()
     except RosParamException as e:
-        print("ERROR: "+str(e), file=sys.stderr)
+        print("ERROR: " + str(e), file=sys.stderr)
         sys.exit(1)
+
 
 # YAML configuration. Doxygen does not like these being higher up in the code
 
-yaml.add_constructor(u'!radians', construct_angle_radians)
-yaml.add_constructor(u'!degrees', construct_angle_degrees)
-yaml.SafeLoader.add_constructor(u'!radians', construct_angle_radians)
-yaml.SafeLoader.add_constructor(u'!degrees', construct_angle_degrees)
+yaml.add_constructor("!radians", construct_angle_radians)
+yaml.add_constructor("!degrees", construct_angle_degrees)
+yaml.SafeLoader.add_constructor("!radians", construct_angle_radians)
+yaml.SafeLoader.add_constructor("!degrees", construct_angle_degrees)
 
 # allow both !degrees 180, !radians 2*pi
-pattern = re.compile(r'^deg\([^\)]*\)$')
-yaml.add_implicit_resolver(u'!degrees', pattern, first="deg(")
-yaml.SafeLoader.add_implicit_resolver(u'!degrees', pattern, first="deg(")
-pattern = re.compile(r'^rad\([^\)]*\)$')
-yaml.add_implicit_resolver(u'!radians', pattern, first="rad(")
-yaml.SafeLoader.add_implicit_resolver(u'!radians', pattern, first="rad(")
-
+pattern = re.compile(r"^deg\([^\)]*\)$")
+yaml.add_implicit_resolver("!degrees", pattern, first="deg(")
+yaml.SafeLoader.add_implicit_resolver("!degrees", pattern, first="deg(")
+pattern = re.compile(r"^rad\([^\)]*\)$")
+yaml.add_implicit_resolver("!radians", pattern, first="rad(")
+yaml.SafeLoader.add_implicit_resolver("!radians", pattern, first="rad(")

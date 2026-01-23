@@ -44,14 +44,31 @@ try:
 except NameError:
     char = chr
 RE_XML_ILLEGAL = (
-    '([%s-%s%s-%s%s-%s%s-%s])' +
-    '|' +
-    '([%s-%s][^%s-%s])|([^%s-%s][%s-%s])|([%s-%s]$)|(^[%s-%s])') % \
-    (char(0x0000), char(0x0008), char(0x000b), char(0x000c),
-     char(0x000e), char(0x001f), char(0xfffe), char(0xffff),
-     char(0xd800), char(0xdbff), char(0xdc00), char(0xdfff),
-     char(0xd800), char(0xdbff), char(0xdc00), char(0xdfff),
-     char(0xd800), char(0xdbff), char(0xdc00), char(0xdfff))
+    "([%s-%s%s-%s%s-%s%s-%s])"
+    + "|"
+    + "([%s-%s][^%s-%s])|([^%s-%s][%s-%s])|([%s-%s]$)|(^[%s-%s])"
+) % (
+    char(0x0000),
+    char(0x0008),
+    char(0x000B),
+    char(0x000C),
+    char(0x000E),
+    char(0x001F),
+    char(0xFFFE),
+    char(0xFFFF),
+    char(0xD800),
+    char(0xDBFF),
+    char(0xDC00),
+    char(0xDFFF),
+    char(0xD800),
+    char(0xDBFF),
+    char(0xDC00),
+    char(0xDFFF),
+    char(0xD800),
+    char(0xDBFF),
+    char(0xDC00),
+    char(0xDFFF),
+)
 _SAFE_XML_REGEX = re.compile(RE_XML_ILLEGAL)
 
 
@@ -63,15 +80,15 @@ def tidy_xml(filename):
     :returns: False if unable to read from file
     """
     if not os.path.isfile(filename):
-        raise ValueError('file does not exist')
+        raise ValueError("file does not exist")
 
     # try first utf-8 then iso. This is ugly, but the files in
     # question that are problematic do not declare unicode type
     data = None
-    for ftype in ['utf-8', 'iso8859-1']:
+    for ftype in ["utf-8", "iso8859-1"]:
         fhand = None
         try:
-            fhand = codecs.open(filename, 'r', ftype)
+            fhand = codecs.open(filename, "r", ftype)
             data = fhand.read()
             break
         except ValueError:
@@ -84,8 +101,8 @@ def tidy_xml(filename):
         return False
 
     for match in _SAFE_XML_REGEX.finditer(data):
-        data = data[:match.start()] + '?' + data[match.end():]
+        data = data[: match.start()] + "?" + data[match.end() :]
 
-    with open(filename, 'w') as fhand:
+    with open(filename, "w") as fhand:
         fhand.write(data)
     return True

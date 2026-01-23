@@ -44,4 +44,4 @@ import genpy.generator
 import genpy.genpy_main
 
 if __name__ == "__main__":
-    genpy.genpy_main.genmain(sys.argv, 'gensrv_py.py', genpy.generator.SrvGenerator())
+    genpy.genpy_main.genmain(sys.argv, "gensrv_py.py", genpy.generator.SrvGenerator())

@@ -54,10 +54,10 @@ import roslib.packages
 import roslib.resources
 
 # file extension
-EXT = '.srv'  # alias
-SEP = '/'  # e.g. std_msgs/String
+EXT = ".srv"  # alias
+SEP = "/"  # e.g. std_msgs/String
 # input/output deliminator
-IODELIM = '---'
+IODELIM = "---"
 COMMENTCHAR = roslib.msgs.COMMENTCHAR
 
 VERBOSE = False
@@ -80,9 +80,11 @@ class SrvSpecException(Exception):
 
 # msg spec representation ##########################################
 
-class SrvSpec(object):
 
-    def __init__(self, request, response, text, full_name='', short_name='', package=''):
+class SrvSpec(object):
+    def __init__(
+        self, request, response, text, full_name="", short_name="", package=""
+    ):
         self.request = request
         self.response = response
         self.text = text
@@ -93,12 +95,14 @@ class SrvSpec(object):
     def __eq__(self, other):
         if not other or not isinstance(other, SrvSpec):
             return False
-        return self.request == other.request and \
-            self.response == other.response and \
-            self.text == other.text and \
-            self.full_name == other.full_name and \
-            self.short_name == other.short_name and \
-            self.package == other.package
+        return (
+            self.request == other.request
+            and self.response == other.response
+            and self.text == other.text
+            and self.full_name == other.full_name
+            and self.short_name == other.short_name
+            and self.package == other.package
+        )
 
     def __ne__(self, other):
         if not other or not isinstance(other, SrvSpec):
@@ -106,10 +110,11 @@ class SrvSpec(object):
         return not self.__eq__(other)
 
     def __repr__(self):
-        return 'SrvSpec[%s, %s]' % (repr(self.request), repr(self.response))
+        return "SrvSpec[%s, %s]" % (repr(self.request), repr(self.response))
 
 
 # srv spec loading utilities ##########################################
+
 
 # @internal
 # predicate for filtering directory list. matches message files
@@ -128,8 +133,10 @@ def list_srv_types(package, include_depends):
     @return: service type names
     @rtype: [str]
     """
-    types = roslib.resources.list_package_resources(package, include_depends, 'srv', _srv_filter)
-    return [x[:-len(EXT)] for x in types]
+    types = roslib.resources.list_package_resources(
+        package, include_depends, "srv", _srv_filter
+    )
+    return [x[: -len(EXT)] for x in types]
 
 
 def srv_file(package, type_):
@@ -141,7 +148,7 @@ def srv_file(package, type_):
     @return: file path of .srv file in specified package
     @rtype: str
     """
-    return roslib.packages.resource_file(package, 'srv', type_+EXT)
+    return roslib.packages.resource_file(package, "srv", type_ + EXT)
 
 
 def get_pkg_srv_specs(package):
@@ -164,11 +171,11 @@ def get_pkg_srv_specs(package):
             specs.append(spec)
         except Exception:
             failures.append(t)
-            sys.stderr.write('ERROR: unable to load %s\n' % (t))
+            sys.stderr.write("ERROR: unable to load %s\n" % (t))
     return specs, failures
 
 
-def load_from_string(text, package_context='', full_name='', short_name=''):
+def load_from_string(text, package_context="", full_name="", short_name=""):
     """
     @param text: .msg text
     @type  text: str
@@ -182,20 +189,30 @@ def load_from_string(text, package_context='', full_name='', short_name=''):
     text_in = StringIO()
     text_out = StringIO()
     accum = text_in
-    for l in text.split('\n'):
+    for l in text.split("\n"):
         l = l.split(COMMENTCHAR)[0].strip()  # strip comments
         if l.startswith(IODELIM):  # lenient, by request
             accum = text_out
         else:
-            accum.write(l+'\n')
+            accum.write(l + "\n")
     # create separate roslib.msgs objects for each half of file
 
-    msg_in = roslib.msgs.load_from_string(text_in.getvalue(), package_context, '%sRequest' % (full_name), '%sRequest' % (short_name))
-    msg_out = roslib.msgs.load_from_string(text_out.getvalue(), package_context, '%sResponse' % (full_name), '%sResponse' % (short_name))
+    msg_in = roslib.msgs.load_from_string(
+        text_in.getvalue(),
+        package_context,
+        "%sRequest" % (full_name),
+        "%sRequest" % (short_name),
+    )
+    msg_out = roslib.msgs.load_from_string(
+        text_out.getvalue(),
+        package_context,
+        "%sResponse" % (full_name),
+        "%sResponse" % (short_name),
+    )
     return SrvSpec(msg_in, msg_out, text, full_name, short_name, package_context)
 
 
-def load_from_file(file_name, package_context=''):
+def load_from_file(file_name, package_context=""):
     """
     Convert the .srv representation in the file to a SrvSpec instance.
     @param file_name: name of file to load from
@@ -209,21 +226,25 @@ def load_from_file(file_name, package_context=''):
     """
     if VERBOSE:
         if package_context:
-            sys.stdout.write('Load spec from %s into namespace [%s]\n' % (file_name, package_context))
+            sys.stdout.write(
+                "Load spec from %s into namespace [%s]\n" % (file_name, package_context)
+            )
         else:
-            sys.stdout.write('Load spec from %s\n' % (file_name))
+            sys.stdout.write("Load spec from %s\n" % (file_name))
     base_file_name = os.path.basename(file_name)
-    type_ = base_file_name[:-len(EXT)]
+    type_ = base_file_name[: -len(EXT)]
     base_type_ = type_
     # determine the type name
     if package_context:
         while package_context.endswith(SEP):
             package_context = package_context[:-1]  # strip message separators
-        type_ = '%s%s%s' % (package_context, SEP, type_)
+        type_ = "%s%s%s" % (package_context, SEP, type_)
     if not roslib.names.is_legal_resource_name(type_):
-        raise SrvSpecException('%s: %s is not a legal service type name' % (file_name, type_))
+        raise SrvSpecException(
+            "%s: %s is not a legal service type name" % (file_name, type_)
+        )
 
-    f = open(file_name, 'r')
+    f = open(file_name, "r")
     try:
         text = f.read()
         return (type_, load_from_string(text, package_context, type_, base_type_))

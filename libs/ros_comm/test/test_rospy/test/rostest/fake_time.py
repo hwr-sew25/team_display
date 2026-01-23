@@ -39,10 +39,11 @@ import time
 import rospy
 from rosgraph_msgs.msg import Clock
 
+
 def faketime():
-    rospy.set_param('/use_sim_time', True)
-    pub = rospy.Publisher('/clock', Clock, queue_size=0)
-    rospy.init_node('fake_time')
+    rospy.set_param("/use_sim_time", True)
+    pub = rospy.Publisher("/clock", Clock, queue_size=0)
+    rospy.init_node("fake_time")
     c = Clock()
     while not rospy.is_shutdown():
         float_secs = time.time()
@@ -51,9 +52,10 @@ def faketime():
         c.clock.secs = secs
         pub.publish(c)
         time.sleep(0.01)
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     try:
         faketime()
-    except rospy.ROSInterruptException: pass
-
+    except rospy.ROSInterruptException:
+        pass

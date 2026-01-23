@@ -32,7 +32,15 @@
 
 from threading import RLock
 
-from rosgraph.names import ns_join, GLOBALNS, SEP, is_global, is_private, canonicalize_name
+from rosgraph.names import (
+    ns_join,
+    GLOBALNS,
+    SEP,
+    is_global,
+    is_private,
+    canonicalize_name,
+)
+
 
 def _get_param_names(names, key, d):
     """
@@ -44,16 +52,16 @@ def _get_param_names(names, key, d):
     @param key: parameter key for tree node d
     @type  key: str
     """
-    
-    #TODOXXX
-    for k,v in d.items():
+
+    # TODOXXX
+    for k, v in d.items():
         if type(v) == dict:
             _get_param_names(names, ns_join(key, k), v)
         else:
             names.append(ns_join(key, k))
 
+
 class ParamDictionary(object):
-    
     def __init__(self, reg_manager):
         """
         ctor.
@@ -74,11 +82,11 @@ class ParamDictionary(object):
         try:
             self.lock.acquire()
             param_names = []
-            _get_param_names(param_names, '/', self.parameters)
+            _get_param_names(param_names, "/", self.parameters)
         finally:
             self.lock.release()
         return param_names
-        
+
     def search_param(self, ns, key):
         """
         Search for matching parameter key for search param
@@ -104,7 +112,7 @@ class ParamDictionary(object):
 
         @param ns: namespace to begin search from.
         @type  ns: str
-        @param key: Parameter key. 
+        @param key: Parameter key.
         @type  key: str
         @return: key of matching parameter or None if no matching
         parameter.
@@ -113,7 +121,7 @@ class ParamDictionary(object):
         if not key or is_private(key):
             raise ValueError("invalid key")
         if not is_global(ns):
-            raise ValueError("namespace must be global")            
+            raise ValueError("namespace must be global")
         if is_global(key):
             if self.has_param(key):
                 return key
@@ -132,15 +140,15 @@ class ParamDictionary(object):
         search_key = ns_join(ns, key_ns)
         if self.has_param(search_key):
             # resolve to full key
-            return ns_join(ns, key) 
-        
+            return ns_join(ns, key)
+
         namespaces = [x for x in ns.split(SEP) if x]
-        for i in range(1, len(namespaces)+1):
+        for i in range(1, len(namespaces) + 1):
             search_key = SEP + SEP.join(namespaces[0:-i] + [key_ns])
             if self.has_param(search_key):
                 # we have a match on the namespace of the key, so
                 # compose the full key and return it
-                full_key = SEP + SEP.join(namespaces[0:-i] + [key]) 
+                full_key = SEP + SEP.join(namespaces[0:-i] + [key])
                 return full_key
         return None
 
@@ -165,7 +173,7 @@ class ParamDictionary(object):
             return val
         finally:
             self.lock.release()
-    
+
     def set_param(self, key, value, notify_task=None, caller_id=None):
         """
         Set the parameter in the parameter dictionary.
@@ -185,7 +193,9 @@ class ParamDictionary(object):
             self.lock.acquire()
             if key == GLOBALNS:
                 if type(value) != dict:
-                    raise TypeError("cannot set root of parameter tree to non-dictionary")
+                    raise TypeError(
+                        "cannot set root of parameter tree to non-dictionary"
+                    )
                 self.parameters = value
             else:
                 namespaces = [x for x in key.split(SEP) if x]
@@ -210,12 +220,13 @@ class ParamDictionary(object):
 
             # ParamDictionary needs to queue updates so that the updates are thread-safe
             if notify_task:
-                updates = compute_param_updates(self.reg_manager.param_subscribers, key, value, caller_id)
+                updates = compute_param_updates(
+                    self.reg_manager.param_subscribers, key, value, caller_id
+                )
                 if updates:
                     notify_task(updates)
         finally:
             self.lock.release()
-
 
     def subscribe_param(self, key, registration_args):
         """
@@ -240,7 +251,6 @@ class ParamDictionary(object):
             return val
         finally:
             self.lock.release()
-            
 
     def unsubscribe_param(self, key, unregistration_args):
         """
@@ -287,15 +297,17 @@ class ParamDictionary(object):
                     raise KeyError(key)
                 else:
                     del d[value_key]
-                    
+
                 # ParamDictionary needs to queue updates so that the updates are thread-safe
                 if notify_task:
-                    updates = compute_param_updates(self.reg_manager.param_subscribers, key, {})
+                    updates = compute_param_updates(
+                        self.reg_manager.param_subscribers, key, {}
+                    )
                     if updates:
                         notify_task(updates)
         finally:
             self.lock.release()
-    
+
     def has_param(self, key):
         """
         Test for parameter existence
@@ -312,7 +324,8 @@ class ParamDictionary(object):
             return True
         except KeyError:
             return False
-    
+
+
 def _compute_all_keys(param_key, param_value, all_keys=None):
     """
     Compute which subscribers should be notified based on the parameter update
@@ -328,13 +341,16 @@ def _compute_all_keys(param_key, param_value, all_keys=None):
     if all_keys is None:
         all_keys = []
     for k, v in param_value.items():
-        new_k = ns_join(param_key, k) + SEP 
+        new_k = ns_join(param_key, k) + SEP
         all_keys.append(new_k)
         if type(v) == dict:
             _compute_all_keys(new_k, v, all_keys)
     return all_keys
 
-def compute_param_updates(subscribers, param_key, param_value, caller_id_to_ignore=None):
+
+def compute_param_updates(
+    subscribers, param_key, param_value, caller_id_to_ignore=None
+):
     """
     Compute subscribers that should be notified based on the parameter update
     @param subscribers: parameter subscribers
@@ -346,25 +362,25 @@ def compute_param_updates(subscribers, param_key, param_value, caller_id_to_igno
     @param caller_id_to_ignore: the caller to ignore
     @type caller_id_to_ignore: str
     """
-    
+
     # logic correct for both updates and deletions
 
     if not subscribers:
         return []
-    
+
     # end with a trailing slash to optimize startswith check from
     # needing an extra equals check
     if param_key != SEP:
-        param_key = canonicalize_name(param_key) + SEP    
+        param_key = canonicalize_name(param_key) + SEP
 
     # compute all the updated keys
     if type(param_value) == dict:
         all_keys = _compute_all_keys(param_key, param_value)
     else:
         all_keys = None
-        
+
     updates = []
-    
+
     # subscriber gets update if anything in the subscribed namespace is updated or if its deleted
     for sub_key in subscribers.iterkeys():
         ns_key = sub_key
@@ -376,10 +392,14 @@ def compute_param_updates(subscribers, param_key, param_value, caller_id_to_igno
                 node_apis = [
                     (caller_id, caller_api)
                     for (caller_id, caller_api) in node_apis
-                    if caller_id != caller_id_to_ignore]
+                    if caller_id != caller_id_to_ignore
+                ]
             updates.append((node_apis, param_key, param_value))
-        elif all_keys is not None and ns_key.startswith(param_key) \
-             and not sub_key in all_keys:
+        elif (
+            all_keys is not None
+            and ns_key.startswith(param_key)
+            and not sub_key in all_keys
+        ):
             # parameter was deleted
             node_apis = subscribers[sub_key]
             updates.append((node_apis, sub_key, {}))
@@ -390,7 +410,7 @@ def compute_param_updates(subscribers, param_key, param_value, caller_id_to_igno
         for key in all_keys:
             if key in subscribers:
                 # compute actual update value
-                sub_key = key[len(param_key):]
+                sub_key = key[len(param_key) :]
                 namespaces = [x for x in sub_key.split(SEP) if x]
                 val = param_value
                 for ns in namespaces:
@@ -399,4 +419,3 @@ def compute_param_updates(subscribers, param_key, param_value, caller_id_to_igno
                 updates.append((subscribers[key], key, val))
 
     return updates
-        

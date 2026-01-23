@@ -34,10 +34,11 @@
 # Author: Thibault Kruse
 
 from __future__ import with_statement
-NAME = 'test_rosmsgproto'
+
+NAME = "test_rosmsgproto"
 
 import os
-import sys 
+import sys
 import unittest
 import time
 import std_msgs
@@ -49,19 +50,19 @@ from rosmsg import *
 
 from nose.plugins.skip import SkipTest
 
-_NO_DICT=True
+_NO_DICT = True
 if "OrderedDict" in collections.__dict__:
-    _NO_DICT=False
+    _NO_DICT = False
+
 
 class RosMsgProtoTest(unittest.TestCase):
-
     def test_get_array_type_instance(self):
         self.assertEqual(0, get_array_type_instance("int16[]"))
         self.assertEqual(0, get_array_type_instance("char[]"))
         self.assertEqual(0, get_array_type_instance("uint16[]"))
         self.assertEqual(0, get_array_type_instance("int32[]"))
         self.assertEqual(0, get_array_type_instance("uint16[]"))
-        self.assertEqual(False,get_array_type_instance("bool[]"))
+        self.assertEqual(False, get_array_type_instance("bool[]"))
         self.assertEqual(0, get_array_type_instance("float32[]"))
         self.assertEqual(0, get_array_type_instance("float64[]"))
         self.assertEqual("", get_array_type_instance("string[]"))
@@ -71,63 +72,132 @@ class RosMsgProtoTest(unittest.TestCase):
         self.assertTrue(None == get_array_type_instance("empty[]"))
         # TODO check for complex types
 
-
     def test_create_names_filter(self):
         class foo:
             def __init__(self):
-                self.__slots__= ["bar","foo","bar","baz","bar"]
+                self.__slots__ = ["bar", "foo", "bar", "baz", "bar"]
+
         self.assertEqual(["foo", "baz"], create_names_filter("bar")(foo()))
 
-
-        
     def test_rosmsg_cmd_prototype_std_msgs_Int16(self):
-        if _NO_DICT: raise SkipTest("Test skipped because Python version too low")
+        if _NO_DICT:
+            raise SkipTest("Test skipped because Python version too low")
         self.assertEqual('"data: 0"', rosmsg_cmd_prototype(["msg", "std_msgs/Int16"]))
-        self.assertEqual('data: 0', rosmsg_cmd_prototype(["msg", "std_msgs/Int16", "-H"]))
-        self.assertEqual('"  data: 0"', rosmsg_cmd_prototype(["msg", "std_msgs/Int16", "-p", "  "]))
-        self.assertEqual('  data: 0', rosmsg_cmd_prototype(["msg", "std_msgs/Int16", "-p", "  ", "-H"]))
-        self.assertEqual('"{}"', rosmsg_cmd_prototype(["msg", "std_msgs/Int16","-x", "data"]))
+        self.assertEqual(
+            "data: 0", rosmsg_cmd_prototype(["msg", "std_msgs/Int16", "-H"])
+        )
+        self.assertEqual(
+            '"  data: 0"', rosmsg_cmd_prototype(["msg", "std_msgs/Int16", "-p", "  "])
+        )
+        self.assertEqual(
+            "  data: 0",
+            rosmsg_cmd_prototype(["msg", "std_msgs/Int16", "-p", "  ", "-H"]),
+        )
+        self.assertEqual(
+            '"{}"', rosmsg_cmd_prototype(["msg", "std_msgs/Int16", "-x", "data"])
+        )
 
     def test_rosmsg_cmd_prototype_std_msgs_String(self):
-        if _NO_DICT: raise SkipTest("Test skipped because Python version too low")
-        self.assertEqual('"data: \'\'"', rosmsg_cmd_prototype(["msg", "std_msgs/String"]))
-        self.assertEqual('data: \'\'', rosmsg_cmd_prototype(["msg", "std_msgs/String", "-H"]))
-        self.assertEqual('  data: \'\'', rosmsg_cmd_prototype(["msg", "std_msgs/String", "-p", "  ", "-H"]))
+        if _NO_DICT:
+            raise SkipTest("Test skipped because Python version too low")
+        self.assertEqual(
+            "\"data: ''\"", rosmsg_cmd_prototype(["msg", "std_msgs/String"])
+        )
+        self.assertEqual(
+            "data: ''", rosmsg_cmd_prototype(["msg", "std_msgs/String", "-H"])
+        )
+        self.assertEqual(
+            "  data: ''",
+            rosmsg_cmd_prototype(["msg", "std_msgs/String", "-p", "  ", "-H"]),
+        )
 
     def test_rosmsg_cmd_prototype_std_msgs_Header(self):
-        if _NO_DICT: raise SkipTest("Test skipped because Python version too low")
-        self.assertEqual('"seq: 0\nstamp:\n  secs: 0\n  nsecs: 0\nframe_id: \'\'"', rosmsg_cmd_prototype(["msg", "std_msgs/Header"]))
-        self.assertEqual('"{seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: \'\'}"', rosmsg_cmd_prototype(["msg", "std_msgs/Header", "-f1"]))
+        if _NO_DICT:
+            raise SkipTest("Test skipped because Python version too low")
+        self.assertEqual(
+            "\"seq: 0\nstamp:\n  secs: 0\n  nsecs: 0\nframe_id: ''\"",
+            rosmsg_cmd_prototype(["msg", "std_msgs/Header"]),
+        )
+        self.assertEqual(
+            "\"{seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: ''}\"",
+            rosmsg_cmd_prototype(["msg", "std_msgs/Header", "-f1"]),
+        )
 
     def test_rosmsg_cmd_prototype_std_msgs_Bool(self):
-        if _NO_DICT: raise SkipTest("Test skipped because Python version too low")
-        self.assertEqual('"data: false"', rosmsg_cmd_prototype(["msg", "std_msgs/Bool"]))
+        if _NO_DICT:
+            raise SkipTest("Test skipped because Python version too low")
+        self.assertEqual(
+            '"data: false"', rosmsg_cmd_prototype(["msg", "std_msgs/Bool"])
+        )
 
     def test_rosmsg_cmd_prototype_std_msgs_Time(self):
-        if _NO_DICT: raise SkipTest("Test skipped because Python version too low")
-        self.assertEqual('"data:\n  secs: 0\n  nsecs: 0"', rosmsg_cmd_prototype(["msg", "std_msgs/Time"]))
-        self.assertEqual('"{data: {secs: 0, nsecs: 0}}"', rosmsg_cmd_prototype(["msg", "std_msgs/Time", "-f1"]))
+        if _NO_DICT:
+            raise SkipTest("Test skipped because Python version too low")
+        self.assertEqual(
+            '"data:\n  secs: 0\n  nsecs: 0"',
+            rosmsg_cmd_prototype(["msg", "std_msgs/Time"]),
+        )
+        self.assertEqual(
+            '"{data: {secs: 0, nsecs: 0}}"',
+            rosmsg_cmd_prototype(["msg", "std_msgs/Time", "-f1"]),
+        )
 
     def test_rosmsg_cmd_prototype_std_msgs_Duration(self):
-        if _NO_DICT: raise SkipTest("Test skipped because Python version too low")
-        self.assertEqual('"data:\n  secs: 0\n  nsecs: 0"', rosmsg_cmd_prototype(["msg", "std_msgs/Duration"]))
-        self.assertEqual('"{data: {secs: 0, nsecs: 0}}"', rosmsg_cmd_prototype(["msg", "std_msgs/Duration", "-f1"]))
+        if _NO_DICT:
+            raise SkipTest("Test skipped because Python version too low")
+        self.assertEqual(
+            '"data:\n  secs: 0\n  nsecs: 0"',
+            rosmsg_cmd_prototype(["msg", "std_msgs/Duration"]),
+        )
+        self.assertEqual(
+            '"{data: {secs: 0, nsecs: 0}}"',
+            rosmsg_cmd_prototype(["msg", "std_msgs/Duration", "-f1"]),
+        )
 
     def test_rosmsg_cmd_prototype_std_msgs_ColorRGBA(self):
-        self.assertEqual('"r: 0.0\ng: 0.0\nb: 0.0\na: 0.0"', rosmsg_cmd_prototype(["msg", "std_msgs/ColorRGBA", "-f0"]))
+        self.assertEqual(
+            '"r: 0.0\ng: 0.0\nb: 0.0\na: 0.0"',
+            rosmsg_cmd_prototype(["msg", "std_msgs/ColorRGBA", "-f0"]),
+        )
 
     def test_rosmsg_cmd_prototype_std_msgs_MultiArrayLayout(self):
-        self.assertEqual('"dim:\n- label: \'\'\n  size: 0\n  stride: 0\ndata_offset: 0"', rosmsg_cmd_prototype(["msg", "std_msgs/MultiArrayLayout"]))
-        self.assertEqual('"dim: []\ndata_offset: 0"', rosmsg_cmd_prototype(["msg", "std_msgs/MultiArrayLayout", "-e"]))
+        self.assertEqual(
+            "\"dim:\n- label: ''\n  size: 0\n  stride: 0\ndata_offset: 0\"",
+            rosmsg_cmd_prototype(["msg", "std_msgs/MultiArrayLayout"]),
+        )
+        self.assertEqual(
+            '"dim: []\ndata_offset: 0"',
+            rosmsg_cmd_prototype(["msg", "std_msgs/MultiArrayLayout", "-e"]),
+        )
 
     def test_rosmsg_cmd_prototype_std_msgs_Float64MultiArray(self):
-        self.assertEqual('"layout:\n  dim:\n  - label: \'\'\n    size: 0\n    stride: 0\n  data_offset: 0\ndata:\n- 0"', rosmsg_cmd_prototype(["msg", "std_msgs/Float64MultiArray"]))
-        self.assertEqual('"layout:\n  dim:\n  - label: \'\'\n    size: 0\n  data_offset: 0"', rosmsg_cmd_prototype(["msg", "std_msgs/Float64MultiArray", "-x", "stride,data"]))
+        self.assertEqual(
+            "\"layout:\n  dim:\n  - label: ''\n    size: 0\n    stride: 0\n  data_offset: 0\ndata:\n- 0\"",
+            rosmsg_cmd_prototype(["msg", "std_msgs/Float64MultiArray"]),
+        )
+        self.assertEqual(
+            "\"layout:\n  dim:\n  - label: ''\n    size: 0\n  data_offset: 0\"",
+            rosmsg_cmd_prototype(
+                ["msg", "std_msgs/Float64MultiArray", "-x", "stride,data"]
+            ),
+        )
 
     def test_rosmsg_cmd_prototype_std_msgs_MultiArrayDimension(self):
-        self.assertEqual('"label: \'\'\nsize: 0\nstride: 0"', rosmsg_cmd_prototype(["msg", "std_msgs/MultiArrayDimension"]))
+        self.assertEqual(
+            "\"label: ''\nsize: 0\nstride: 0\"",
+            rosmsg_cmd_prototype(["msg", "std_msgs/MultiArrayDimension"]),
+        )
 
     def test_rosmsg_cmd_prototype_std_msgs_Float32MultiArray(self):
-        self.assertEqual('"layout:\n  dim:\n  - label: \'\'\n    size: 0\n    stride: 0\n  data_offset: 0\ndata:\n- 0"', rosmsg_cmd_prototype(["msg", "std_msgs/Float32MultiArray"]))
-        self.assertEqual('"layout:\n  dim:\n  - label: \'\'\n    size: 0\n    stride: 0\n  data_offset: 0\ndata:\n- 0"', rosmsg_cmd_prototype(["msg", "std_msgs/Float32MultiArray", "-f0"]))
-        self.assertEqual('"{layout: {dim: [{label: \'\', size: 0, stride: 0}], data_offset: 0}, data: [0]}"', rosmsg_cmd_prototype(["msg", "std_msgs/Float32MultiArray", "-f1"]))
+        self.assertEqual(
+            "\"layout:\n  dim:\n  - label: ''\n    size: 0\n    stride: 0\n  data_offset: 0\ndata:\n- 0\"",
+            rosmsg_cmd_prototype(["msg", "std_msgs/Float32MultiArray"]),
+        )
+        self.assertEqual(
+            "\"layout:\n  dim:\n  - label: ''\n    size: 0\n    stride: 0\n  data_offset: 0\ndata:\n- 0\"",
+            rosmsg_cmd_prototype(["msg", "std_msgs/Float32MultiArray", "-f0"]),
+        )
+        self.assertEqual(
+            "\"{layout: {dim: [{label: '', size: 0, stride: 0}], data_offset: 0}, data: [0]}\"",
+            rosmsg_cmd_prototype(["msg", "std_msgs/Float32MultiArray", "-f1"]),
+        )

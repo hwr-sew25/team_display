@@ -47,7 +47,7 @@ Publisher example::
 
     from rospy.numpy_msg import numpy_msg
     import numpy
-    
+
     pub = rospy.Publisher('mytopic', numpy_msg(TopicType), queue_size=10)
     rospy.init_node('mynode')
     a = numpy.array([1.0, 2.1, 3.2, 4.3, 5.4, 6.5], dtype=numpy.float32)
@@ -60,6 +60,7 @@ import numpy
 # little-endian specified and then pass that type structure into the
 # *_numpy calls.
 
+
 def _serialize_numpy(self, buff):
     """
     wrapper for factory-generated class that passes numpy module into serialize
@@ -67,33 +68,42 @@ def _serialize_numpy(self, buff):
     # pass in numpy module reference to prevent import in auto-generated code
     return self.serialize_numpy(buff, numpy)
 
+
 def _deserialize_numpy(self, str):
     """
-    wrapper for factory-generated class that passes numpy module into deserialize    
+    wrapper for factory-generated class that passes numpy module into deserialize
     """
     # pass in numpy module reference to prevent import in auto-generated code
     return self.deserialize_numpy(str, numpy)
-    
+
+
 _numpy_msg_types = {}
+
+
 ## Use this function to generate message instances using numpy array
-## types for numerical arrays. 
+## types for numerical arrays.
 ## @msg_type Message class: call this functioning on the message type that you pass
-## into a Publisher or Subscriber call. 
+## into a Publisher or Subscriber call.
 ## @returns Message class
 def numpy_msg(msg_type):
     if msg_type in _numpy_msg_types:
         return _numpy_msg_types[msg_type]
 
-    classdict = { '__slots__': msg_type.__slots__, '_slot_types': msg_type._slot_types,
-                  '_md5sum': msg_type._md5sum, '_type': msg_type._type,
-                  '_has_header': msg_type._has_header, '_full_text': msg_type._full_text,
-                  'serialize': _serialize_numpy, 'deserialize': _deserialize_numpy,
-                  'serialize_numpy': msg_type.serialize_numpy,
-                  'deserialize_numpy': msg_type.deserialize_numpy
-                  }
+    classdict = {
+        "__slots__": msg_type.__slots__,
+        "_slot_types": msg_type._slot_types,
+        "_md5sum": msg_type._md5sum,
+        "_type": msg_type._type,
+        "_has_header": msg_type._has_header,
+        "_full_text": msg_type._full_text,
+        "serialize": _serialize_numpy,
+        "deserialize": _deserialize_numpy,
+        "serialize_numpy": msg_type.serialize_numpy,
+        "deserialize_numpy": msg_type.deserialize_numpy,
+    }
 
     # create the numpy message type
-    msg_type_name = "Numpy_%s"%msg_type._type.replace('/', '__')
-    numpy_type = type(msg_type_name,(msg_type,),classdict)
+    msg_type_name = "Numpy_%s" % msg_type._type.replace("/", "__")
+    numpy_type = type(msg_type_name, (msg_type,), classdict)
     _numpy_msg_types[msg_type] = numpy_type
     return numpy_type

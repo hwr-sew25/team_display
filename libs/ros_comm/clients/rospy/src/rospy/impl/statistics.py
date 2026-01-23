@@ -39,10 +39,10 @@ import sys
 from rosgraph_msgs.msg import TopicStatistics
 import rospy
 
-_logger = logging.getLogger('rospy.impl.statistics')
+_logger = logging.getLogger("rospy.impl.statistics")
 
 
-class SubscriberStatisticsLogger():
+class SubscriberStatisticsLogger:
     """
     Class that monitors each subscriber.
 
@@ -101,7 +101,9 @@ class SubscriberStatisticsLogger():
             # create ConnectionStatisticsLogger for new connections
             logger = self.connections.get(publisher)
             if logger is None:
-                logger = ConnectionStatisticsLogger(self.subscriber_name, rospy.get_name(), publisher)
+                logger = ConnectionStatisticsLogger(
+                    self.subscriber_name, rospy.get_name(), publisher
+                )
                 self.connections[publisher] = logger
 
             # delegate stuff to that instance
@@ -115,7 +117,7 @@ class SubscriberStatisticsLogger():
         self.connections.clear()
 
 
-class ConnectionStatisticsLogger():
+class ConnectionStatisticsLogger:
     """
     Class that monitors lots of stuff for each connection.
 
@@ -184,8 +186,16 @@ class ConnectionStatisticsLogger():
 
         # we can only calculate message age if the messages did contain Header fields.
         if len(self.age_list_) > 0:
-            msg.stamp_age_mean = rospy.Duration(sum(self.age_list_, rospy.Duration(0)).to_sec() / len(self.age_list_))
-            variance = sum((rospy.Duration((msg.stamp_age_mean - value).to_sec() ** 2) for value in self.age_list_), rospy.Duration(0)) / len(self.age_list_)
+            msg.stamp_age_mean = rospy.Duration(
+                sum(self.age_list_, rospy.Duration(0)).to_sec() / len(self.age_list_)
+            )
+            variance = sum(
+                (
+                    rospy.Duration((msg.stamp_age_mean - value).to_sec() ** 2)
+                    for value in self.age_list_
+                ),
+                rospy.Duration(0),
+            ) / len(self.age_list_)
             msg.stamp_age_stddev = rospy.Duration(sqrt(variance.to_sec()))
             msg.stamp_age_max = max(self.age_list_)
         else:
@@ -195,9 +205,22 @@ class ConnectionStatisticsLogger():
 
         # computer period/frequency. we need at least two messages within the window to do this.
         if len(self.arrival_time_list_) > 1:
-            periods = [j - i for i, j in zip(self.arrival_time_list_[:-1], self.arrival_time_list_[1:])]
-            msg.period_mean = rospy.Duration(sum(periods, rospy.Duration(0)).to_sec() / len(periods))
-            variance = sum((rospy.Duration((msg.period_mean - value).to_sec() ** 2) for value in periods), rospy.Duration(0)) / len(periods)
+            periods = [
+                j - i
+                for i, j in zip(
+                    self.arrival_time_list_[:-1], self.arrival_time_list_[1:]
+                )
+            ]
+            msg.period_mean = rospy.Duration(
+                sum(periods, rospy.Duration(0)).to_sec() / len(periods)
+            )
+            variance = sum(
+                (
+                    rospy.Duration((msg.period_mean - value).to_sec() ** 2)
+                    for value in periods
+                ),
+                rospy.Duration(0),
+            ) / len(periods)
             msg.period_stddev = rospy.Duration(sqrt(variance.to_sec()))
             msg.period_max = max(periods)
         else:
@@ -209,9 +232,15 @@ class ConnectionStatisticsLogger():
 
         # adjust window, if message count is not appropriate.
         pub_period = 1.0 / self.pub_frequency.to_sec()
-        if len(self.arrival_time_list_) > subscriber_statistics_logger.max_elements and pub_period / 2 >= subscriber_statistics_logger.min_window:
+        if (
+            len(self.arrival_time_list_) > subscriber_statistics_logger.max_elements
+            and pub_period / 2 >= subscriber_statistics_logger.min_window
+        ):
             self.pub_frequency *= 2
-        if len(self.arrival_time_list_) < subscriber_statistics_logger.min_elements and pub_period * 2 <= subscriber_statistics_logger.max_window:
+        if (
+            len(self.arrival_time_list_) < subscriber_statistics_logger.min_elements
+            and pub_period * 2 <= subscriber_statistics_logger.max_window
+        ):
             self.pub_frequency /= 2
 
         # clear collected stats, start new window.
@@ -258,7 +287,10 @@ class ConnectionStatisticsLogger():
             self.last_seq_ = msg.header.seq
 
         # send out statistics with a certain frequency
-        if self.last_pub_time + rospy.Duration(1.0 / self.pub_frequency.to_sec()) < arrival_time:
+        if (
+            self.last_pub_time + rospy.Duration(1.0 / self.pub_frequency.to_sec())
+            < arrival_time
+        ):
             self.last_pub_time = arrival_time
             self.sendStatistics(subscriber_statistics_logger)
 

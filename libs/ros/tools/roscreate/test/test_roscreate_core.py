@@ -33,15 +33,17 @@
 
 def test_author_name():
     from roscreate.core import author_name
+
     val = author_name()
     assert val, val
 
 
 def test_read_template():
     from roscreate.core import read_template
+
     s = set()
     # this unit test will break if any of the templates get removed/renamed
-    tests = ['Makefile.tmpl', 'stack.tmpl', 'mainpage.tmpl', 'CMakeLists.stack.tmpl']
+    tests = ["Makefile.tmpl", "stack.tmpl", "mainpage.tmpl", "CMakeLists.stack.tmpl"]
     for f in tests:
         text = read_template(f)
         s.add(text)
@@ -49,5 +51,5 @@ def test_read_template():
     assert len(s) == len(tests)
 
     # hardcode test against a known template
-    text = read_template('Makefile.tmpl')
-    assert text == 'include $(shell rospack find mk)/cmake.mk'
+    text = read_template("Makefile.tmpl")
+    assert text == "include $(shell rospack find mk)/cmake.mk"

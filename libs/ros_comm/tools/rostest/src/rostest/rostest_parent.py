@@ -41,28 +41,32 @@ from roslaunch.core import printlog_bold, RLException
 import roslaunch.launch
 import roslaunch.pmon
 import roslaunch.server
-import roslaunch.xmlloader 
+import roslaunch.xmlloader
 
 import roslaunch.parent
 
 from rosmaster.master import Master
 from rospy import logwarn
 
-class ROSTestLaunchParent(roslaunch.parent.ROSLaunchParent):
 
-    def __init__(self, config, roslaunch_files, port=0, reuse_master=False, clear=False):
+class ROSTestLaunchParent(roslaunch.parent.ROSLaunchParent):
+    def __init__(
+        self, config, roslaunch_files, port=0, reuse_master=False, clear=False
+    ):
         if config is None:
             raise Exception("config not initialized")
         # we generate a run_id for each test
         if reuse_master:
-            param_server = rosgraph.Master('/roslaunch')
+            param_server = rosgraph.Master("/roslaunch")
             try:
-                run_id = param_server.getParam('/run_id')
+                run_id = param_server.getParam("/run_id")
             except Exception as e:
                 # The user asked us to connect to an existing ROS master, and
                 # we can't. Throw an exception and die
-                raise Exception("Could not connect to existing ROS master. "
-                                + "Original exception was: %s" % str(e))
+                raise Exception(
+                    "Could not connect to existing ROS master. "
+                    + "Original exception was: %s" % str(e)
+                )
             except:
                 # oh boy; we got something that wasn't an exception.
                 # Throw an exception and die
@@ -71,23 +75,25 @@ class ROSTestLaunchParent(roslaunch.parent.ROSLaunchParent):
             if clear:
                 params = param_server.getParamNames()
                 # whitelist of parameters to keep
-                whitelist = ['/run_id', '/rosversion', '/rosdistro']
+                whitelist = ["/run_id", "/rosversion", "/rosdistro"]
                 for i in reversed(range(len(params))):
                     param = params[i]
                     if param in whitelist:
                         del params[i]
-                    elif param.startswith('/roslaunch/'):
+                    elif param.startswith("/roslaunch/"):
                         del params[i]
                 for param in params:
                     param_server.deleteParam(param)
         else:
             run_id = roslaunch.core.generate_run_id()
-        super(ROSTestLaunchParent, self).__init__(run_id, roslaunch_files, is_core=False, is_rostest=True)
+        super(ROSTestLaunchParent, self).__init__(
+            run_id, roslaunch_files, is_core=False, is_rostest=True
+        )
         self.config = config
         self.port = port
         self.reuse_master = reuse_master
         self.master = None
-        
+
     def _load_config(self):
         # disable super, just in case, though this shouldn't get called
         pass
@@ -125,10 +131,10 @@ class ROSTestLaunchParent(roslaunch.parent.ROSLaunchParent):
 
     def run_test(self, test):
         """
-        run the test, blocks until completion 
+        run the test, blocks until completion
         """
         if self.runner is not None:
-            # run the test, blocks until completion            
+            # run the test, blocks until completion
             return self.runner.run_test(test)
         else:
             raise Exception("no runner")

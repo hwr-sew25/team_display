@@ -31,7 +31,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'test_roslaunch'
+PKG = "test_roslaunch"
 
 import os, sys, unittest
 
@@ -43,22 +43,25 @@ import rostest
 import rospkg
 
 import rosgraph
-master = rosgraph.Master('params_basic')
+
+master = rosgraph.Master("params_basic")
+
+
 def get_param(*args):
     return master.getParam(*args)
-    
+
+
 ## Test Roslaunch 'param' tags
 class TestParamsBasic(unittest.TestCase):
-
     ## test primitive values
     def test_values(self):
         ## Test roslaunch string params
-        self.assertEqual(get_param('stringempty'), '')
-        print(get_param('stringbar'))
-        self.assertEqual(get_param('stringbar'), 'bar')
-        self.assertEqual(get_param('str10'), '10')
-        self.assertEqual(get_param('string10'), '10')        
-        self.assertEqual(get_param('stringentity'), '<stringentity/>')        
+        self.assertEqual(get_param("stringempty"), "")
+        print(get_param("stringbar"))
+        self.assertEqual(get_param("stringbar"), "bar")
+        self.assertEqual(get_param("str10"), "10")
+        self.assertEqual(get_param("string10"), "10")
+        self.assertEqual(get_param("stringentity"), "<stringentity/>")
         ## Test roslaunch integer params
         self.assertEqual(get_param("integerneg1"), -1)
         self.assertEqual(get_param("integer0"), 0)
@@ -66,52 +69,52 @@ class TestParamsBasic(unittest.TestCase):
         self.assertEqual(get_param("integernoop1"), 1)
         self.assertEqual(get_param("integer12345"), 12345)
         ## Test roslaunch float params
-        self.assertEqual(get_param("floatpi"),3.14159)
-        self.assertEqual(get_param("floatnooppi"),3.14159)
-        self.assertEqual(get_param("float3"),3.0)
-        self.assertEqual(get_param("floatneg1"),-1.0)
+        self.assertEqual(get_param("floatpi"), 3.14159)
+        self.assertEqual(get_param("floatnooppi"), 3.14159)
+        self.assertEqual(get_param("float3"), 3.0)
+        self.assertEqual(get_param("floatneg1"), -1.0)
         ## Test roslaunch boolean params
-        for p in ['true', 'TRUE', 'True']:
-            self.assertTrue(get_param(p), "[%s] is not false: %s"%(p, get_param(p)))
-        for p in ['false', "FALSE", 'False']:
-            self.assertFalse(get_param(p), "[%s] is not false: %s"%(p, get_param(p)))
-            
+        for p in ["true", "TRUE", "True"]:
+            self.assertTrue(get_param(p), "[%s] is not false: %s" % (p, get_param(p)))
+        for p in ["false", "FALSE", "False"]:
+            self.assertFalse(get_param(p), "[%s] is not false: %s" % (p, get_param(p)))
+
     ## Test roslaunch ns attribute (namespace) on params
     def test_ns(self):
-        self.assertEqual(get_param("/wg/childparam"),"wg")
-        self.assertEqual(get_param("/wg2/childparam"),"wg2")
-        self.assertEqual(get_param("/wg3/childparam"),"wg3")
-        self.assertEqual(get_param("/wg/wg4/childparam"),"wg4")
-        self.assertEqual(get_param("/wg/wg4/wg5/childparam"),"wg5")          
+        self.assertEqual(get_param("/wg/childparam"), "wg")
+        self.assertEqual(get_param("/wg2/childparam"), "wg2")
+        self.assertEqual(get_param("/wg3/childparam"), "wg3")
+        self.assertEqual(get_param("/wg/wg4/childparam"), "wg4")
+        self.assertEqual(get_param("/wg/wg4/wg5/childparam"), "wg5")
         ## Test roslaunch <group> tag with and without ns attribute
-        self.assertEqual(get_param("/wga/wg/childparam"),"wg")
-        self.assertEqual(get_param("/wga/wg2/childparam"),"wg2")
-        self.assertEqual(get_param("/wga/wg3/childparam"),"wg3")
-        self.assertEqual(get_param("/wga/wg/wg4/childparam"),"wg4")
-        self.assertEqual(get_param("/wga/wg/wg4/wg5/childparam"),"wg5")          
+        self.assertEqual(get_param("/wga/wg/childparam"), "wg")
+        self.assertEqual(get_param("/wga/wg2/childparam"), "wg2")
+        self.assertEqual(get_param("/wga/wg3/childparam"), "wg3")
+        self.assertEqual(get_param("/wga/wg/wg4/childparam"), "wg4")
+        self.assertEqual(get_param("/wga/wg/wg4/wg5/childparam"), "wg5")
         # test second-level group
-        self.assertEqual(get_param("/wga/wgb/wg/childparam"),"bwg")
-        self.assertEqual(get_param("/wga/wgb/wg2/childparam"),"bwg2")
-        self.assertEqual(get_param("/wga/wgb/wg3/childparam"),"bwg3")
-        self.assertEqual(get_param("/wga/wgb/wg/wg4/childparam"),"bwg4")
-        self.assertEqual(get_param("/wga/wgb/wg/wg4/wg5/childparam"),"bwg5")
+        self.assertEqual(get_param("/wga/wgb/wg/childparam"), "bwg")
+        self.assertEqual(get_param("/wga/wgb/wg2/childparam"), "bwg2")
+        self.assertEqual(get_param("/wga/wgb/wg3/childparam"), "bwg3")
+        self.assertEqual(get_param("/wga/wgb/wg/wg4/childparam"), "bwg4")
+        self.assertEqual(get_param("/wga/wgb/wg/wg4/wg5/childparam"), "bwg5")
         # test unscoped group
-        self.assertEqual(get_param("/wgc/childparam"),"wg")
-        self.assertEqual(get_param("/wgc2/childparam"),"wg2")
-        self.assertEqual(get_param("/wgc3/childparam"),"wg3")
-        self.assertEqual(get_param("/wgc/wg4/childparam"),"wg4")
-        self.assertEqual(get_param("/wgc/wg4/wg5/childparam"),"wg5")          
-        
+        self.assertEqual(get_param("/wgc/childparam"), "wg")
+        self.assertEqual(get_param("/wgc2/childparam"), "wg2")
+        self.assertEqual(get_param("/wgc3/childparam"), "wg3")
+        self.assertEqual(get_param("/wgc/wg4/childparam"), "wg4")
+        self.assertEqual(get_param("/wgc/wg4/wg5/childparam"), "wg5")
+
     ## test 'command' attribute
     def test_commandandfile(self):
-        dir = rospkg.RosPack().get_path('roslaunch')
-        with open(os.path.join(dir, 'resources', 'example.launch'), 'r') as f:
+        dir = rospkg.RosPack().get_path("roslaunch")
+        with open(os.path.join(dir, "resources", "example.launch"), "r") as f:
             text_data = f.read()
-        with open(os.path.join(dir, 'resources', 'example.launch'), 'rb') as f:
+        with open(os.path.join(dir, "resources", "example.launch"), "rb") as f:
             binary_data = f.read()
 
         # test 'command' attribute
-        if os.name != 'nt':  # skip testcase for `cat` command in Windows
+        if os.name != "nt":  # skip testcase for `cat` command in Windows
             self.assertEqual(get_param("commandoutput"), binary_data.decode())
         # test 'textfile' attribute
         self.assertEqual(get_param("textfile"), text_data)
@@ -119,7 +122,7 @@ class TestParamsBasic(unittest.TestCase):
         bindata = get_param("binaryfile")
         self.assertTrue(isinstance(bindata, Binary))
         self.assertEqual(bindata.data, binary_data)
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     rostest.rosrun(PKG, sys.argv[0], TestParamsBasic, sys.argv)
-    

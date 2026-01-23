@@ -37,15 +37,16 @@ import struct
 import unittest
 import time
 
+
 # test rospy API verifies that the rospy module exports the required symbols
 class TestRospyApi(unittest.TestCase):
-
     def test_msg(self):
         # rospy.Message really only exists at the client level, as the internal
         # implementation is built around the roslib reference, so we put the test here
 
         import rospy
-        #trip wires against Message API
+
+        # trip wires against Message API
         m = rospy.Message()
         try:
             from cStringIO import StringIO
@@ -54,12 +55,11 @@ class TestRospyApi(unittest.TestCase):
         buff = StringIO()
         m.serialize(buff)
         self.assertEqual(0, buff.tell())
-        m.deserialize('')
-        
+        m.deserialize("")
+
     def test_anymsg(self):
         # rospy.AnyMsg really only exists at the client level as nothing within
         # rospy uses its functionality.
-        
 
         try:
             from cStringIO import StringIO
@@ -67,7 +67,8 @@ class TestRospyApi(unittest.TestCase):
             from io import StringIO
         import rospy
         import rospy.exceptions
-        #trip wires against AnyMsg API
+
+        # trip wires against AnyMsg API
         m = rospy.AnyMsg()
         try:
             m.serialize(StringIO())
@@ -75,35 +76,37 @@ class TestRospyApi(unittest.TestCase):
         except rospy.exceptions.ROSException:
             pass
 
-        teststr = 'foostr-%s'%time.time()
+        teststr = "foostr-%s" % time.time()
         m.deserialize(teststr)
         self.assertEqual(teststr, m._buff)
 
-        #test AnyMsg ctor error checking
+        # test AnyMsg ctor error checking
         try:
-            m = rospy.AnyMsg('foo')
+            m = rospy.AnyMsg("foo")
             self.fail("AnyMsg ctor should not allow args")
-        except: pass
+        except:
+            pass
 
     def test_rospy_api(self):
         import rospy
 
         # just a laundry list of API methods to make sure that they still exist
-        
+
         # removed
         try:
             rospy.add_shutdown_hook
             self.fail("add_shutdown_hookshould not longer be top-level API")
-        except AttributeError: pass
+        except AttributeError:
+            pass
 
         rospy.DEBUG
         rospy.INFO
         rospy.WARN
         rospy.ERROR
         rospy.FATAL
-        
+
         rospy.get_caller_id
-        rospy.get_name        
+        rospy.get_name
         rospy.get_master
         rospy.get_namespace
         rospy.get_published_topics
@@ -116,8 +119,8 @@ class TestRospyApi(unittest.TestCase):
         rospy.logdebug
         rospy.logerr
         rospy.logfatal
-        rospy.loginfo        
-        rospy.logout #deprecated
+        rospy.loginfo
+        rospy.logout  # deprecated
         rospy.logwarn
         rospy.logdebug_throttle
         rospy.logerr_throttle
@@ -145,7 +148,7 @@ class TestRospyApi(unittest.TestCase):
         rospy.get_param_names
         rospy.has_param
         rospy.set_param
-        rospy.search_param        
+        rospy.search_param
 
         rospy.AnyMsg
         rospy.Duration
@@ -161,7 +164,7 @@ class TestRospyApi(unittest.TestCase):
         rospy.Service
         rospy.ServiceProxy
         rospy.SubscribeListener
-        rospy.Subscriber        
+        rospy.Subscriber
         rospy.Time
         rospy.TransportException
         rospy.TransportTerminated

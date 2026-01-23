@@ -43,9 +43,9 @@ import sys
 import hashlib
 
 try:
-    from cStringIO import StringIO # Python 2.x
+    from cStringIO import StringIO  # Python 2.x
 except ImportError:
-    from io import StringIO # Python 3.x
+    from io import StringIO  # Python 3.x
 
 from . import msgs
 
@@ -54,6 +54,7 @@ from .msg_loader import load_depends
 from .srvs import SrvSpec
 from . import names
 from . import base
+
 
 def compute_md5_text(msg_context, spec):
     """
@@ -67,15 +68,15 @@ def compute_md5_text(msg_context, spec):
     """
     package = spec.package
 
-    buff = StringIO()    
+    buff = StringIO()
 
     for c in spec.constants:
-        buff.write("%s %s=%s\n"%(c.type, c.name, c.val_text))
+        buff.write("%s %s=%s\n" % (c.type, c.name, c.val_text))
     for type_, name in zip(spec.types, spec.names):
         msg_type = bare_msg_type(type_)
         # md5 spec strips package names
         if is_builtin(msg_type):
-            buff.write("%s %s\n"%(type_, name))
+            buff.write("%s %s\n" % (type_, name))
         else:
             # recursively generate md5 for subtype.  have to build up
             # dependency representation for subtype in order to
@@ -84,9 +85,10 @@ def compute_md5_text(msg_context, spec):
             sub_pkg = sub_pkg or package
             sub_spec = msg_context.get_registered(msg_type)
             sub_md5 = compute_md5(msg_context, sub_spec)
-            buff.write("%s %s\n"%(sub_md5, name))
-    
-    return buff.getvalue().strip() # remove trailing new line
+            buff.write("%s %s\n" % (sub_md5, name))
+
+    return buff.getvalue().strip()  # remove trailing new line
+
 
 def _compute_hash(msg_context, spec, hash):
     """
@@ -94,7 +96,7 @@ def _compute_hash(msg_context, spec, hash):
 
     :param msg_context: :class:`MsgContext` instance to load dependencies into/from.
     :param spec: :class:`MsgSpec` to compute hash for.
-    :param hash: hash instance  
+    :param hash: hash instance
     """
     # accumulate the hash
     # - root file
@@ -104,8 +106,9 @@ def _compute_hash(msg_context, spec, hash):
         hash.update(compute_md5_text(msg_context, spec.request).encode())
         hash.update(compute_md5_text(msg_context, spec.response).encode())
     else:
-        raise Exception("[%s] is not a message or service"%spec)   
+        raise Exception("[%s] is not a message or service" % spec)
     return hash.hexdigest()
+
 
 def compute_md5(msg_context, spec):
     """
@@ -117,8 +120,10 @@ def compute_md5(msg_context, spec):
     """
     return _compute_hash(msg_context, spec, hashlib.md5())
 
+
 ## alias
 compute_md5_v2 = compute_md5
+
 
 def _unique_deps(dep_list):
     uniques = []
@@ -126,7 +131,8 @@ def _unique_deps(dep_list):
         if d not in uniques:
             uniques.append(d)
     return uniques
-        
+
+
 def compute_full_text(msg_context, spec):
     """
     Compute full text of message/service, including text of embedded
@@ -140,19 +146,20 @@ def compute_full_text(msg_context, spec):
     :returns: concatenated text for msg/srv file and embedded msg/srv types, ``str``
     """
     buff = StringIO()
-    sep = '='*80+'\n'
+    sep = "=" * 80 + "\n"
 
     # write the text of the top-level type
     buff.write(spec.text)
-    buff.write('\n')    
+    buff.write("\n")
     # append the text of the dependencies (embedded types).  Can't use set() as we have to preserve order.
     for d in _unique_deps(msg_context.get_all_depends(spec.full_name)):
         buff.write(sep)
-        buff.write("MSG: %s\n"%d)
+        buff.write("MSG: %s\n" % d)
         buff.write(msg_context.get_registered(d).text)
-        buff.write('\n')
+        buff.write("\n")
     # #1168: remove the trailing \n separator that is added by the concatenation logic
     return buff.getvalue()[:-1]
+
 
 def compute_full_type_name(package_name, file_name):
     """
@@ -166,9 +173,10 @@ def compute_full_type_name(package_name, file_name):
     # strip extension
     for ext in (base.EXT_MSG, base.EXT_SRV):
         if file_name.endswith(ext):
-            short_name = file_name[:-len(ext)]
+            short_name = file_name[: -len(ext)]
             break
     else:
-        raise base.MsgGenerationException("Processing file: '%s' - unknown file extension"% (file_name))
-    return "%s/%s"%(package_name, short_name)
-
+        raise base.MsgGenerationException(
+            "Processing file: '%s' - unknown file extension" % (file_name)
+        )
+    return "%s/%s" % (package_name, short_name)

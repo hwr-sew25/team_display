@@ -32,6 +32,7 @@
 
 import logging
 import os
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -43,23 +44,25 @@ from nose.tools import assert_regexp_matches
 import rosgraph.roslogging
 
 
-os.environ['ROSCONSOLE_FORMAT'] = ' '.join([
-    '${severity}',
-    '${message}',
-    '${walltime}',
-    '${walltime:%Y-%m-%d %H:%M:%S.%f}',
-    '${thread}',
-    '${logger}',
-    '${file}',
-    '${line}',
-    '${function}',
-    '${node}',
-    '${time}',
-    '${time:%Y-%m-%d %H:%M:%S.%f}',
-])
-rosgraph.roslogging.configure_logging('test_rosgraph', logging.INFO)
-loginfo = logging.getLogger('rosout').info
-rosout_logger = logging.getLogger('rosout')
+os.environ["ROSCONSOLE_FORMAT"] = " ".join(
+    [
+        "${severity}",
+        "${message}",
+        "${walltime}",
+        "${walltime:%Y-%m-%d %H:%M:%S.%f}",
+        "${thread}",
+        "${logger}",
+        "${file}",
+        "${line}",
+        "${function}",
+        "${node}",
+        "${time}",
+        "${time:%Y-%m-%d %H:%M:%S.%f}",
+    ]
+)
+rosgraph.roslogging.configure_logging("test_rosgraph", logging.INFO)
+loginfo = logging.getLogger("rosout").info
+rosout_logger = logging.getLogger("rosout")
 assert isinstance(rosout_logger.handlers[0], rosgraph.roslogging.RosStreamHandler)
 default_ros_handler = rosout_logger.handlers[0]
 
@@ -71,24 +74,25 @@ except ImportError:
 
 lout = StringIO()
 lerr = StringIO()
-test_ros_handler = rosgraph.roslogging.RosStreamHandler(colorize=False, stdout=lout, stderr=lerr)
+test_ros_handler = rosgraph.roslogging.RosStreamHandler(
+    colorize=False, stdout=lout, stderr=lerr
+)
 
 try:
     # hack to replace the stream handler with a debug version
     rosout_logger.removeHandler(default_ros_handler)
     rosout_logger.addHandler(test_ros_handler)
 
-    loginfo('on module')
+    loginfo("on module")
 
     def logging_on_function():
-        loginfo('on function')
+        loginfo("on function")
 
     logging_on_function()
 
     class LoggingOnClass(object):
-
         def __init__(self):
-            loginfo('on method')
+            loginfo("on method")
 
     LoggingOnClass()
 
@@ -96,40 +100,40 @@ try:
         this_file = os.path.abspath(__file__)
         # this is necessary to avoid test fails because of .pyc cache file
         base, ext = os.path.splitext(this_file)
-        if ext == '.pyc':
-            this_file = base + '.py'
+        if ext == ".pyc":
+            this_file = base + ".py"
 
-        for i, loc in enumerate(['module', 'function', 'method']):
-            if loc == 'module':
-                function = '<module>'
-            elif loc == 'function':
-                function = 'logging_on_function'
-            elif loc == 'method':
-                function = 'LoggingOnClass.__init__'
+        for i, loc in enumerate(["module", "function", "method"]):
+            if loc == "module":
+                function = "<module>"
+            elif loc == "function":
+                function = "logging_on_function"
+            elif loc == "method":
+                function = "LoggingOnClass.__init__"
             else:
                 raise ValueError
 
-            log_out = ' '.join([
-                'INFO',
-                'on ' + loc,
-                r'[0-9]*\.[0-9]*',
-                r'[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}',
-                '[0-9]*',
-                'rosout',
-                re.escape(this_file),
-                '[0-9]*',
-                function,
-                # depending if rospy.get_name() is available
-                '(/unnamed|<unknown_node_name>)',
-                r'[0-9]*\.[0-9]*',
-                r'[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}',
-            ])
+            log_out = " ".join(
+                [
+                    "INFO",
+                    "on " + loc,
+                    r"[0-9]*\.[0-9]*",
+                    r"[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}",
+                    "[0-9]*",
+                    "rosout",
+                    re.escape(this_file),
+                    "[0-9]*",
+                    function,
+                    # depending if rospy.get_name() is available
+                    "(/unnamed|<unknown_node_name>)",
+                    r"[0-9]*\.[0-9]*",
+                    r"[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}",
+                ]
+            )
             assert_regexp_matches(lout.getvalue().splitlines()[i], log_out)
 
 finally:
-
     # restoring default ros handler
     rosout_logger.removeHandler(test_ros_handler)
     rosout_logger.addHandler(default_ros_handler)
     # lout and lerr need to stay open while test is running
-

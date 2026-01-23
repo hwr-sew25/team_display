@@ -36,15 +36,21 @@ from __future__ import print_function
 import rospy
 import rosbag
 
+
 def sortbags(inbag, outbag):
-    rebag = rosbag.Bag(outbag, 'w')
+    rebag = rosbag.Bag(outbag, "w")
 
     try:
-        schedule = [(t, i) for i, (topic, msg, t) in enumerate(rosbag.Bag(inbag).read_messages(raw=True))]
+        schedule = [
+            (t, i)
+            for i, (topic, msg, t) in enumerate(
+                rosbag.Bag(inbag).read_messages(raw=True)
+            )
+        ]
 
         schedule = [i for (t, i) in sorted(schedule)]
         print(schedule)
-    
+
         stage = {}
         for i, (topic, msg, t) in enumerate(rosbag.Bag(inbag).read_messages(raw=True)):
             stage[i] = (topic, msg, t)
@@ -59,8 +65,10 @@ def sortbags(inbag, outbag):
     finally:
         rebag.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import sys
+
     if len(sys.argv) == 3:
         sortbags(sys.argv[1], sys.argv[2])
     else:

@@ -33,46 +33,47 @@
 import os
 import sys
 
+
 def test_vars():
     import rosgraph.rosenv
-    assert 'ROS_MASTER_URI' == rosgraph.rosenv.ROS_MASTER_URI
-    assert rosgraph.rosenv.ROS_IP == 'ROS_IP'
-    assert rosgraph.rosenv.ROS_HOSTNAME == 'ROS_HOSTNAME'
-    assert rosgraph.rosenv.ROS_NAMESPACE == 'ROS_NAMESPACE'
-    
+
+    assert "ROS_MASTER_URI" == rosgraph.rosenv.ROS_MASTER_URI
+    assert rosgraph.rosenv.ROS_IP == "ROS_IP"
+    assert rosgraph.rosenv.ROS_HOSTNAME == "ROS_HOSTNAME"
+    assert rosgraph.rosenv.ROS_NAMESPACE == "ROS_NAMESPACE"
+
+
 def test_get_master_uri():
     from rosgraph.rosenv import get_master_uri
+
     val = get_master_uri()
-    if 'ROS_MASTER_URI' in os.environ:
-        assert val == os.environ['ROS_MASTER_URI']
+    if "ROS_MASTER_URI" in os.environ:
+        assert val == os.environ["ROS_MASTER_URI"]
 
     # environment override
-    val = get_master_uri(env=dict(ROS_MASTER_URI='foo'))
-    assert val == 'foo'
+    val = get_master_uri(env=dict(ROS_MASTER_URI="foo"))
+    assert val == "foo"
 
     # argv override precedence, first arg wins
-    val = get_master_uri(env=dict(ROS_MASTER_URI='foo'), argv=['__master:=bar', '__master:=bar2'])
-    assert val == 'bar'
+    val = get_master_uri(
+        env=dict(ROS_MASTER_URI="foo"), argv=["__master:=bar", "__master:=bar2"]
+    )
+    assert val == "bar"
 
     import rosgraph.rosenv
+
     # empty env
     assert rosgraph.rosenv.DEFAULT_MASTER_URI == get_master_uri(env={})
-    
+
     # invalid argv
     try:
-        val = get_master_uri(argv=['__master:='])
+        val = get_master_uri(argv=["__master:="])
         assert False, "should have failed"
     except ValueError:
         pass
     # invalid argv
     try:
-        val = get_master_uri(argv=['__master:=foo:=bar'])
+        val = get_master_uri(argv=["__master:=foo:=bar"])
         assert False, "should have failed"
     except ValueError:
         pass
-
-    
-    
-
-    
-    

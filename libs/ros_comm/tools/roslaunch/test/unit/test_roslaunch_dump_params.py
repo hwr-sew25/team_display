@@ -32,77 +32,87 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys 
+import sys
 import time
 import unittest
 import yaml
 
 from subprocess import Popen, PIPE, check_call, call
 
-class TestDumpParams(unittest.TestCase):
 
+class TestDumpParams(unittest.TestCase):
     def setUp(self):
         pass
 
     def test_roslaunch(self):
         # network is initialized
-        cmd = 'roslaunch'
+        cmd = "roslaunch"
 
         # Smoke test for testing parameters
-        p = Popen([cmd, '--dump-params', 'roslaunch', 'noop.launch'], stdout = PIPE)
+        p = Popen([cmd, "--dump-params", "roslaunch", "noop.launch"], stdout=PIPE)
         o, e = p.communicate()
-        self.assertTrue(p.returncode == 0, "Return code nonzero for param dump! Code: %d" % (p.returncode))
+        self.assertTrue(
+            p.returncode == 0,
+            "Return code nonzero for param dump! Code: %d" % (p.returncode),
+        )
 
-        self.assertEqual({'/noop': 'noop'}, yaml.safe_load(o))
+        self.assertEqual({"/noop": "noop"}, yaml.safe_load(o))
 
-        p = Popen([cmd, '--dump-params', 'roslaunch', 'test-dump-rosparam.launch'], stdout = PIPE)
+        p = Popen(
+            [cmd, "--dump-params", "roslaunch", "test-dump-rosparam.launch"],
+            stdout=PIPE,
+        )
         o, e = p.communicate()
-        self.assertTrue(p.returncode == 0, "Return code nonzero for param dump! Code: %d" % (p.returncode))
+        self.assertTrue(
+            p.returncode == 0,
+            "Return code nonzero for param dump! Code: %d" % (p.returncode),
+        )
 
         val = {
-            '/string1': 'bar',
-            '/dict1/head': 1,
-            '/dict1/shoulders': 2,
-            '/dict1/knees': 3,
-            '/dict1/toes': 4,
-
-            '/rosparam/string1': 'bar',
-            '/rosparam/dict1/head': 1,
-            '/rosparam/dict1/shoulders': 2,
-            '/rosparam/dict1/knees': 3,
-            '/rosparam/dict1/toes': 4,
-            
-            '/node_rosparam/string1': 'bar',
-            '/node_rosparam/dict1/head': 1,
-            '/node_rosparam/dict1/shoulders': 2,
-            '/node_rosparam/dict1/knees': 3,
-            '/node_rosparam/dict1/toes': 4,
-            '/node_rosparam/tilde1': 'foo',
-            '/node_rosparam/local_param': 'baz',
-
-            '/node_rosparam2/tilde1': 'foo',
-
-            '/inline_str': 'value1',
-            '/inline_list': [1, 2, 3, 4],
-            '/inline_dict/key1': 'value1',
-            '/inline_dict/key2': 'value2',
-
-            '/inline_dict2/key3': 'value3',
-            '/inline_dict2/key4': 'value4',
-            
-            '/override/key1': 'override1',
-            '/override/key2': 'value2',
-            '/noparam1': 'value1',
-            '/noparam2': 'value2',
-            }
+            "/string1": "bar",
+            "/dict1/head": 1,
+            "/dict1/shoulders": 2,
+            "/dict1/knees": 3,
+            "/dict1/toes": 4,
+            "/rosparam/string1": "bar",
+            "/rosparam/dict1/head": 1,
+            "/rosparam/dict1/shoulders": 2,
+            "/rosparam/dict1/knees": 3,
+            "/rosparam/dict1/toes": 4,
+            "/node_rosparam/string1": "bar",
+            "/node_rosparam/dict1/head": 1,
+            "/node_rosparam/dict1/shoulders": 2,
+            "/node_rosparam/dict1/knees": 3,
+            "/node_rosparam/dict1/toes": 4,
+            "/node_rosparam/tilde1": "foo",
+            "/node_rosparam/local_param": "baz",
+            "/node_rosparam2/tilde1": "foo",
+            "/inline_str": "value1",
+            "/inline_list": [1, 2, 3, 4],
+            "/inline_dict/key1": "value1",
+            "/inline_dict/key2": "value2",
+            "/inline_dict2/key3": "value3",
+            "/inline_dict2/key4": "value4",
+            "/override/key1": "override1",
+            "/override/key2": "value2",
+            "/noparam1": "value1",
+            "/noparam2": "value2",
+        }
         output_val = yaml.safe_load(o)
         if not val == output_val:
             for k, v in val.items():
                 if k not in output_val:
-                    self.fail("key [%s] not in output: %s"%(k, output_val))
+                    self.fail("key [%s] not in output: %s" % (k, output_val))
                 elif v != output_val[k]:
-                    self.fail("key [%s] value [%s] does not match output: %s"%(k, v, output_val[k])) 
+                    self.fail(
+                        "key [%s] value [%s] does not match output: %s"
+                        % (k, v, output_val[k])
+                    )
         self.assertEqual(val, output_val)
-        for k in ('/node_rosparam/tilde2', '/node_rosparam2/tilde2', '/node_rosparam2/local_param'):
+        for k in (
+            "/node_rosparam/tilde2",
+            "/node_rosparam2/tilde2",
+            "/node_rosparam2/local_param",
+        ):
             if k in output_val:
-                self.fail("key [%s] should not be in output: %s"%(k, output_val))
+                self.fail("key [%s] should not be in output: %s" % (k, output_val))

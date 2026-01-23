@@ -56,6 +56,7 @@ def platform_supported(rospack, pkg, os, version):
 class PackageFlagTracker:
     """This will use the dependency tracker to test if packages are
     blacklisted and all their dependents."""
+
     def __init__(self, dependency_tracker, os_name=None, os_version=None):
         if not os_name and not os_version:
             try:
@@ -63,7 +64,9 @@ class PackageFlagTracker:
                 self.os_name = osd.get_codename()
                 self.os_version = osd.get_version()
             except rospkg.os_detect.OsNotDetected:
-                sys.stderr.write('Could not detect OS. platform detection will not work\n')
+                sys.stderr.write(
+                    "Could not detect OS. platform detection will not work\n"
+                )
         else:
             self.os_name = os_name
             self.os_version = os_version
@@ -95,23 +98,23 @@ class PackageFlagTracker:
         rospack = self.rospack
         path = rospack.get_path(package)
 
-        if os.path.exists(os.path.join(path, 'ROS_BUILD_BLACKLIST')):
+        if os.path.exists(os.path.join(path, "ROS_BUILD_BLACKLIST")):
             self.register_blacklisted(package, package)
             for p in rospack.get_depends_on(package, implicit=True):
                 self.register_blacklisted(package, p)
 
-        if os.path.exists(os.path.join(path, 'ROS_BUILD_BLACKLIST_OSX')):
+        if os.path.exists(os.path.join(path, "ROS_BUILD_BLACKLIST_OSX")):
             self.register_blacklisted_osx(package, package)
             for p in rospack.get_depends_on(package, implicit=True):
                 self.register_blacklisted_osx(package, p)
 
         # NO_BUILD if marker file or catkin attribute in manifest
-        if os.path.exists(os.path.join(path, 'ROS_NOBUILD')):
+        if os.path.exists(os.path.join(path, "ROS_NOBUILD")):
             self.nobuild.add(package)
         if self.rospack.get_manifest(package).is_catkin:
             self.nobuild.add(package)
 
-        if not os.path.exists(os.path.join(path, 'Makefile')):
+        if not os.path.exists(os.path.join(path, "Makefile")):
             self.nomakefile.add(package)
 
         self.packages_tested.add(package)
@@ -167,8 +170,10 @@ class PackageFlagTracker:
     def add_nobuild(self, package):
         if self.has_nobuild(package):
             return True
-        with open(os.path.join(self.rospack.get_path(package), 'ROS_NOBUILD'), 'w') as f:
-            f.write('created by rosmake to mark as installed')
+        with open(
+            os.path.join(self.rospack.get_path(package), "ROS_NOBUILD"), "w"
+        ) as f:
+            f.write("created by rosmake to mark as installed")
             self.nobuild.add(package)
             return True
         return False
@@ -177,7 +182,7 @@ class PackageFlagTracker:
         if not self.has_nobuild(package):
             return True
         try:
-            os.remove(os.path.join(self.rospack.get_path(package), 'ROS_NOBUILD'))
+            os.remove(os.path.join(self.rospack.get_path(package), "ROS_NOBUILD"))
             self.nobuild.remove(package)
             return True
         except Exception:
@@ -189,37 +194,47 @@ class PackageFlagTracker:
     def build_failed(self, package):
         return package in self.build_failed
 
-    def can_build(self, pkg, use_blacklist=False, failed_packages=[], use_makefile=True):
+    def can_build(
+        self, pkg, use_blacklist=False, failed_packages=[], use_makefile=True
+    ):
         """
         Return (buildable, error, "reason why not")
         """
-        output_str = ''
+        output_str = ""
         output_state = True
         buildable = True
 
-        previously_failed_pkgs = [pk for pk in failed_packages if pk in self.dependency_tracker.get_deps(pkg)]
+        previously_failed_pkgs = [
+            pk for pk in failed_packages if pk in self.dependency_tracker.get_deps(pkg)
+        ]
         if len(previously_failed_pkgs) > 0:
             buildable = False
             output_state = False
-            output_str += ' Package %s cannot be built for dependent package(s) %s failed. \n' % (pkg, previously_failed_pkgs)
+            output_str += (
+                " Package %s cannot be built for dependent package(s) %s failed. \n"
+                % (pkg, previously_failed_pkgs)
+            )
 
         if use_blacklist:
             black_listed_dependents = self.is_blacklisted(pkg)
             if len(black_listed_dependents) > 0:
                 buildable = False
-                output_str += 'Cannot build %s ROS_BUILD_BLACKLIST found in packages %s' % (pkg, black_listed_dependents)
+                output_str += (
+                    "Cannot build %s ROS_BUILD_BLACKLIST found in packages %s"
+                    % (pkg, black_listed_dependents)
+                )
 
         if self.has_nobuild(pkg):
             buildable = False
             output_state = True  # dependents are ok, it should already be built
-            output_str += 'ROS_NOBUILD in package %s\n' % pkg
+            output_str += "ROS_NOBUILD in package %s\n" % pkg
 
         if use_makefile and not self.has_makefile(pkg):
             output_state = True  # dependents are ok no need to build
             buildable = False
-            output_str += ' No Makefile in package %s\n' % pkg
+            output_str += " No Makefile in package %s\n" % pkg
 
-        if output_str and output_str[-1] == '\n':
+        if output_str and output_str[-1] == "\n":
             output_str = output_str[:-1]
 
         return (buildable, output_state, output_str)

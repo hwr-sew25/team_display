@@ -41,13 +41,16 @@ from roswtf.rules import warning_rule, error_rule
 import rospkg
 
 _packages_of_cache = {}
+
+
 def _packages_of(rosstack, d):
     if d in _packages_of_cache:
         return _packages_of_cache[d]
     else:
         _packages_of_cache[d] = pkgs = rosstack.packages_of(d)
         return pkgs
-                
+
+
 def manifest_depends(ctx):
     # This rule should probably be cache optimized
     errors = []
@@ -55,7 +58,7 @@ def manifest_depends(ctx):
     rosstack = rospkg.RosStack()
 
     stack_list = rosstack.list()
-    #print stack_list
+    # print stack_list
     for s in ctx.stacks:
         try:
             s_deps = []
@@ -63,11 +66,11 @@ def manifest_depends(ctx):
             for p in s_pkgs:
                 s_deps.extend(rospack.get_depends(p, implicit=False))
             m = rosstack.get_manifest(s)
-            m_file = os.path.join(rosstack.get_path(s), 'stack.xml')
+            m_file = os.path.join(rosstack.get_path(s), "stack.xml")
             for d in m.depends:
                 if not d.name in stack_list:
-                    errors.append("%s (%s does not exist)"%(m_file, d))
-                elif d.name in ['ros', 'ros_comm']:
+                    errors.append("%s (%s does not exist)" % (m_file, d))
+                elif d.name in ["ros", "ros_comm"]:
                     # ros dependency always exists. ros_comm
                     # dependency has implicit connections (msggen), so
                     # we ignore.
@@ -75,27 +78,26 @@ def manifest_depends(ctx):
                 else:
                     pkgs = _packages_of(rosstack, d.name)
                     # check no longer works due to rosdeps chains
-                    #if not [p for p in pkgs if p in s_deps]:
+                    # if not [p for p in pkgs if p in s_deps]:
                     #    errors.append("%s (%s appears to be an unnecessary depend)"%(m_file, d))
         except rospkg.ResourceNotFound:
             # report with a different rule
             pass
     return errors
 
+
 warnings = [
     (manifest_depends, "The following stack.xml file list invalid dependencies:"),
-    
-    ]
-errors = [
-    ]
+]
+errors = []
+
 
 def wtf_check(ctx):
     # no package in context to verify
     if not ctx.stacks:
         return
-    
+
     for r in warnings:
         warning_rule(r, r[0](ctx), ctx)
     for r in errors:
         error_rule(r, r[0](ctx), ctx)
-

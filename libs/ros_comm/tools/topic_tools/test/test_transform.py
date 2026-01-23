@@ -38,21 +38,21 @@ import sys
 from std_msgs.msg import *
 
 
-PKG = 'topic_tools'
-NAME = 'transform_sub'
+PKG = "topic_tools"
+NAME = "transform_sub"
 
 
 class TransformSub(unittest.TestCase):
+    def test_transform_sub(self):
+        rospy.init_node(NAME)
+        value = rospy.get_param("~value", 1.0)
 
-  def test_transform_sub(self):
-    rospy.init_node(NAME)
-    value = rospy.get_param("~value", 1.0)
+        try:
+            msg = rospy.wait_for_message("input", Float32, 1.0)
+            self.assertEqual(msg.data, value)
+        except rospy.ROSException as e:
+            self.fail(str(e))
 
-    try:
-        msg = rospy.wait_for_message("input", Float32, 1.0)
-        self.assertEqual(msg.data, value)
-    except rospy.ROSException as e:
-        self.fail(str(e))
 
-if __name__ == '__main__':
-  rostest.rosrun(PKG, NAME, TransformSub, sys.argv)
+if __name__ == "__main__":
+    rostest.rosrun(PKG, NAME, TransformSub, sys.argv)

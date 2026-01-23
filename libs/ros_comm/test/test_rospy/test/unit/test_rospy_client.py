@@ -44,12 +44,11 @@ import rospy
 
 
 class TestRospyClient(unittest.TestCase):
-    
     def test_init_node(self):
         failed = True
         try:
             # #1822
-            rospy.init_node('ns/node')
+            rospy.init_node("ns/node")
         except ValueError:
             failed = False
         self.assertFalse(failed, "init_node allowed '/' in name")
@@ -75,36 +74,41 @@ class TestRospyClient(unittest.TestCase):
         except rospy.ROSInitException:
             failed = False
         self.assertFalse(failed, "spin() should failed if not initialized")
-        
+
     def test_myargv(self):
         orig_argv = sys.argv
         try:
             from rospy.client import myargv
+
             args = myargv()
             self.assertEqual(args, sys.argv)
-            self.assertEqual(['foo', 'bar', 'baz'], myargv(['foo','bar', 'baz']))
-            self.assertEqual(['-foo', 'bar', '-baz'], myargv(['-foo','bar', '-baz']))
-            
-            self.assertEqual(['foo'], myargv(['foo','bar:=baz']))
-            self.assertEqual(['foo','-bar:=baz'], myargv(['foo','-bar:=baz']))
+            self.assertEqual(["foo", "bar", "baz"], myargv(["foo", "bar", "baz"]))
+            self.assertEqual(["-foo", "bar", "-baz"], myargv(["-foo", "bar", "-baz"]))
+
+            self.assertEqual(["foo"], myargv(["foo", "bar:=baz"]))
+            self.assertEqual(["foo", "-bar:=baz"], myargv(["foo", "-bar:=baz"]))
         finally:
             sys.argv = orig_argv
-    
+
     def test_load_command_line_node_params(self):
-        
         from rospy.client import load_command_line_node_params
-        
+
         assert {} == load_command_line_node_params([])
-        assert {} == load_command_line_node_params(['a', 'b', 'c'])        
-        assert {} == load_command_line_node_params(['a:=b'])        
-        assert {'a': 'b'} == load_command_line_node_params(['_a:=b'])        
-        assert {'a': 'b', 'foo': 'bar'} == load_command_line_node_params(['_a:=b', 'blah', '_foo:=bar', 'baz'])        
+        assert {} == load_command_line_node_params(["a", "b", "c"])
+        assert {} == load_command_line_node_params(["a:=b"])
+        assert {"a": "b"} == load_command_line_node_params(["_a:=b"])
+        assert {"a": "b", "foo": "bar"} == load_command_line_node_params(
+            ["_a:=b", "blah", "_foo:=bar", "baz"]
+        )
         # test yaml unmarshal
-        assert {'a': 1} == load_command_line_node_params(['_a:=1'])        
+        assert {"a": 1} == load_command_line_node_params(["_a:=1"])
         try:
-            load_command_line_node_params(['_a:=b:=c'])        
+            load_command_line_node_params(["_a:=b:=c"])
         except rospy.exceptions.ROSInitException:
             pass
 
-if __name__ == '__main__':
-    rosunit.unitrun('test_rospy', sys.argv[0], TestRospyClient, coverage_packages=['rospy.client'])
+
+if __name__ == "__main__":
+    rosunit.unitrun(
+        "test_rospy", sys.argv[0], TestRospyClient, coverage_packages=["rospy.client"]
+    )

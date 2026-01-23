@@ -53,7 +53,7 @@ def get_depends(package, rospack):
     return [v for v in vals if not rospack.get_manifest(v).is_catkin]
 
 
-def load_manifest(package_name, bootstrap_version='0.7'):
+def load_manifest(package_name, bootstrap_version="0.7"):
     """
     Update the Python sys.path with package's dependencies
 
@@ -71,17 +71,17 @@ def _append_package_paths(manifest_, paths, pkg_dir):
     :param pkg_dir: package's filesystem directory path, ``str``
     :param paths: list of paths, ``[str]``
     """
-    exports = manifest_.get_export('python', 'path')
+    exports = manifest_.get_export("python", "path")
     if exports:
         for export in exports:
-            if ':' in export:
-                export = export.split(':')
+            if ":" in export:
+                export = export.split(":")
             else:
                 export = [export]
             for e in export:
-                paths.append(e.replace('${prefix}', pkg_dir))
+                paths.append(e.replace("${prefix}", pkg_dir))
     else:
-        dirs = [os.path.join(pkg_dir, d) for d in ['src', 'lib']]
+        dirs = [os.path.join(pkg_dir, d) for d in ["src", "lib"]]
         paths.extend([d for d in dirs if os.path.isdir(d)])
 
 

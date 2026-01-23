@@ -38,28 +38,35 @@ import struct
 import unittest
 import time
 
+
 class FakeSocket(object):
     def __init__(self):
-        self.data = ''
+        self.data = ""
         self.sockopt = None
+
     def fileno(self):
         # fool select logic by giving it stdout fileno
         return 1
+
     def setblocking(self, *args):
         pass
+
     def setsockopt(self, *args):
         self.sockopt = args
+
     def send(self, d):
-        self.data = self.data+d
+        self.data = self.data + d
         return len(d)
+
     def sendall(self, d):
-        self.data = self.data+d
+        self.data = self.data + d
+
     def close(self):
         pass
 
+
 # test service implementation
 class TestRospyTcprosService(unittest.TestCase):
-
     def test_convert_return_to_response(self):
         import rospy
         from rospy.impl.tcpros_service import convert_return_to_response
@@ -67,84 +74,88 @@ class TestRospyTcprosService(unittest.TestCase):
 
         cls = AddTwoIntsResponse
         v = cls(3)
-        
+
         # test various ways that a user could reasonable return a
         # value for a single-arg message. This is actually our hardest
         # case.
         self.assertEqual(v, convert_return_to_response(v, cls))
         self.assertEqual(v, convert_return_to_response(3, cls))
-        self.assertEqual(v, convert_return_to_response((3), cls))        
-        self.assertEqual(v, convert_return_to_response([3], cls))        
-        self.assertEqual(v, convert_return_to_response({'sum':3}, cls))
-        for bad in [[1, 2, 3], {'fake': 1}]:
+        self.assertEqual(v, convert_return_to_response((3), cls))
+        self.assertEqual(v, convert_return_to_response([3], cls))
+        self.assertEqual(v, convert_return_to_response({"sum": 3}, cls))
+        for bad in [[1, 2, 3], {"fake": 1}]:
             try:
                 convert_return_to_response(bad, cls)
-                self.fail("should have raised: %s"%str(bad))
+                self.fail("should have raised: %s" % str(bad))
             except rospy.ServiceException:
                 pass
 
         # test multi-arg services
         from test_rospy.srv import MultipleAddTwoIntsResponse
+
         cls = MultipleAddTwoIntsResponse
         v = cls(1, 2)
         self.assertEqual(v, convert_return_to_response(v, cls))
-        self.assertEqual(v, convert_return_to_response((1, 2), cls))        
-        self.assertEqual(v, convert_return_to_response([1, 2], cls))        
-        self.assertEqual(v, convert_return_to_response({'ab':1, 'cd': 2}, cls))
-        for bad in [1, AddTwoIntsResponse(), [1, 2, 3], {'fake': 1}]:
+        self.assertEqual(v, convert_return_to_response((1, 2), cls))
+        self.assertEqual(v, convert_return_to_response([1, 2], cls))
+        self.assertEqual(v, convert_return_to_response({"ab": 1, "cd": 2}, cls))
+        for bad in [1, AddTwoIntsResponse(), [1, 2, 3], {"fake": 1}]:
             try:
                 convert_return_to_response(bad, cls)
-                self.fail("should have raised: %s"%str(bad))
+                self.fail("should have raised: %s" % str(bad))
             except rospy.ServiceException:
                 pass
 
         # test response with single, array field
         from test_rospy.srv import ListReturnResponse
+
         cls = ListReturnResponse
         v = cls([1, 2, 3])
         self.assertEqual(v, convert_return_to_response(v, cls))
-        self.assertEqual(v, convert_return_to_response(((1, 2, 3),), cls))        
+        self.assertEqual(v, convert_return_to_response(((1, 2, 3),), cls))
         self.assertEqual(v, convert_return_to_response(([1, 2, 3],), cls))
-        self.assertEqual(v, convert_return_to_response([[1, 2, 3]], cls))        
-        self.assertEqual(v, convert_return_to_response({'abcd':[1,2,3]}, cls))
-        for bad in [[1, 2, 3], {'fake': 1}]:
+        self.assertEqual(v, convert_return_to_response([[1, 2, 3]], cls))
+        self.assertEqual(v, convert_return_to_response({"abcd": [1, 2, 3]}, cls))
+        for bad in [[1, 2, 3], {"fake": 1}]:
             try:
                 convert_return_to_response(bad, cls)
-                self.fail("should have raised: %s"%str(bad))
+                self.fail("should have raised: %s" % str(bad))
             except rospy.ServiceException:
                 pass
 
         # test with empty response
         from test_rospy.srv import EmptySrvResponse
+
         cls = EmptySrvResponse
         v = cls()
         # - only valid return values are empty list, empty dict and a response instance
         self.assertEqual(v, convert_return_to_response(v, cls))
         self.assertEqual(v, convert_return_to_response([], cls))
         self.assertEqual(v, convert_return_to_response({}, cls))
-        
+
         # #2185: currently empty does not do any checking whatsoever,
         # disabling this test as it is not convert()s fault
         if 0:
-            for bad in [1, AddTwoIntsResponse(), [1, 2, 3], {'fake': 1}]:
+            for bad in [1, AddTwoIntsResponse(), [1, 2, 3], {"fake": 1}]:
                 try:
                     convert_return_to_response(bad, cls)
-                    self.fail("should have raised: %s"%str(bad))
+                    self.fail("should have raised: %s" % str(bad))
                 except rospy.ServiceException:
                     pass
-        
+
     def test_service_connection_handler(self):
         import test_rospy.srv
-        from rospy.impl.registration import get_service_manager        
+        from rospy.impl.registration import get_service_manager
         import rospy.service
 
         sock = FakeSocket()
         from rospy.impl.tcpros_service import service_connection_handler
-        client_addr = '10.0.0.1'
+
+        client_addr = "10.0.0.1"
 
         # check error conditions on missing headers
         self.assertTrue("Missing" in service_connection_handler(sock, client_addr, {}))
-        header = { 'service' : '/service', 'md5sum': '*', 'callerid': '/bob' }
+        header = {"service": "/service", "md5sum": "*", "callerid": "/bob"}
         for k in header:
             c = header.copy()
             del c[k]
@@ -153,36 +164,35 @@ class TestRospyTcprosService(unittest.TestCase):
             self.assertTrue(k in msg, msg)
 
         # check error condition on invalid service
-        header['service'] = '/doesnotexist'
+        header["service"] = "/doesnotexist"
         msg = service_connection_handler(sock, client_addr, header)
-        self.assertTrue('is not a provider' in msg, msg)
+        self.assertTrue("is not a provider" in msg, msg)
 
         # check invalid md5sums
 
-        name = '/service'
+        name = "/service"
         sm = get_service_manager()
-        fake_service = \
-            rospy.service._Service(name, test_rospy.srv.EmptySrv)
+        fake_service = rospy.service._Service(name, test_rospy.srv.EmptySrv)
         sm.register(name, fake_service)
-        
-        header['service'] = name
-        header['md5sum'] = 'X'
+
+        header["service"] = name
+        header["md5sum"] = "X"
 
         msg = service_connection_handler(sock, client_addr, header)
-        self.assertTrue('md5sums do not match' in msg, msg)
-        
-        
+        self.assertTrue("md5sums do not match" in msg, msg)
+
     def test_TCPROSServiceClient(self):
         import rospy.impl.transport
-        from rospy.impl.tcpros_service import TCPROSServiceClient        
+        from rospy.impl.tcpros_service import TCPROSServiceClient
         import test_rospy.srv
 
-        callerid = 'test_TCPROSServiceClient'
+        callerid = "test_TCPROSServiceClient"
         import rospy.names
+
         rospy.names._set_caller_id(callerid)
 
-        #name, pub_data_class
-        name = 'name-%s'%time.time()
+        # name, pub_data_class
+        name = "name-%s" % time.time()
         srv_data_class = test_rospy.srv.EmptySrv
         p = TCPROSServiceClient(name, srv_data_class)
         self.assertEqual(name, p.resolved_name)
@@ -194,30 +204,30 @@ class TestRospyTcprosService(unittest.TestCase):
         self.assertTrue(1, p.buff_size)
 
         fields = p.get_header_fields()
-        self.assertEqual(name, fields['service'])
-        self.assertEqual(srv_data_class._md5sum, fields['md5sum'])
+        self.assertEqual(name, fields["service"])
+        self.assertEqual(srv_data_class._md5sum, fields["md5sum"])
 
         # test custom headers
-        headers = {'sessionid': '123456', 'persistent': '1'}
+        headers = {"sessionid": "123456", "persistent": "1"}
         p = TCPROSServiceClient(name, srv_data_class, headers=headers)
-        self.assertEqual('123456', p.get_header_fields()['sessionid'])
-        self.assertEqual('1', p.get_header_fields()['persistent'])
+        self.assertEqual("123456", p.get_header_fields()["sessionid"])
+        self.assertEqual("1", p.get_header_fields()["persistent"])
         # - make sure builtins are still there
-        self.assertEqual(name, fields['service'])
-        self.assertEqual(srv_data_class._md5sum, fields['md5sum'])
-        
+        self.assertEqual(name, fields["service"])
+        self.assertEqual(srv_data_class._md5sum, fields["md5sum"])
 
     def test_TCPService(self):
         import rospy.impl.transport
-        from rospy.impl.tcpros_service import TCPService        
+        from rospy.impl.tcpros_service import TCPService
         import test_rospy.srv
 
-        callerid = 'test_TCPService'
+        callerid = "test_TCPService"
         import rospy.names
+
         rospy.names._set_caller_id(callerid)
 
-        #name, pub_data_class
-        name = 'name-%s'%time.time()
+        # name, pub_data_class
+        name = "name-%s" % time.time()
         srv_data_class = test_rospy.srv.EmptySrv
         p = TCPService(name, srv_data_class)
         self.assertEqual(name, p.resolved_name)
@@ -229,6 +239,6 @@ class TestRospyTcprosService(unittest.TestCase):
         self.assertTrue(1, p.buff_size)
 
         fields = p.get_header_fields()
-        self.assertEqual(name, fields['service'])
-        self.assertEqual(srv_data_class._md5sum, fields['md5sum'])
-        self.assertEqual(srv_data_class._type, fields['type'])        
+        self.assertEqual(name, fields["service"])
+        self.assertEqual(srv_data_class._md5sum, fields["md5sum"])
+        self.assertEqual(srv_data_class._type, fields["type"])

@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """ROS Time representation, including Duration."""
+
 from __future__ import division
 
 import numbers
@@ -51,10 +52,10 @@ class TVal(object):
     Representation is secs+nanoseconds since epoch.
     """
 
-    __slots__ = ['secs', 'nsecs']
+    __slots__ = ["secs", "nsecs"]
 
     # mimic same API as messages when being introspected
-    _slot_types = ['int32', 'int32']
+    _slot_types = ["int32", "int32"]
 
     def __init__(self, secs=0, nsecs=0):  # noqa: D205, D400
         """
@@ -65,7 +66,7 @@ class TVal(object):
         if not isinstance(secs, numbers.Integral):
             # float secs constructor
             if nsecs != 0:
-                raise ValueError('if secs is a float, nsecs cannot be set')
+                raise ValueError("if secs is a float, nsecs cannot be set")
             float_secs = secs
             secs = int(float_secs)
             nsecs = int((float_secs - secs) * 1000000000)
@@ -136,11 +137,12 @@ class TVal(object):
         return str(self.to_nsec())
 
     def __repr__(self):
-        return 'genpy.TVal[%d]' % self.to_nsec()
+        return "genpy.TVal[%d]" % self.to_nsec()
 
     def __nonzero__(self):
         """Return if time value is not zero."""
         return self.secs != 0 or self.nsecs != 0
+
     __bool__ = __nonzero__
 
     def __lt__(self, other):
@@ -176,7 +178,7 @@ class TVal(object):
 
     def __cmp__(self, other):
         if not isinstance(other, TVal):
-            raise TypeError('Cannot compare to non-TVal')
+            raise TypeError("Cannot compare to non-TVal")
         a = self.to_nsec()
         b = other.to_nsec()
         return (a > b) - (a < b)
@@ -195,7 +197,7 @@ class Time(TVal):
     seconds. Time instances are mutable.
     """
 
-    __slots__ = ['secs', 'nsecs']
+    __slots__ = ["secs", "nsecs"]
 
     def __init__(self, secs=0, nsecs=0):
         """
@@ -208,7 +210,7 @@ class Time(TVal):
         """
         super(Time, self).__init__(secs, nsecs)
         if self.secs < 0:
-            raise TypeError('time values must be positive')
+            raise TypeError("time values must be positive")
 
     def __getstate__(self):
         """Support for Python pickling."""
@@ -230,7 +232,7 @@ class Time(TVal):
         return super(Time, self).__hash__()
 
     def __repr__(self):
-        return 'genpy.Time[%d]' % self.to_nsec()
+        return "genpy.Time[%d]" % self.to_nsec()
 
     def __add__(self, other):
         """
@@ -265,7 +267,7 @@ class Time(TVal):
         :param other: :class:`Time`
         """
         if not isinstance(other, Time):
-            raise TypeError('cannot compare to non-Time')
+            raise TypeError("cannot compare to non-Time")
         a = self.to_nsec()
         b = other.to_nsec()
         return (a > b) - (a < b)
@@ -293,7 +295,7 @@ class Duration(TVal):
     including adding and subtracting from :class:`Time` instances.
     """
 
-    __slots__ = ['secs', 'nsecs']
+    __slots__ = ["secs", "nsecs"]
 
     def __init__(self, secs=0, nsecs=0):
         """
@@ -316,7 +318,7 @@ class Duration(TVal):
         return super(Duration, self).__hash__()
 
     def __repr__(self):
-        return 'genpy.Duration[%d]' % self.to_nsec()
+        return "genpy.Duration[%d]" % self.to_nsec()
 
     def __neg__(self):  # noqa: D400, D401
         """:returns: Negative value of this :class:`Duration`"""
@@ -341,7 +343,7 @@ class Duration(TVal):
           instance, :class:`Time` if other is a :class:`Time`
         """
         if isinstance(other, Duration):
-            return self.__class__(self.secs+other.secs, self.nsecs+other.nsecs)
+            return self.__class__(self.secs + other.secs, self.nsecs + other.nsecs)
         else:
             return NotImplemented
 
@@ -356,7 +358,7 @@ class Duration(TVal):
         """
         if not isinstance(other, Duration):
             return NotImplemented
-        return self.__class__(self.secs-other.secs, self.nsecs-other.nsecs)
+        return self.__class__(self.secs - other.secs, self.nsecs - other.nsecs)
 
     def __mul__(self, val):
         """
@@ -442,7 +444,7 @@ class Duration(TVal):
 
     def __cmp__(self, other):
         if not isinstance(other, Duration):
-            raise TypeError('Cannot compare to non-Duration')
+            raise TypeError("Cannot compare to non-Duration")
         a = self.to_nsec()
         b = other.to_nsec()
         return (a > b) - (a < b)

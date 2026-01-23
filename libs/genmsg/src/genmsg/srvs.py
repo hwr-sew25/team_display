@@ -38,12 +38,18 @@ Implements http://ros.org/wiki/srv
 import os
 import sys
 
-from . names import is_legal_resource_name, is_legal_resource_base_name, package_resource_name, resource_name
+from .names import (
+    is_legal_resource_name,
+    is_legal_resource_base_name,
+    package_resource_name,
+    resource_name,
+)
+
 
 class SrvSpec(object):
-    
-    def __init__(self, request, response, text, full_name = '', short_name = '', package = ''):
-
+    def __init__(
+        self, request, response, text, full_name="", short_name="", package=""
+    ):
         alt_package, alt_short_name = package_resource_name(full_name)
         if not package:
             package = alt_package
@@ -57,22 +63,22 @@ class SrvSpec(object):
         self.short_name = short_name
         self.package = package
 
-        
     def __eq__(self, other):
         if not other or not isinstance(other, SrvSpec):
             return False
-        return self.request == other.request and \
-               self.response == other.response and \
-               self.text == other.text and \
-               self.full_name == other.full_name and \
-               self.short_name == other.short_name and \
-               self.package == other.package
-    
+        return (
+            self.request == other.request
+            and self.response == other.response
+            and self.text == other.text
+            and self.full_name == other.full_name
+            and self.short_name == other.short_name
+            and self.package == other.package
+        )
+
     def __ne__(self, other):
         if not other or not isinstance(other, SrvSpec):
             return True
         return not self.__eq__(other)
 
     def __repr__(self):
-        return "SrvSpec[%s, %s]"%(repr(self.request), repr(self.response))
-    
+        return "SrvSpec[%s, %s]" % (repr(self.request), repr(self.response))

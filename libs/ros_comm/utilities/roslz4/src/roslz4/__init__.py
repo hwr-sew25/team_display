@@ -32,9 +32,11 @@
 
 from ._roslz4 import *
 
+
 def compress(data):
     compressor = LZ4Compressor()
     return compressor.compress(data) + compressor.flush()
+
 
 def decompress(data):
     decompressor = LZ4Decompressor()

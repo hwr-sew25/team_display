@@ -35,15 +35,20 @@ import os
 import sys
 import unittest
 
-import roslaunch.loader 
-import roslaunch.xmlloader 
+import roslaunch.loader
+import roslaunch.xmlloader
+
 
 def get_test_path():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'xml'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "xml"))
+
 
 # path to example.launch directory
 def get_example_path():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'resources'))
+    return os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "resources")
+    )
+
 
 ## Fake RosLaunch object
 class RosLaunchMock(object):
@@ -52,18 +57,22 @@ class RosLaunchMock(object):
         self.nodes = []
         self.tests = []
         self.params = []
-        self.executables = []        
-        self.clear_params = []        
+        self.executables = []
+        self.clear_params = []
         self.machines = []
         self.master = None
-        self.config_errors = []        
+        self.config_errors = []
         self.roslaunch_files = []
+
     def set_master(self, m):
         self.master = m
+
     def add_machine(self, m, verbose=True):
         self.machines.append(m)
+
     def add_roslaunch_file(self, f):
         self.roslaunch_files.append(f)
+
     def add_node(self, n, core=False, verbose=True):
         if not core:
             self.nodes.append(n)
@@ -72,48 +81,51 @@ class RosLaunchMock(object):
 
     def add_config_error(self, msg):
         self.config_errors.append(msg)
-        
+
     def add_test(self, t, verbose=True):
-        self.tests.append(t)        
+        self.tests.append(t)
+
     def add_executable(self, t):
-        self.executables.append(t)        
+        self.executables.append(t)
 
     def add_param(self, p, filename=None, verbose=True):
         matches = [x for x in self.params if x.key == p.key]
         for m in matches:
             self.params.remove(m)
-        self.params.append(p)        
+        self.params.append(p)
+
     def add_clear_param(self, param):
         self.clear_params.append(param)
 
 
 ## Test Roslaunch XML parser
 class TestXmlLoader(unittest.TestCase):
-
     def setUp(self):
         self.xml_dir = get_test_path()
-        
+
     def _load(self, test_file):
         loader = roslaunch.xmlloader.XmlLoader()
         mock = RosLaunchMock()
-        self.assertTrue(os.path.exists(test_file), "cannot locate test file %s"%test_file)
+        self.assertTrue(
+            os.path.exists(test_file), "cannot locate test file %s" % test_file
+        )
         loader.load(test_file, mock)
         return mock
-        
+
     def _load_valid_nodes(self, tests):
-        mock = self._load(os.path.join(self.xml_dir, 'test-node-valid.xml'))
+        mock = self._load(os.path.join(self.xml_dir, "test-node-valid.xml"))
         nodes = [n for n in mock.nodes if n.type in tests]
         self.assertEqual(len(tests), len(nodes))
         return nodes
 
     def _load_valid_rostests(self, tests):
-        mock = self._load(os.path.join(self.xml_dir, 'test-test-valid.xml'))
+        mock = self._load(os.path.join(self.xml_dir, "test-test-valid.xml"))
         nodes = [n for n in mock.tests if n.type in tests]
         self.assertEqual(len(tests), len(nodes))
         return nodes
-    
+
     def _load_valid_machines(self, tests):
-        mock = self._load(os.path.join(self.xml_dir, 'test-machine-valid.xml'))
+        mock = self._load(os.path.join(self.xml_dir, "test-machine-valid.xml"))
         machines = [m for m in mock.machines if m.name in tests]
         self.assertEqual(len(tests), len(machines))
         return machines
@@ -126,12 +138,14 @@ class TestXmlLoader(unittest.TestCase):
         # test with no <launch /> element
         # #1582: test error message as well
         try:
-            loader.load_string('<foo />', mock)
+            loader.load_string("<foo />", mock)
             self.fail("no root lauch element passed")
         except Exception as e:
-            self.assertEqual(str(e), "Invalid roslaunch XML syntax: no root <launch> tag")
-        
-        f = open(os.path.join(self.xml_dir, 'test-node-valid.xml'), 'r')
+            self.assertEqual(
+                str(e), "Invalid roslaunch XML syntax: no root <launch> tag"
+            )
+
+        f = open(os.path.join(self.xml_dir, "test-node-valid.xml"), "r")
         try:
             s = f.read()
         finally:
@@ -139,741 +153,860 @@ class TestXmlLoader(unittest.TestCase):
         loader.load_string(s, mock)
         # sanity check
         self.assertTrue(mock.nodes)
-        self.assertTrue([n for n in mock.nodes if n.type == 'test_base'])
+        self.assertTrue([n for n in mock.nodes if n.type == "test_base"])
 
         # check exception case
-        f = open(os.path.join(self.xml_dir, 'invalid-xml.xml'), 'r')
+        f = open(os.path.join(self.xml_dir, "invalid-xml.xml"), "r")
         try:
             s = f.read()
         finally:
             f.close()
         try:
-            loader.load_string(s, mock)            
-            self.fail('load_string should have thrown an exception')
+            loader.load_string(s, mock)
+            self.fail("load_string should have thrown an exception")
         except roslaunch.xmlloader.XmlParseException:
             pass
 
     def test_load(self):
         # make sure load isn't broken
         loader = roslaunch.xmlloader.XmlLoader()
-        
+
         # test against empty data
-        loader.load(os.path.join(self.xml_dir, 'test-valid.xml'), RosLaunchMock())
+        loader.load(os.path.join(self.xml_dir, "test-valid.xml"), RosLaunchMock())
 
         # sanity check with real data
         mock = RosLaunchMock()
 
-        loader.load(os.path.join(self.xml_dir, 'test-node-valid.xml'), mock)
+        loader.load(os.path.join(self.xml_dir, "test-node-valid.xml"), mock)
         self.assertTrue(mock.nodes)
-        self.assertTrue([n for n in mock.nodes if n.type == 'test_base'])
+        self.assertTrue([n for n in mock.nodes if n.type == "test_base"])
 
         # check exception case
         try:
-            loader.load(os.path.join(self.xml_dir, 'invalid-xml.xml'), mock)            
-            self.fail('load_string should have thrown an exception')
+            loader.load(os.path.join(self.xml_dir, "invalid-xml.xml"), mock)
+            self.fail("load_string should have thrown an exception")
         except roslaunch.xmlloader.XmlParseException:
             pass
 
     def test_params_invalid(self):
-        tests = ['test-params-invalid-%s.xml'%i for i in range(1, 6)]
+        tests = ["test-params-invalid-%s.xml" % i for i in range(1, 6)]
         loader = roslaunch.xmlloader.XmlLoader()
         for filename in tests:
             filename = os.path.join(self.xml_dir, filename)
             try:
                 self.assertTrue(os.path.exists(filename))
                 loader.load(filename, RosLaunchMock())
-                self.fail("xmlloader did not throw an xmlparseexception for [%s]"%filename)
+                self.fail(
+                    "xmlloader did not throw an xmlparseexception for [%s]" % filename
+                )
             except roslaunch.xmlloader.XmlParseException:
                 pass
             except roslaunch.loader.LoadException:
                 pass
 
     def test_params(self):
-        mock = self._load(os.path.join(self.xml_dir, 'test-params-valid.xml'))
+        mock = self._load(os.path.join(self.xml_dir, "test-params-valid.xml"))
 
         param_d = {}
         for p in mock.params:
             param_d[p.key] = p.value
 
-        self.assertEqual('pass', param_d['/override'])
-        self.assertEqual('bar2', param_d['/somestring1'])
-        self.assertEqual('10', param_d['/somestring2'])
-        self.assertEqual(1, param_d['/someinteger1'])
-        self.assertEqual(2, param_d['/someinteger2'])
-        self.assertAlmostEqual(3.14159, param_d['/somefloat1'], 2)
-        self.assertAlmostEqual(5.0, param_d['/somefloat2'], 1)
-        self.assertEqual("a child namespace parameter 1", param_d['/wg/wgchildparam'], p.value)
-        self.assertEqual("a child namespace parameter 2", param_d['/wg2/wg2childparam1'], p.value)
-        self.assertEqual("a child namespace parameter 3", param_d['/wg2/wg2childparam2'], p.value)
+        self.assertEqual("pass", param_d["/override"])
+        self.assertEqual("bar2", param_d["/somestring1"])
+        self.assertEqual("10", param_d["/somestring2"])
+        self.assertEqual(1, param_d["/someinteger1"])
+        self.assertEqual(2, param_d["/someinteger2"])
+        self.assertAlmostEqual(3.14159, param_d["/somefloat1"], 2)
+        self.assertAlmostEqual(5.0, param_d["/somefloat2"], 1)
+        self.assertEqual(
+            "a child namespace parameter 1", param_d["/wg/wgchildparam"], p.value
+        )
+        self.assertEqual(
+            "a child namespace parameter 2", param_d["/wg2/wg2childparam1"], p.value
+        )
+        self.assertEqual(
+            "a child namespace parameter 3", param_d["/wg2/wg2childparam2"], p.value
+        )
 
         try:
             from xmlrpc.client import Binary
         except ImportError:
             from xmlrpclib import Binary
-        f = open(os.path.join(get_example_path(), 'example.launch'))
+        f = open(os.path.join(get_example_path(), "example.launch"))
         try:
             contents = f.read()
         finally:
             f.close()
-        p = [p for p in mock.params if p.key == '/configfile'][0]
+        p = [p for p in mock.params if p.key == "/configfile"][0]
         self.assertEqual(contents, p.value, 1)
-        p = [p for p in mock.params if p.key == '/binaryfile'][0]
+        p = [p for p in mock.params if p.key == "/binaryfile"][0]
         self.assertEqual(Binary(contents.encode()), p.value, 1)
 
-        if os.name != 'nt':  # skip testcase for `cat` command in Windows
-            p = [p for p in mock.params if p.key == '/commandoutput'][0]
+        if os.name != "nt":  # skip testcase for `cat` command in Windows
+            p = [p for p in mock.params if p.key == "/commandoutput"][0]
             self.assertEqual(contents, p.value, 1)
-        
-        
+
     def test_rosparam_valid(self):
-        mock = self._load(os.path.join(self.xml_dir, 'test-rosparam-valid.xml'))
+        mock = self._load(os.path.join(self.xml_dir, "test-rosparam-valid.xml"))
 
-        for prefix in ['', '/rosparam', '/node_rosparam']:
-            p = [p for p in mock.params if p.key == prefix+'/string1'][0]
-            self.assertEqual('bar', p.value)
-            p = [p for p in mock.params if p.key == prefix+'/robots/childparam'][0]
-            self.assertEqual('a child namespace parameter', p.value)
+        for prefix in ["", "/rosparam", "/node_rosparam"]:
+            p = [p for p in mock.params if p.key == prefix + "/string1"][0]
+            self.assertEqual("bar", p.value)
+            p = [p for p in mock.params if p.key == prefix + "/robots/childparam"][0]
+            self.assertEqual("a child namespace parameter", p.value)
 
-        p = [p for p in mock.params if p.key == '/node_rosparam/string1'][0]
-        self.assertEqual('bar', p.value)
-        p = [p for p in mock.params if p.key == '/node_rosparam/robots/childparam'][0]
-        self.assertEqual('a child namespace parameter', p.value)
+        p = [p for p in mock.params if p.key == "/node_rosparam/string1"][0]
+        self.assertEqual("bar", p.value)
+        p = [p for p in mock.params if p.key == "/node_rosparam/robots/childparam"][0]
+        self.assertEqual("a child namespace parameter", p.value)
 
         # test substitution in yaml files
-        p = [p for p in mock.params if p.key == '/rosparam_subst/string1'][0]
-        self.assertTrue('$(anon foo)' not in p.value)
-        
-        exes = [e for e in mock.executables if e.command == 'rosparam']
-        self.assertEqual(len(exes), 2, "expected 2 rosparam exes, got %s"%len(exes))
+        p = [p for p in mock.params if p.key == "/rosparam_subst/string1"][0]
+        self.assertTrue("$(anon foo)" not in p.value)
+
+        exes = [e for e in mock.executables if e.command == "rosparam"]
+        self.assertEqual(len(exes), 2, "expected 2 rosparam exes, got %s" % len(exes))
         from roslaunch.core import PHASE_SETUP
+
         for e in exes:
             self.assertEqual(PHASE_SETUP, e.phase)
             args = e.args
-            self.assertEqual(3, len(args), "expected 3 args, got %s"%str(args))
+            self.assertEqual(3, len(args), "expected 3 args, got %s" % str(args))
             rp_cmd, rp_file, rp_ctx = args
-            self.assertFalse('$(find' in rp_file, "file attribute was not evaluated")
-            self.assertEqual('dump', rp_cmd)
-                
+            self.assertFalse("$(find" in rp_file, "file attribute was not evaluated")
+            self.assertEqual("dump", rp_cmd)
+
             # verify that the context is passed in correctly
-            if rp_file.endswith('dump.yaml'):
-                self.assertEqual('/', rp_ctx)
-            elif rp_file.endswith('dump2.yaml'):
-                self.assertEqual('/rosparam/', rp_ctx)
+            if rp_file.endswith("dump.yaml"):
+                self.assertEqual("/", rp_ctx)
+            elif rp_file.endswith("dump2.yaml"):
+                self.assertEqual("/rosparam/", rp_ctx)
 
         # test inline yaml examples
-        p = [p for p in mock.params if p.key == '/inline_str'][0]
-        self.assertEqual('value1', p.value)
-        p = [p for p in mock.params if p.key == '/inline_list'][0]
+        p = [p for p in mock.params if p.key == "/inline_str"][0]
+        self.assertEqual("value1", p.value)
+        p = [p for p in mock.params if p.key == "/inline_list"][0]
         self.assertEqual([1, 2, 3, 4], p.value)
-        p = [p for p in mock.params if p.key == '/inline_dict/key1'][0]
-        self.assertEqual('value1', p.value)
-        p = [p for p in mock.params if p.key == '/inline_dict/key2'][0]
-        self.assertEqual('value2', p.value)
-        p = [p for p in mock.params if p.key == '/inline_dict2/key3'][0]
-        self.assertEqual('value3', p.value)
-        p = [p for p in mock.params if p.key == '/inline_dict2/key4'][0]
-        self.assertEqual('value4', p.value)
+        p = [p for p in mock.params if p.key == "/inline_dict/key1"][0]
+        self.assertEqual("value1", p.value)
+        p = [p for p in mock.params if p.key == "/inline_dict/key2"][0]
+        self.assertEqual("value2", p.value)
+        p = [p for p in mock.params if p.key == "/inline_dict2/key3"][0]
+        self.assertEqual("value3", p.value)
+        p = [p for p in mock.params if p.key == "/inline_dict2/key4"][0]
+        self.assertEqual("value4", p.value)
 
         # test substitution in inline yaml
-        p = [p for p in mock.params if p.key == '/inline_subst'][0]
-        self.assertTrue('$(anon foo)' not in p.value)
+        p = [p for p in mock.params if p.key == "/inline_subst"][0]
+        self.assertTrue("$(anon foo)" not in p.value)
 
-        # verify that later tags override 
+        # verify that later tags override
         # - key2 is overridden
-        self.assertEqual(1, len([p for p in mock.params if p.key == '/override/key1']))
-        p = [p for p in mock.params if p.key == '/override/key1'][0]
-        self.assertEqual('override1', p.value)
+        self.assertEqual(1, len([p for p in mock.params if p.key == "/override/key1"]))
+        p = [p for p in mock.params if p.key == "/override/key1"][0]
+        self.assertEqual("override1", p.value)
         # - key2 is not overridden
-        p = [p for p in mock.params if p.key == '/override/key2'][0]
-        self.assertEqual('value2', p.value)
+        p = [p for p in mock.params if p.key == "/override/key2"][0]
+        self.assertEqual("value2", p.value)
 
         # verify that 'param' attribute is not required
-        p = [p for p in mock.params if p.key == '/noparam1'][0]
-        self.assertEqual('value1', p.value)
-        p = [p for p in mock.params if p.key == '/noparam2'][0]
-        self.assertEqual('value2', p.value)
+        p = [p for p in mock.params if p.key == "/noparam1"][0]
+        self.assertEqual("value1", p.value)
+        p = [p for p in mock.params if p.key == "/noparam2"][0]
+        self.assertEqual("value2", p.value)
 
         # #3580: test degree/rad conversions
         import math
-        p = [p for p in mock.params if p.key == '/inline_degrees0'][0]
+
+        p = [p for p in mock.params if p.key == "/inline_degrees0"][0]
         self.assertAlmostEqual(0, p.value)
-        p = [p for p in mock.params if p.key == '/inline_degrees180'][0]
+        p = [p for p in mock.params if p.key == "/inline_degrees180"][0]
         self.assertAlmostEqual(p.value, math.pi)
-        p = [p for p in mock.params if p.key == '/inline_degrees360'][0]
+        p = [p for p in mock.params if p.key == "/inline_degrees360"][0]
         self.assertAlmostEqual(p.value, 2 * math.pi)
 
-        p = [p for p in mock.params if p.key == '/dict_degrees/deg0'][0]
+        p = [p for p in mock.params if p.key == "/dict_degrees/deg0"][0]
         self.assertAlmostEqual(0, p.value)
-        p = [p for p in mock.params if p.key == '/dict_degrees/deg180'][0]
+        p = [p for p in mock.params if p.key == "/dict_degrees/deg180"][0]
         self.assertAlmostEqual(p.value, math.pi)
-        p = [p for p in mock.params if p.key == '/dict_degrees/deg360'][0]
+        p = [p for p in mock.params if p.key == "/dict_degrees/deg360"][0]
         self.assertAlmostEqual(p.value, 2 * math.pi)
 
-        p = [p for p in mock.params if p.key == '/inline_rad0'][0]
+        p = [p for p in mock.params if p.key == "/inline_rad0"][0]
         self.assertAlmostEqual(0, p.value)
-        p = [p for p in mock.params if p.key == '/inline_radpi'][0]
+        p = [p for p in mock.params if p.key == "/inline_radpi"][0]
         self.assertAlmostEqual(p.value, math.pi)
-        p = [p for p in mock.params if p.key == '/inline_rad2pi'][0]
+        p = [p for p in mock.params if p.key == "/inline_rad2pi"][0]
         self.assertAlmostEqual(p.value, 2 * math.pi)
 
-        p = [p for p in mock.params if p.key == '/dict_rad/rad0'][0]
+        p = [p for p in mock.params if p.key == "/dict_rad/rad0"][0]
         self.assertAlmostEqual(0, p.value)
-        p = [p for p in mock.params if p.key == '/dict_rad/radpi'][0]
+        p = [p for p in mock.params if p.key == "/dict_rad/radpi"][0]
         self.assertAlmostEqual(p.value, math.pi)
-        p = [p for p in mock.params if p.key == '/dict_rad/rad2pi'][0]
+        p = [p for p in mock.params if p.key == "/dict_rad/rad2pi"][0]
         self.assertAlmostEqual(p.value, 2 * math.pi)
-                    
+
         # rosparam file also contains empty params
-        mock = self._load(os.path.join(self.xml_dir, 'test-rosparam-empty.xml'))
+        mock = self._load(os.path.join(self.xml_dir, "test-rosparam-empty.xml"))
         self.assertEqual([], mock.params)
 
     def test_rosparam_invalid(self):
-        tests = ['test-rosparam-invalid-%s.xml'%i for i in range(1, 6)]
+        tests = ["test-rosparam-invalid-%s.xml" % i for i in range(1, 6)]
         loader = roslaunch.xmlloader.XmlLoader()
         for filename in tests:
             filename = os.path.join(self.xml_dir, filename)
             try:
                 self.assertTrue(os.path.exists(filename))
                 loader.load(filename, RosLaunchMock())
-                self.fail("xmlloader did not throw an xmlloadexception for [%s]"%filename)
+                self.fail(
+                    "xmlloader did not throw an xmlloadexception for [%s]" % filename
+                )
             except roslaunch.loader.LoadException:
                 pass
-        
+
     def test_node_valid(self):
         nodes = self._load_valid_nodes([])
 
     def test_rostest_valid(self):
         nodes = self._load_valid_rostests([])
-        
+
     def test_node_rosparam_invalid(self):
-        tests = ['test-node-rosparam-invalid-name.xml']
+        tests = ["test-node-rosparam-invalid-name.xml"]
         loader = roslaunch.xmlloader.XmlLoader()
         for filename in tests:
             filename = os.path.join(self.xml_dir, filename)
             try:
                 self.assertTrue(os.path.exists(filename))
                 loader.load(filename, RosLaunchMock())
-                self.fail("xmlloader did not throw an xmlparseexception for [%s]"%filename)
+                self.fail(
+                    "xmlloader did not throw an xmlparseexception for [%s]" % filename
+                )
             except roslaunch.xmlloader.XmlParseException:
                 pass
 
     def test_node_rosparam(self):
         from roslaunch.core import PHASE_SETUP
 
-        tests = [("test-node-rosparam-load.xml", "test_node_rosparam_load"),
-                 ("test-node-rosparam-dump.xml","test_node_rosparam_dump"),
-                 ("test-node-rosparam-delete.xml","test_node_rosparam_delete"),
-                 ("test-node-rosparam-load-multi.xml", "test_node_rosparam_multi"),
-                 ("test-node-rosparam-load-param.xml", "test_node_rosparam_load_param"),
-                 ("test-node-rosparam-load-ns.xml", "test_node_rosparam_load_ns")]
+        tests = [
+            ("test-node-rosparam-load.xml", "test_node_rosparam_load"),
+            ("test-node-rosparam-dump.xml", "test_node_rosparam_dump"),
+            ("test-node-rosparam-delete.xml", "test_node_rosparam_delete"),
+            ("test-node-rosparam-load-multi.xml", "test_node_rosparam_multi"),
+            ("test-node-rosparam-load-param.xml", "test_node_rosparam_load_param"),
+            ("test-node-rosparam-load-ns.xml", "test_node_rosparam_load_ns"),
+        ]
         for f, test in tests:
-                 
             mock = self._load(os.path.join(self.xml_dir, f))
             nodes = [n for n in mock.nodes if n.type == test]
             self.assertEqual(1, len(nodes))
             n = nodes[0]
-                          
-            exes = [e for e in mock.executables if e.command == 'rosparam']
+
+            exes = [e for e in mock.executables if e.command == "rosparam"]
 
             if n.type == "test_node_rosparam_load":
                 self.assertEqual(0, len(exes))
-                p = [p for p in mock.params if p.key == '/rosparam_load/string1'][0]
-                self.assertEqual('bar', p.value)
-                p = [p for p in mock.params if p.key == '/rosparam_load/robots/childparam'][0]
-                self.assertEqual('a child namespace parameter', p.value)
+                p = [p for p in mock.params if p.key == "/rosparam_load/string1"][0]
+                self.assertEqual("bar", p.value)
+                p = [
+                    p
+                    for p in mock.params
+                    if p.key == "/rosparam_load/robots/childparam"
+                ][0]
+                self.assertEqual("a child namespace parameter", p.value)
             elif n.type == "test_node_rosparam_delete":
                 self.assertEqual(1, len(exes))
-                self.assertTrue(len(exes[0].args) == 2, "invalid arg: %s"%(str(exes[0].args)))
-                rp_cmd, rp_param = exes[0].args   
+                self.assertTrue(
+                    len(exes[0].args) == 2, "invalid arg: %s" % (str(exes[0].args))
+                )
+                rp_cmd, rp_param = exes[0].args
                 self.assertEqual("delete", rp_cmd)
                 self.assertEqual("/ns1/rosparam_delete/ns2/param", rp_param)
             elif n.type == "test_node_rosparam_dump":
                 self.assertEqual(1, len(exes))
-                rp_cmd, rp_file, rp_ctx = exes[0].args                
+                rp_cmd, rp_file, rp_ctx = exes[0].args
                 self.assertEqual("dump", rp_cmd)
                 self.assertEqual("dump.yaml", rp_file)
-                self.assertEqual('/rosparam_dump/', rp_ctx)
+                self.assertEqual("/rosparam_dump/", rp_ctx)
             elif n.type == "test_node_rosparam_load_ns":
                 self.assertEqual(0, len(exes))
-                p = [p for p in mock.params if p.key == '/load_ns/subns/string1'][0]
-                self.assertEqual('bar', p.value)
-                p = [p for p in mock.params if p.key == '/load_ns/subns/robots/childparam'][0]
-                self.assertEqual('a child namespace parameter', p.value)
+                p = [p for p in mock.params if p.key == "/load_ns/subns/string1"][0]
+                self.assertEqual("bar", p.value)
+                p = [
+                    p
+                    for p in mock.params
+                    if p.key == "/load_ns/subns/robots/childparam"
+                ][0]
+                self.assertEqual("a child namespace parameter", p.value)
             elif n.type == "test_node_rosparam_load_param":
                 self.assertEqual(0, len(exes))
-                p = [p for p in mock.params if p.key == '/load_param/param/string1'][0]
-                self.assertEqual('bar', p.value)
-                p = [p for p in mock.params if p.key == '/load_param/param/robots/childparam'][0]
-                self.assertEqual('a child namespace parameter', p.value)
+                p = [p for p in mock.params if p.key == "/load_param/param/string1"][0]
+                self.assertEqual("bar", p.value)
+                p = [
+                    p
+                    for p in mock.params
+                    if p.key == "/load_param/param/robots/childparam"
+                ][0]
+                self.assertEqual("a child namespace parameter", p.value)
             elif n.type == "test_node_rosparam_multi":
                 self.assertEqual(1, len(exes))
                 e = exes[0]
                 rp_cmd, rp_file, rp_ctx = e.args
                 self.assertEqual("dump", rp_cmd)
                 self.assertEqual("mdump.yaml", rp_file)
-                self.assertEqual('/rosparam_multi/', rp_ctx)
+                self.assertEqual("/rosparam_multi/", rp_ctx)
 
                 # test two other rosparam tags
-                p = [p for p in mock.params if p.key == '/rosparam_multi/string1'][0]
-                self.assertEqual('bar', p.value)
-                p = [p for p in mock.params if p.key == '/rosparam_multi/robots/childparam'][0]
-                self.assertEqual('a child namespace parameter', p.value)
+                p = [p for p in mock.params if p.key == "/rosparam_multi/string1"][0]
+                self.assertEqual("bar", p.value)
+                p = [
+                    p
+                    for p in mock.params
+                    if p.key == "/rosparam_multi/robots/childparam"
+                ][0]
+                self.assertEqual("a child namespace parameter", p.value)
 
-                p = [p for p in mock.params if p.key == '/rosparam_multi/msubns/string1'][0]
-                self.assertEqual('bar', p.value)
-                p = [p for p in mock.params if p.key == '/rosparam_multi/msubns/robots/childparam'][0]
-                self.assertEqual('a child namespace parameter', p.value)
-                
+                p = [
+                    p for p in mock.params if p.key == "/rosparam_multi/msubns/string1"
+                ][0]
+                self.assertEqual("bar", p.value)
+                p = [
+                    p
+                    for p in mock.params
+                    if p.key == "/rosparam_multi/msubns/robots/childparam"
+                ][0]
+                self.assertEqual("a child namespace parameter", p.value)
+
     ## test that ~params in groups get applied to later members of group
     def test_local_param_group(self):
-        mock = self._load(os.path.join(self.xml_dir, 'test-local-param-group.xml'))
+        mock = self._load(os.path.join(self.xml_dir, "test-local-param-group.xml"))
         correct = [
-            u'/group1/g1node1/gparam1',
-            u'/group1/g1node2/gparam1',
-            u'/group1/g1node2/gparam2',
-            u'/node1/param1',
-            ]
+            "/group1/g1node1/gparam1",
+            "/group1/g1node2/gparam1",
+            "/group1/g1node2/gparam2",
+            "/node1/param1",
+        ]
         p_names = [p.key for p in mock.params]
-        self.assertEqual(set([]), set(correct) ^ set(p_names), "%s does not match %s"%(p_names, correct))
+        self.assertEqual(
+            set([]),
+            set(correct) ^ set(p_names),
+            "%s does not match %s" % (p_names, correct),
+        )
 
     def test_node_param(self):
-        mock = self._load(os.path.join(self.xml_dir, 'test-node-valid.xml'))
-        tests = [('/test_private_param1/foo1', 'bar1'),
-                 ('/ns_test/test_private_param2/foo2', 'bar2'),
-                 ('/test_private_param3/foo3', 'bar3'), ]
+        mock = self._load(os.path.join(self.xml_dir, "test-node-valid.xml"))
+        tests = [
+            ("/test_private_param1/foo1", "bar1"),
+            ("/ns_test/test_private_param2/foo2", "bar2"),
+            ("/test_private_param3/foo3", "bar3"),
+        ]
         for k, v in tests:
             p = [p for p in mock.params if p.key == k]
-            self.assertEqual(1, len(p), "%s not present in parameters: %s"%(k, mock.params))
+            self.assertEqual(
+                1, len(p), "%s not present in parameters: %s" % (k, mock.params)
+            )
             self.assertEqual(v, p[0].value)
         node_types = [n.type for n in mock.nodes]
-        
+
     def test_roslaunch_files(self):
-        f = os.path.join(self.xml_dir, 'test-env.xml')
-        f2 = os.path.join(self.xml_dir, 'test-env-include.xml')
+        f = os.path.join(self.xml_dir, "test-env.xml")
+        f2 = os.path.join(self.xml_dir, "test-env-include.xml")
         mock = self._load(f)
         mock_files = [os.path.realpath(x) for x in mock.roslaunch_files]
         actual_files = [os.path.realpath(x) for x in [f, f2]]
         self.assertEqual(len(set(actual_files)), len(set(mock_files)))
 
     def test_launch_prefix(self):
-        nodes = self._load_valid_nodes(['test_launch_prefix'])
+        nodes = self._load_valid_nodes(["test_launch_prefix"])
         self.assertEqual(1, len(nodes))
-        self.assertEqual('xterm -e gdb --args', nodes[0].launch_prefix)
-        nodes = self._load_valid_nodes(['test_base'])
+        self.assertEqual("xterm -e gdb --args", nodes[0].launch_prefix)
+        nodes = self._load_valid_nodes(["test_base"])
         self.assertEqual(1, len(nodes))
         self.assertEqual(None, nodes[0].launch_prefix)
 
     def test_respawn(self):
-        tests = ["test_respawn_true", "test_respawn_TRUE",
-                 "test_respawn_false", "test_respawn_FALSE",
-                 "test_respawn_none",]
+        tests = [
+            "test_respawn_true",
+            "test_respawn_TRUE",
+            "test_respawn_false",
+            "test_respawn_FALSE",
+            "test_respawn_none",
+        ]
         respawn_nodes = self._load_valid_nodes(tests)
         self.assertEqual(len(tests), len(respawn_nodes))
         for n in respawn_nodes:
-            if n.type in ['test_respawn_true', 'test_respawn_TRUE']:
-                self.assertEqual(True, n.respawn, "respawn for [%s] should be True"%n.type)
+            if n.type in ["test_respawn_true", "test_respawn_TRUE"]:
+                self.assertEqual(
+                    True, n.respawn, "respawn for [%s] should be True" % n.type
+                )
             else:
-                self.assertEqual(False, n.respawn, "respawn for [%s] should be False"%n.type)
+                self.assertEqual(
+                    False, n.respawn, "respawn for [%s] should be False" % n.type
+                )
 
     def test_env_and_include(self):
-        mock = self._load(os.path.join(self.xml_dir, 'test-env.xml'))
-        expected = ['test_none', 'test_one', 'test_one_two', 'test_one_two_priv', 'test_one_two_include',]
+        mock = self._load(os.path.join(self.xml_dir, "test-env.xml"))
+        expected = [
+            "test_none",
+            "test_one",
+            "test_one_two",
+            "test_one_two_priv",
+            "test_one_two_include",
+        ]
         self.assertEqual(set(expected), set([n.type for n in mock.nodes]))
         for n in mock.nodes:
-            if n.type == 'test_none':
+            if n.type == "test_none":
                 self.assertEqual([], n.env_args)
-            elif n.type == 'test_one':
+            elif n.type == "test_one":
                 self.assertEqual([("ONE", "one")], n.env_args)
-            elif n.type == 'test_one_two':
+            elif n.type == "test_one_two":
                 self.assertTrue(("ONE", "one") in n.env_args)
                 self.assertTrue(("TWO", "two") in n.env_args)
-            elif n.type == 'test_one_two_priv':
+            elif n.type == "test_one_two_priv":
                 self.assertTrue(("ONE", "one") in n.env_args)
                 self.assertTrue(("TWO", "two") in n.env_args)
                 self.assertTrue(("PRIVATE_TWO", "private_two") in n.env_args)
-            elif n.type == 'test_one_two_include':
+            elif n.type == "test_one_two_include":
                 self.assertTrue(("ONE", "one") in n.env_args)
                 self.assertTrue(("TWO", "two") in n.env_args)
                 self.assertTrue(("INCLUDE", "include") in n.env_args)
-                
+
     def test_clear_params(self):
-        true_tests = ["/test_clear_params1/","/test_clear_params2/",
-                      "/clear_params_ns/test_clear_params_ns/",
-                      "/group_test/","/embed_group_test/embedded_group/",
-                      "/include_test/",
-                      ]
-        mock = self._load(os.path.join(self.xml_dir, 'test-clear-params.xml'))
-        self.assertEqual(len(true_tests), len(mock.clear_params), "clear params did not match expected true: %s"%(str(mock.clear_params)))
+        true_tests = [
+            "/test_clear_params1/",
+            "/test_clear_params2/",
+            "/clear_params_ns/test_clear_params_ns/",
+            "/group_test/",
+            "/embed_group_test/embedded_group/",
+            "/include_test/",
+        ]
+        mock = self._load(os.path.join(self.xml_dir, "test-clear-params.xml"))
+        self.assertEqual(
+            len(true_tests),
+            len(mock.clear_params),
+            "clear params did not match expected true: %s" % (str(mock.clear_params)),
+        )
         for t in true_tests:
-            self.assertTrue(t in mock.clear_params, "%s was not marked for clear: %s"%(t, mock.clear_params))
-                
+            self.assertTrue(
+                t in mock.clear_params,
+                "%s was not marked for clear: %s" % (t, mock.clear_params),
+            )
+
     def test_clear_params_invalid(self):
-        tests = ['test-clear-params-invalid-1.xml', 'test-clear-params-invalid-2.xml',
-                 'test-clear-params-invalid-3.xml','test-clear-params-invalid-4.xml',]
+        tests = [
+            "test-clear-params-invalid-1.xml",
+            "test-clear-params-invalid-2.xml",
+            "test-clear-params-invalid-3.xml",
+            "test-clear-params-invalid-4.xml",
+        ]
         loader = roslaunch.xmlloader.XmlLoader()
         for filename in tests:
             filename = os.path.join(self.xml_dir, filename)
             try:
                 self.assertTrue(os.path.exists(filename))
                 loader.load(filename, RosLaunchMock())
-                self.fail("xmlloader did not throw an xmlparseexception for [%s]"%filename)
+                self.fail(
+                    "xmlloader did not throw an xmlparseexception for [%s]" % filename
+                )
             except roslaunch.xmlloader.XmlParseException:
                 pass
 
     def _subtest_node_base(self, nodes):
         node = nodes[0]
         self.assertEqual("package", node.package)
-        self.assertEqual("test_base", node.type)        
+        self.assertEqual("test_base", node.type)
 
     def test_node_base(self):
-        self._subtest_node_base(self._load_valid_nodes(['test_base']))
-        tests = self._load_valid_rostests(['test_base'])
+        self._subtest_node_base(self._load_valid_nodes(["test_base"]))
+        tests = self._load_valid_rostests(["test_base"])
         self._subtest_node_base(tests)
-        self.assertEqual('test1', tests[0].test_name)
+        self.assertEqual("test1", tests[0].test_name)
         self.assertEqual(roslaunch.core.TEST_TIME_LIMIT_DEFAULT, tests[0].time_limit)
-        
+
     def _subtest_node_args(self, nodes):
         for n in nodes:
-            if n.type == 'test_args':
+            if n.type == "test_args":
                 self.assertEqual("args test", n.args)
-            elif n.type == 'test_args_empty':
-                self.assertEqual("", n.args)                
+            elif n.type == "test_args_empty":
+                self.assertEqual("", n.args)
 
     def test_node_args(self):
-        self._subtest_node_args(self._load_valid_nodes(['test_args', 'test_args_empty']))
-        tests = self._load_valid_rostests(['test_args', 'test_args_empty'])
+        self._subtest_node_args(
+            self._load_valid_nodes(["test_args", "test_args_empty"])
+        )
+        tests = self._load_valid_rostests(["test_args", "test_args_empty"])
         self._subtest_node_args(tests)
         for n in tests:
-            if n.type == 'test_args':
+            if n.type == "test_args":
                 self.assertEqual("test2", n.test_name)
-            elif n.type == 'test_args_empty':
-                self.assertEqual("test3", n.test_name)                
-        
+            elif n.type == "test_args_empty":
+                self.assertEqual("test3", n.test_name)
+
     def test_rostest_time_limit(self):
-        tests = self._load_valid_rostests(['test_time_limit_int_1', 'test_time_limit_float_10_1'])
+        tests = self._load_valid_rostests(
+            ["test_time_limit_int_1", "test_time_limit_float_10_1"]
+        )
         for n in tests:
-            if n.type == 'test_time_limit_int_1':
+            if n.type == "test_time_limit_int_1":
                 self.assertAlmostEqual(1.0, n.time_limit, 3)
-            elif n.type == 'test_time_limit_float_10_1':
+            elif n.type == "test_time_limit_float_10_1":
                 self.assertAlmostEqual(10.1, n.time_limit, 3)
 
     def test_rostest_retry(self):
-        n = self._load_valid_rostests(['test_retry'])[0]
+        n = self._load_valid_rostests(["test_retry"])[0]
         self.assertEqual(2, n.retry)
-                
+
     def test_node_cwd(self):
-        nodes = self._load_valid_nodes(['test_base', 'test_cwd_2', 'test_cwd_3', 'test_cwd_4'])
+        nodes = self._load_valid_nodes(
+            ["test_base", "test_cwd_2", "test_cwd_3", "test_cwd_4"]
+        )
         for n in nodes:
-            if n.type == 'test_base':
+            if n.type == "test_base":
                 self.assertEqual(None, n.cwd)
-            elif n.type == 'test_cwd_2':
-                self.assertEqual("node", n.cwd)  
-            elif n.type in ['test_cwd_3', 'test_cwd_4']:
-                self.assertEqual("ROS_HOME", n.cwd)  
+            elif n.type == "test_cwd_2":
+                self.assertEqual("node", n.cwd)
+            elif n.type in ["test_cwd_3", "test_cwd_4"]:
+                self.assertEqual("ROS_HOME", n.cwd)
 
     def test_node_output(self):
-        nodes = self._load_valid_nodes(['test_output_log', 'test_output_screen'])
+        nodes = self._load_valid_nodes(["test_output_log", "test_output_screen"])
         for n in nodes:
-            if n.type == 'test_output_log':
+            if n.type == "test_output_log":
                 self.assertEqual("log", n.output)
-            elif n.type == 'test_output_screen':
-                self.assertEqual("screen", n.output) 
+            elif n.type == "test_output_screen":
+                self.assertEqual("screen", n.output)
 
     def test_node_required(self):
-        nodes = self._load_valid_nodes(['test_base',
-                                        'test_required_true_1',
-                                        'test_required_true_2',
-                                        'test_required_false_1',
-                                        'test_required_false_2',                                        
-                                        ])
+        nodes = self._load_valid_nodes(
+            [
+                "test_base",
+                "test_required_true_1",
+                "test_required_true_2",
+                "test_required_false_1",
+                "test_required_false_2",
+            ]
+        )
         for n in nodes:
-            if n.type.startswith('test_required_true'):
+            if n.type.startswith("test_required_true"):
                 self.assertEqual(True, n.required)
             else:
-                self.assertEqual(False, n.required) 
+                self.assertEqual(False, n.required)
 
     def test_node_machine(self):
-        nodes = self._load_valid_nodes(['test_machine'])
+        nodes = self._load_valid_nodes(["test_machine"])
         node = nodes[0]
         self.assertEqual("machine_test", node.machine_name)
 
     def test_node_ns(self):
-        nodes = self._load_valid_nodes(['test_ns1', 'test_ns2','test_ns3'])
+        nodes = self._load_valid_nodes(["test_ns1", "test_ns2", "test_ns3"])
         for n in nodes:
-            if n.type == 'test_ns1':
+            if n.type == "test_ns1":
                 self.assertEqual("/ns_test1/", n.namespace)
-            elif n.type == 'test_ns2':
-                self.assertEqual("/ns_test2/child2/", n.namespace) 
-            elif n.type == 'test_ns3':
-                self.assertEqual("/ns_test3/child3/", n.namespace) 
+            elif n.type == "test_ns2":
+                self.assertEqual("/ns_test2/child2/", n.namespace)
+            elif n.type == "test_ns3":
+                self.assertEqual("/ns_test3/child3/", n.namespace)
 
     def test_machines(self):
-        tests = ['test-machine-invalid.xml', \
-                 'test-machine-invalid-4.xml', 'test-machine-invalid-5.xml',
-                 'test-machine-invalid-6.xml', 'test-machine-invalid-7.xml',
-                 'test-machine-invalid-8.xml', 'test-machine-invalid-9.xml', 
-                 'test-machine-invalid-10.xml', 'test-machine-invalid-11.xml',
-                 'test-machine-invalid-12.xml', 
-                 ]
+        tests = [
+            "test-machine-invalid.xml",
+            "test-machine-invalid-4.xml",
+            "test-machine-invalid-5.xml",
+            "test-machine-invalid-6.xml",
+            "test-machine-invalid-7.xml",
+            "test-machine-invalid-8.xml",
+            "test-machine-invalid-9.xml",
+            "test-machine-invalid-10.xml",
+            "test-machine-invalid-11.xml",
+            "test-machine-invalid-12.xml",
+        ]
         loader = roslaunch.xmlloader.XmlLoader()
         for filename in tests:
             filename = os.path.join(self.xml_dir, filename)
             try:
                 self.assertTrue(os.path.exists(filename))
                 loader.load(filename, RosLaunchMock())
-                self.fail("xmlloader did not throw an xmlparseexception for [%s]"%filename)
+                self.fail(
+                    "xmlloader did not throw an xmlparseexception for [%s]" % filename
+                )
             except roslaunch.xmlloader.XmlParseException:
                 pass
 
-        machines = self._load_valid_machines(['machine1', 'machine6', 'machine7', 'machine8', 'machine9'])
+        machines = self._load_valid_machines(
+            ["machine1", "machine6", "machine7", "machine8", "machine9"]
+        )
         for m in machines:
-            if m.name == 'machine1':
-                self.assertEqual(m.address, 'address1')
-            elif m.name == 'machine7':
+            if m.name == "machine1":
+                self.assertEqual(m.address, "address1")
+            elif m.name == "machine7":
                 self.assertEqual(m.timeout, 10.0)
-            elif m.name == 'machine8':
-                self.assertEqual(m.timeout, 1.)
-            elif m.name == 'machine9':
-                self.assertEqual(m.env_loader, '/opt/ros/fuerte/env.sh')
+            elif m.name == "machine8":
+                self.assertEqual(m.timeout, 1.0)
+            elif m.name == "machine9":
+                self.assertEqual(m.env_loader, "/opt/ros/fuerte/env.sh")
 
-                
     def test_node_subst(self):
-        test_file =os.path.join(self.xml_dir, 'test-node-substitution.xml')
-        keys = ['PACKAGE', 'TYPE', 'OUTPUT', 'RESPAWN']
+        test_file = os.path.join(self.xml_dir, "test-node-substitution.xml")
+        keys = ["PACKAGE", "TYPE", "OUTPUT", "RESPAWN"]
         for k in keys:
             if k in os.environ:
                 del os.environ[k]
         import random
+
         r = random.randint(0, 100000)
-        if r%2:
-            output = 'screen'
-            respawn = 'true' 
+        if r % 2:
+            output = "screen"
+            respawn = "true"
         else:
-            output = 'log'
-            respawn = 'false'
+            output = "log"
+            respawn = "false"
         # append all but one required key and make sure we fail
         for k in keys[:-1]:
-            if k in ['PACKAGE', 'TYPE']:
-                os.environ[k] = "%s-%s"%(k.lower(), r)
-            elif k == 'OUTPUT':
-                os.environ['OUTPUT'] = output
+            if k in ["PACKAGE", "TYPE"]:
+                os.environ[k] = "%s-%s" % (k.lower(), r)
+            elif k == "OUTPUT":
+                os.environ["OUTPUT"] = output
             try:
                 mock = self._load(test_file)
-                self.fail("xml loader should have thrown an exception due to missing environment var")
+                self.fail(
+                    "xml loader should have thrown an exception due to missing environment var"
+                )
             except roslaunch.xmlloader.XmlParseException:
                 pass
 
         # load the last required env var
-        os.environ['RESPAWN'] = respawn
+        os.environ["RESPAWN"] = respawn
         mock = self._load(test_file)
         self.assertEqual(1, len(mock.nodes), "should only be one test node")
         n = mock.nodes[0]
-        self.assertEqual(n.package, 'package-%s'%r)
-        self.assertEqual(n.type, 'type-%s'%r)
+        self.assertEqual(n.package, "package-%s" % r)
+        self.assertEqual(n.type, "type-%s" % r)
         self.assertEqual(n.output, output)
-        if respawn == 'true':
+        if respawn == "true":
             self.assertTrue(n.respawn)
         else:
-            self.assertFalse(n.respawn)            
+            self.assertFalse(n.respawn)
 
     def test_machine_subst(self):
-        test_file = os.path.join(self.xml_dir, 'test-machine-substitution.xml')
-        keys = ['NAME', 'ADDRESS'] 
+        test_file = os.path.join(self.xml_dir, "test-machine-substitution.xml")
+        keys = ["NAME", "ADDRESS"]
         for k in keys:
             if k in os.environ:
                 del os.environ[k]
         import random
+
         r = random.randint(0, 100000)
         # append all but one required key and make sure we fail
         for k in keys[:-1]:
-            os.environ[k] = "%s-%s"%(k.lower(), r)
+            os.environ[k] = "%s-%s" % (k.lower(), r)
             try:
                 mock = self._load(test_file)
-                self.fail("xml loader should have thrown an exception due to missing environment var")
+                self.fail(
+                    "xml loader should have thrown an exception due to missing environment var"
+                )
             except roslaunch.xmlloader.XmlParseException:
                 pass
 
-        os.environ['NAME'] = "name-foo"
-        os.environ['ADDRESS'] = "address-foo"
+        os.environ["NAME"] = "name-foo"
+        os.environ["ADDRESS"] = "address-foo"
         # load the last required env var
         mock = self._load(test_file)
         self.assertEqual(1, len(mock.machines), "should only be one test machine")
         m = mock.machines[0]
-        self.assertEqual(m.name, 'name-foo')
-        self.assertEqual(m.address, 'address-foo')
+        self.assertEqual(m.name, "name-foo")
+        self.assertEqual(m.address, "address-foo")
 
     def test_env(self):
-        nodes = self._load_valid_nodes(['test_env', 'test_env_empty'])
+        nodes = self._load_valid_nodes(["test_env", "test_env_empty"])
         for n in nodes:
-            if n.type == 'test_env':
+            if n.type == "test_env":
                 self.assertTrue(("env1", "env1 value1") in n.env_args)
                 self.assertTrue(("env2", "env2 value2") in n.env_args)
                 self.assertEqual(2, len(n.env_args))
-            elif n.type == 'test_env_empty':
+            elif n.type == "test_env_empty":
                 self.assertTrue(("env1", "") in n.env_args)
 
     def test_remap(self):
         loader = roslaunch.xmlloader.XmlLoader()
         mock = RosLaunchMock()
-        loader.load(os.path.join(self.xml_dir, 'test-remap-valid.xml'), mock)
-        names = ["node%s"%i for i in range(1, 7)]
+        loader.load(os.path.join(self.xml_dir, "test-remap-valid.xml"), mock)
+        names = ["node%s" % i for i in range(1, 7)]
         nodes = [n for n in mock.nodes if n.type in names]
         for n in nodes:
-            if n.type == 'node1':
-                self.assertEqual([['foo', 'bar']], n.remap_args)
-            elif n.type == 'node2':
-                self.assertEqual([['foo', 'baz']], n.remap_args)
-            elif n.type == 'node3':
-                self.assertEqual([['foo', 'bar']], n.remap_args)
-            elif n.type == 'node4':
-                self.assertEqual([['foo', 'far']], n.remap_args)
-            elif n.type == 'node5':
-                self.assertEqual([['foo', 'fad'], ['a', 'b'], ['c', 'd']], n.remap_args)
-            elif n.type == 'node6':
-                self.assertEqual([['foo', 'far'], ['old1', 'new1'], ['old2', 'new2'], ['old3', 'new3']], n.remap_args)
-                 
-    def test_substitution(self):
-        mock = self._load(os.path.join(self.xml_dir, 'test-substitution.xml'))
-        # for now this is mostly a trip wire test due to #1776 
-        for p in mock.params:
-            self.assertTrue('$' not in p.key)
-            self.assertTrue('$' not in p.value)            
-        for n in mock.nodes:
-            self.assertTrue('$' not in n.package)
-            self.assertTrue('$' not in n.type)
-            for e in n.env_args:
-                self.assertTrue('$' not in e[0])
-                self.assertTrue('$' not in e[1])
-            for r in n.remap_args:
-                self.assertTrue('$' not in r[0])
-                self.assertTrue('$' not in r[1])
-            for a in n.args:
-                self.assertTrue('$' not in a)                        
-    
-    def test_node_invalid(self):
-        tests = ['test-node-invalid-type.xml','test-node-invalid-type-2.xml',
-                 'test-node-invalid-pkg.xml','test-node-invalid-pkg-2.xml',
-                 # 1 and 2 have been disabled for now until we re-remove ability to have unnamed nodes with params
-                 'test-node-invalid-name-1.xml',
-                 'test-node-invalid-name-2.xml',
-                 'test-node-invalid-name-3.xml',
-                 'test-node-invalid-respawn.xml',
-                 'test-node-invalid-respawn-required.xml',                 
-                 'test-node-invalid-required-1.xml',
-                 'test-node-invalid-required-2.xml',                  
-                 'test-node-invalid-ns.xml','test-node-invalid-ns-2.xml',                 
-                 'test-node-invalid-env-name.xml','test-node-invalid-env-name-2.xml',
-                 'test-node-invalid-env-value.xml',
-                 'test-node-invalid-output.xml',
-                 'test-node-invalid-cwd.xml',                 
-                 'test-node-invalid-exception.xml',
+            if n.type == "node1":
+                self.assertEqual([["foo", "bar"]], n.remap_args)
+            elif n.type == "node2":
+                self.assertEqual([["foo", "baz"]], n.remap_args)
+            elif n.type == "node3":
+                self.assertEqual([["foo", "bar"]], n.remap_args)
+            elif n.type == "node4":
+                self.assertEqual([["foo", "far"]], n.remap_args)
+            elif n.type == "node5":
+                self.assertEqual([["foo", "fad"], ["a", "b"], ["c", "d"]], n.remap_args)
+            elif n.type == "node6":
+                self.assertEqual(
+                    [
+                        ["foo", "far"],
+                        ["old1", "new1"],
+                        ["old2", "new2"],
+                        ["old3", "new3"],
+                    ],
+                    n.remap_args,
+                )
 
-                 # rostest <test> tests
-                 'test-test-invalid-reqd-1.xml',
-                 'test-test-invalid-reqd-2.xml',                 
-                 'test-test-invalid-respawn.xml',
-                 'test-test-invalid-output.xml',
-                 'test-test-invalid-time-limit-1.xml',
-                 'test-test-invalid-time-limit-2.xml',
-                 'test-test-invalid-retry.xml',
-                 ]
+    def test_substitution(self):
+        mock = self._load(os.path.join(self.xml_dir, "test-substitution.xml"))
+        # for now this is mostly a trip wire test due to #1776
+        for p in mock.params:
+            self.assertTrue("$" not in p.key)
+            self.assertTrue("$" not in p.value)
+        for n in mock.nodes:
+            self.assertTrue("$" not in n.package)
+            self.assertTrue("$" not in n.type)
+            for e in n.env_args:
+                self.assertTrue("$" not in e[0])
+                self.assertTrue("$" not in e[1])
+            for r in n.remap_args:
+                self.assertTrue("$" not in r[0])
+                self.assertTrue("$" not in r[1])
+            for a in n.args:
+                self.assertTrue("$" not in a)
+
+    def test_node_invalid(self):
+        tests = [
+            "test-node-invalid-type.xml",
+            "test-node-invalid-type-2.xml",
+            "test-node-invalid-pkg.xml",
+            "test-node-invalid-pkg-2.xml",
+            # 1 and 2 have been disabled for now until we re-remove ability to have unnamed nodes with params
+            "test-node-invalid-name-1.xml",
+            "test-node-invalid-name-2.xml",
+            "test-node-invalid-name-3.xml",
+            "test-node-invalid-respawn.xml",
+            "test-node-invalid-respawn-required.xml",
+            "test-node-invalid-required-1.xml",
+            "test-node-invalid-required-2.xml",
+            "test-node-invalid-ns.xml",
+            "test-node-invalid-ns-2.xml",
+            "test-node-invalid-env-name.xml",
+            "test-node-invalid-env-name-2.xml",
+            "test-node-invalid-env-value.xml",
+            "test-node-invalid-output.xml",
+            "test-node-invalid-cwd.xml",
+            "test-node-invalid-exception.xml",
+            # rostest <test> tests
+            "test-test-invalid-reqd-1.xml",
+            "test-test-invalid-reqd-2.xml",
+            "test-test-invalid-respawn.xml",
+            "test-test-invalid-output.xml",
+            "test-test-invalid-time-limit-1.xml",
+            "test-test-invalid-time-limit-2.xml",
+            "test-test-invalid-retry.xml",
+        ]
         loader = roslaunch.xmlloader.XmlLoader()
         for filename in tests:
             filename = os.path.join(self.xml_dir, filename)
             try:
                 self.assertTrue(os.path.exists(filename))
                 loader.load(filename, RosLaunchMock())
-                self.fail("xmlloader did not throw an xmlparseexception for [%s]"%filename)
+                self.fail(
+                    "xmlloader did not throw an xmlparseexception for [%s]" % filename
+                )
             except roslaunch.xmlloader.XmlParseException:
                 pass
 
     def test_remap_invalid(self):
-        tests = ['test-remap-invalid-1.xml',
-                 'test-remap-invalid-2.xml',
-                 'test-remap-invalid-3.xml',
-                 'test-remap-invalid-4.xml',                                  
-                 'test-remap-invalid-name-from.xml',                 
-                 'test-remap-invalid-name-to.xml',                 
-                 ]
+        tests = [
+            "test-remap-invalid-1.xml",
+            "test-remap-invalid-2.xml",
+            "test-remap-invalid-3.xml",
+            "test-remap-invalid-4.xml",
+            "test-remap-invalid-name-from.xml",
+            "test-remap-invalid-name-to.xml",
+        ]
         loader = roslaunch.xmlloader.XmlLoader()
         for filename in tests:
             filename = os.path.join(self.xml_dir, filename)
             try:
                 self.assertTrue(os.path.exists(filename))
                 loader.load(filename, RosLaunchMock())
-                self.fail("xmlloader did not throw an xmlparseexception for [%s]"%filename)
+                self.fail(
+                    "xmlloader did not throw an xmlparseexception for [%s]" % filename
+                )
             except roslaunch.xmlloader.XmlParseException:
                 pass
 
     def test_if_unless(self):
         mock = RosLaunchMock()
         loader = roslaunch.xmlloader.XmlLoader()
-        filename = os.path.join(self.xml_dir, 'test-if-unless.xml')
+        filename = os.path.join(self.xml_dir, "test-if-unless.xml")
         loader.load(filename, mock, argv=[])
 
         param_d = {}
         for p in mock.params:
             param_d[p.key] = p.value
 
-        keys = ['group_if', 'group_unless', 'param_if', 'param_unless']
+        keys = ["group_if", "group_unless", "param_if", "param_unless"]
         for k in keys:
-            self.assertTrue('/'+k+'_pass' in param_d, param_d)
-            self.assertFalse('/'+k+'_fail' in param_d, k)
+            self.assertTrue("/" + k + "_pass" in param_d, param_d)
+            self.assertFalse("/" + k + "_fail" in param_d, k)
             # Also check the result of Python-parsed expressions
-            self.assertTrue('/py_'+k+'_pass' in param_d, param_d)
-            self.assertFalse('/py_'+k+'_fail' in param_d, k)
+            self.assertTrue("/py_" + k + "_pass" in param_d, param_d)
+            self.assertFalse("/py_" + k + "_fail" in param_d, k)
 
         n = mock.nodes[0]
-        for k in ['if', 'unless']:
-            self.assertTrue(['from_%s_pass'%k, 'to_%s_pass'%k] in n.remap_args)
-            self.assertFalse(['from_%s_fail'%k, 'to_%s_fail'%k] in n.remap_args)            
+        for k in ["if", "unless"]:
+            self.assertTrue(["from_%s_pass" % k, "to_%s_pass" % k] in n.remap_args)
+            self.assertFalse(["from_%s_fail" % k, "to_%s_fail" % k] in n.remap_args)
             # Also check the result of Python-parsed expressions
-            self.assertTrue(['py_from_%s_pass'%k, 'py_to_%s_pass'%k] in n.remap_args)
-            self.assertFalse(['py_from_%s_fail'%k, 'py_to_%s_fail'%k] in n.remap_args)
-        
+            self.assertTrue(
+                ["py_from_%s_pass" % k, "py_to_%s_pass" % k] in n.remap_args
+            )
+            self.assertFalse(
+                ["py_from_%s_fail" % k, "py_to_%s_fail" % k] in n.remap_args
+            )
+
     def test_if_unless_invalid(self):
         mock = RosLaunchMock()
         loader = roslaunch.xmlloader.XmlLoader()
-        filename = os.path.join(self.xml_dir, 'test-if-unless-invalid-both.xml')
+        filename = os.path.join(self.xml_dir, "test-if-unless-invalid-both.xml")
         # this should raise, not sure XmlParseException is what we want as it destroys semantic info
         try:
             loader.load(filename, mock, argv=[])
             self.fail("should have raised with invalid if and unless spec")
         except roslaunch.xmlloader.XmlParseException as e:
-            self.assertTrue('unless' in str(e))
-            self.assertTrue('if' in str(e))
+            self.assertTrue("unless" in str(e))
+            self.assertTrue("if" in str(e))
 
     def test_arg_invalid(self):
         mock = RosLaunchMock()
         loader = roslaunch.xmlloader.XmlLoader()
-        filename = os.path.join(self.xml_dir, 'test-arg.xml')
+        filename = os.path.join(self.xml_dir, "test-arg.xml")
         # this should raise, not sure XmlParseException is what we want as it destroys semantic info
         try:
             loader.load(filename, mock, argv=[])
             self.fail("should have raised with missing arg")
         except roslaunch.xmlloader.XmlParseException as e:
-            self.assertTrue('required' in str(e))
+            self.assertTrue("required" in str(e))
 
         # test with invalid $(arg unknown)
-        filename = os.path.join(self.xml_dir, 'test-arg-invalid-sub.xml')
+        filename = os.path.join(self.xml_dir, "test-arg-invalid-sub.xml")
         try:
             loader.load(filename, mock, argv=[])
             self.fail("should have raised with unknown arg")
         except roslaunch.xmlloader.XmlParseException as e:
-            self.assertTrue('missing' in str(e))
+            self.assertTrue("missing" in str(e))
 
         # test with invalid $(arg unknown)
-        filename = os.path.join(self.xml_dir, 'test-arg-invalid-redecl.xml')
+        filename = os.path.join(self.xml_dir, "test-arg-invalid-redecl.xml")
         try:
             loader.load(filename, mock, argv=[])
             self.fail("should have raised with multiple decl")
         except roslaunch.xmlloader.XmlParseException as e:
-            self.assertTrue('grounded' in str(e))
-            
-                    
+            self.assertTrue("grounded" in str(e))
+
     def test_arg(self):
         loader = roslaunch.xmlloader.XmlLoader()
-        filename = os.path.join(self.xml_dir, 'test-arg.xml')
+        filename = os.path.join(self.xml_dir, "test-arg.xml")
 
         mock = RosLaunchMock()
         loader.load(filename, mock, argv=["required:=test_arg", "if_test:=0"])
@@ -882,83 +1015,87 @@ class TestXmlLoader(unittest.TestCase):
         for p in mock.params:
             param_d[p.key] = p.value
 
-        self.assertEqual(param_d['/p1_test'], 'test_arg')
-        self.assertEqual(param_d['/p2_test'], 'not_set')
-        self.assertEqual(param_d['/p3_test'], 'set')
-        self.assertEqual(param_d['/succeed'], 'yes')                
-        self.assertEqual(param_d['/py_succeed'], 'yes')
-        self.assertEqual(param_d['/if_test'], 'not_ran')                
-        self.assertEqual(param_d['/py_if_test'], 'not_ran')
-        self.assertEqual(param_d['/if_param'], False)   
-        self.assertEqual(param_d['/py_if_param'], False)
-        self.assertEqual(param_d['/int_param'], 1234)   
-        self.assertAlmostEqual(param_d['/float_param'], 3.)   
-        self.assertFalse('/fail' in param_d)
-        self.assertFalse('/py_fail' in param_d)
+        self.assertEqual(param_d["/p1_test"], "test_arg")
+        self.assertEqual(param_d["/p2_test"], "not_set")
+        self.assertEqual(param_d["/p3_test"], "set")
+        self.assertEqual(param_d["/succeed"], "yes")
+        self.assertEqual(param_d["/py_succeed"], "yes")
+        self.assertEqual(param_d["/if_test"], "not_ran")
+        self.assertEqual(param_d["/py_if_test"], "not_ran")
+        self.assertEqual(param_d["/if_param"], False)
+        self.assertEqual(param_d["/py_if_param"], False)
+        self.assertEqual(param_d["/int_param"], 1234)
+        self.assertAlmostEqual(param_d["/float_param"], 3.0)
+        self.assertFalse("/fail" in param_d)
+        self.assertFalse("/py_fail" in param_d)
 
         # context tests
         #  - args are scoped to their context, and thus can be rebound in a sibling context
-        self.assertEqual(param_d['/context1'], 'group1')
-        self.assertEqual(param_d['/context2'], 'group2')        
-        
+        self.assertEqual(param_d["/context1"], "group1")
+        self.assertEqual(param_d["/context2"], "group2")
+
         # include tests
-        self.assertEqual(param_d['/include_test/p1_test'], 'required1')
-        self.assertEqual(param_d['/include_test/p2_test'], 'not_set')
-        self.assertEqual(param_d['/include_test/p3_test'], 'set')
-        self.assertEqual(param_d['/include_test/p4_test'], 'initial')
-        
-        self.assertEqual(param_d['/include2/include_test/p1_test'], 'required2')
-        self.assertEqual(param_d['/include2/include_test/p2_test'], 'optional2')
-        self.assertEqual(param_d['/include2/include_test/p3_test'], 'set')
-        self.assertEqual(param_d['/include2/include_test/p4_test'], 'new2')
-            
-        self.assertTrue('/include3/include_test/p1_test' not in param_d)
-        self.assertTrue('/include3/include_test/p2_test' not in param_d)
-        self.assertTrue('/include3/include_test/p3_test' not in param_d)
-        self.assertTrue('/include3/include_test/p4_test' not in param_d)
+        self.assertEqual(param_d["/include_test/p1_test"], "required1")
+        self.assertEqual(param_d["/include_test/p2_test"], "not_set")
+        self.assertEqual(param_d["/include_test/p3_test"], "set")
+        self.assertEqual(param_d["/include_test/p4_test"], "initial")
+
+        self.assertEqual(param_d["/include2/include_test/p1_test"], "required2")
+        self.assertEqual(param_d["/include2/include_test/p2_test"], "optional2")
+        self.assertEqual(param_d["/include2/include_test/p3_test"], "set")
+        self.assertEqual(param_d["/include2/include_test/p4_test"], "new2")
+
+        self.assertTrue("/include3/include_test/p1_test" not in param_d)
+        self.assertTrue("/include3/include_test/p2_test" not in param_d)
+        self.assertTrue("/include3/include_test/p3_test" not in param_d)
+        self.assertTrue("/include3/include_test/p4_test" not in param_d)
 
         # test again with optional value set
         mock = RosLaunchMock()
-        loader.load(filename, mock, argv=["required:=test_arg", "optional:=test_arg2", "if_test:=1"])
+        loader.load(
+            filename,
+            mock,
+            argv=["required:=test_arg", "optional:=test_arg2", "if_test:=1"],
+        )
 
         param_d = {}
         for p in mock.params:
             param_d[p.key] = p.value
-            
-        self.assertEqual(param_d['/p1_test'], 'test_arg')
-        self.assertEqual(param_d['/p2_test'], 'test_arg2')
-        self.assertEqual(param_d['/p3_test'], 'set')
-        self.assertEqual(param_d['/context1'], 'group1')
-        self.assertEqual(param_d['/context2'], 'group2')                
-        self.assertEqual(param_d['/succeed'], 'yes')                
-        self.assertEqual(param_d['/py_succeed'], 'yes')
-        self.assertEqual(param_d['/if_test'], 'ran')   
-        self.assertEqual(param_d['/py_if_test'], 'ran')
-        self.assertEqual(param_d['/if_param'], True)   
-        self.assertEqual(param_d['/py_if_param'], True)
-        self.assertFalse('/fail' in param_d)
-        self.assertFalse('/py_fail' in param_d)
+
+        self.assertEqual(param_d["/p1_test"], "test_arg")
+        self.assertEqual(param_d["/p2_test"], "test_arg2")
+        self.assertEqual(param_d["/p3_test"], "set")
+        self.assertEqual(param_d["/context1"], "group1")
+        self.assertEqual(param_d["/context2"], "group2")
+        self.assertEqual(param_d["/succeed"], "yes")
+        self.assertEqual(param_d["/py_succeed"], "yes")
+        self.assertEqual(param_d["/if_test"], "ran")
+        self.assertEqual(param_d["/py_if_test"], "ran")
+        self.assertEqual(param_d["/if_param"], True)
+        self.assertEqual(param_d["/py_if_param"], True)
+        self.assertFalse("/fail" in param_d)
+        self.assertFalse("/py_fail" in param_d)
 
         # include tests
-        self.assertEqual(param_d['/include_test/p1_test'], 'required1')
-        self.assertEqual(param_d['/include_test/p2_test'], 'not_set')
-        self.assertEqual(param_d['/include_test/p3_test'], 'set')
-        self.assertEqual(param_d['/include_test/p4_test'], 'initial')
-        
-        self.assertEqual(param_d['/include2/include_test/p1_test'], 'required2')
-        self.assertEqual(param_d['/include2/include_test/p2_test'], 'optional2')
-        self.assertEqual(param_d['/include2/include_test/p3_test'], 'set')
-        self.assertEqual(param_d['/include2/include_test/p4_test'], 'new2')
-        
-        self.assertEqual(param_d['/include3/include_test/p1_test'], 'required3')
-        self.assertEqual(param_d['/include3/include_test/p2_test'], 'optional3')
-        self.assertEqual(param_d['/include3/include_test/p3_test'], 'set')
-        self.assertEqual(param_d['/include3/include_test/p4_test'], 'new3')
-        
+        self.assertEqual(param_d["/include_test/p1_test"], "required1")
+        self.assertEqual(param_d["/include_test/p2_test"], "not_set")
+        self.assertEqual(param_d["/include_test/p3_test"], "set")
+        self.assertEqual(param_d["/include_test/p4_test"], "initial")
+
+        self.assertEqual(param_d["/include2/include_test/p1_test"], "required2")
+        self.assertEqual(param_d["/include2/include_test/p2_test"], "optional2")
+        self.assertEqual(param_d["/include2/include_test/p3_test"], "set")
+        self.assertEqual(param_d["/include2/include_test/p4_test"], "new2")
+
+        self.assertEqual(param_d["/include3/include_test/p1_test"], "required3")
+        self.assertEqual(param_d["/include3/include_test/p2_test"], "optional3")
+        self.assertEqual(param_d["/include3/include_test/p3_test"], "set")
+        self.assertEqual(param_d["/include3/include_test/p4_test"], "new3")
+
     # Test the new attribute <include pass_all_args={"true"|"false"}>
     def test_arg_all(self):
         loader = roslaunch.xmlloader.XmlLoader()
-        filename = os.path.join(self.xml_dir, 'test-arg-all.xml')
+        filename = os.path.join(self.xml_dir, "test-arg-all.xml")
 
         # Test suite A: load without an optional arg set externally
         mock = RosLaunchMock()
@@ -969,32 +1106,32 @@ class TestXmlLoader(unittest.TestCase):
             param_d[p.key] = p.value
 
         # Sanity check: Parent namespace
-        self.assertEqual(param_d['/p1_test'], 'test_arg')
-        self.assertEqual(param_d['/p2_test'], 'not_set')
-        self.assertEqual(param_d['/p3_test'], 'parent')
+        self.assertEqual(param_d["/p1_test"], "test_arg")
+        self.assertEqual(param_d["/p2_test"], "not_set")
+        self.assertEqual(param_d["/p3_test"], "parent")
 
         # Test case 1: include without pass_all_args
-        self.assertEqual(param_d['/notall/include_test/p1_test'], 'test_arg')
-        self.assertEqual(param_d['/notall/include_test/p2_test'], 'not_set')
-        self.assertEqual(param_d['/notall/include_test/p3_test'], 'set')
+        self.assertEqual(param_d["/notall/include_test/p1_test"], "test_arg")
+        self.assertEqual(param_d["/notall/include_test/p2_test"], "not_set")
+        self.assertEqual(param_d["/notall/include_test/p3_test"], "set")
 
         # Test case 2: include without pass_all_args attribute, and pass optional arg
         # internally
-        self.assertEqual(param_d['/notall_optional/include_test/p1_test'], 'test_arg')
-        self.assertEqual(param_d['/notall_optional/include_test/p2_test'], 'not_set')
-        self.assertEqual(param_d['/notall_optional/include_test/p3_test'], 'set')
+        self.assertEqual(param_d["/notall_optional/include_test/p1_test"], "test_arg")
+        self.assertEqual(param_d["/notall_optional/include_test/p2_test"], "not_set")
+        self.assertEqual(param_d["/notall_optional/include_test/p3_test"], "set")
 
         # Test case 3: include with pass_all_args attribute, instead of passing individual
         # args
-        self.assertEqual(param_d['/all/include_test/p1_test'], 'test_arg')
-        self.assertEqual(param_d['/all/include_test/p2_test'], 'not_set')
-        self.assertEqual(param_d['/all/include_test/p3_test'], 'set')
+        self.assertEqual(param_d["/all/include_test/p1_test"], "test_arg")
+        self.assertEqual(param_d["/all/include_test/p2_test"], "not_set")
+        self.assertEqual(param_d["/all/include_test/p3_test"], "set")
 
         # Test case 4: include with pass_all_args attribute, and override one
         # arg inside the include tag
-        self.assertEqual(param_d['/all_override/include_test/p1_test'], 'override')
-        self.assertEqual(param_d['/all_override/include_test/p2_test'], 'not_set')
-        self.assertEqual(param_d['/all_override/include_test/p3_test'], 'set')
+        self.assertEqual(param_d["/all_override/include_test/p1_test"], "override")
+        self.assertEqual(param_d["/all_override/include_test/p2_test"], "not_set")
+        self.assertEqual(param_d["/all_override/include_test/p3_test"], "set")
 
         # Test suite B: load with an optional arg set externally
         mock = RosLaunchMock()
@@ -1005,32 +1142,32 @@ class TestXmlLoader(unittest.TestCase):
             param_d[p.key] = p.value
 
         # Sanity check: Parent namespace
-        self.assertEqual(param_d['/p1_test'], 'test_arg')
-        self.assertEqual(param_d['/p2_test'], 'test_arg2')
-        self.assertEqual(param_d['/p3_test'], 'parent')
+        self.assertEqual(param_d["/p1_test"], "test_arg")
+        self.assertEqual(param_d["/p2_test"], "test_arg2")
+        self.assertEqual(param_d["/p3_test"], "parent")
 
         # Test case 1: include without pass_all_args attribute
-        self.assertEqual(param_d['/notall/include_test/p1_test'], 'test_arg')
-        self.assertEqual(param_d['/notall/include_test/p2_test'], 'not_set')
-        self.assertEqual(param_d['/notall/include_test/p3_test'], 'set')
+        self.assertEqual(param_d["/notall/include_test/p1_test"], "test_arg")
+        self.assertEqual(param_d["/notall/include_test/p2_test"], "not_set")
+        self.assertEqual(param_d["/notall/include_test/p3_test"], "set")
 
         # Test case 2: include without pass_all_args attribute, and pass optional arg
         # internally
-        self.assertEqual(param_d['/notall_optional/include_test/p1_test'], 'test_arg')
-        self.assertEqual(param_d['/notall_optional/include_test/p2_test'], 'test_arg2')
-        self.assertEqual(param_d['/notall_optional/include_test/p3_test'], 'set')
+        self.assertEqual(param_d["/notall_optional/include_test/p1_test"], "test_arg")
+        self.assertEqual(param_d["/notall_optional/include_test/p2_test"], "test_arg2")
+        self.assertEqual(param_d["/notall_optional/include_test/p3_test"], "set")
 
         # Test case 3: include with pass_all_args attribute, instead of passing individual
         # args
-        self.assertEqual(param_d['/all/include_test/p1_test'], 'test_arg')
-        self.assertEqual(param_d['/all/include_test/p2_test'], 'test_arg2')
-        self.assertEqual(param_d['/all/include_test/p3_test'], 'set')
+        self.assertEqual(param_d["/all/include_test/p1_test"], "test_arg")
+        self.assertEqual(param_d["/all/include_test/p2_test"], "test_arg2")
+        self.assertEqual(param_d["/all/include_test/p3_test"], "set")
 
         # Test case 4: include with pass_all_args attribute, and override one
         # arg inside the include tag
-        self.assertEqual(param_d['/all_override/include_test/p1_test'], 'override')
-        self.assertEqual(param_d['/all_override/include_test/p2_test'], 'test_arg2')
-        self.assertEqual(param_d['/all_override/include_test/p3_test'], 'set')
+        self.assertEqual(param_d["/all_override/include_test/p1_test"], "override")
+        self.assertEqual(param_d["/all_override/include_test/p2_test"], "test_arg2")
+        self.assertEqual(param_d["/all_override/include_test/p3_test"], "set")
 
     def test_arg_all_includes(self):
         loader = roslaunch.xmlloader.XmlLoader()
@@ -1038,10 +1175,10 @@ class TestXmlLoader(unittest.TestCase):
         # Can't explicitly set an arg when including a file that sets the same
         # arg as constant.
         mock = RosLaunchMock()
-        filename = os.path.join(self.xml_dir, 'test-arg-invalid-include.xml')
+        filename = os.path.join(self.xml_dir, "test-arg-invalid-include.xml")
         try:
-            loader.load(filename, mock)            
-            self.fail('should have thrown an exception')
+            loader.load(filename, mock)
+            self.fail("should have thrown an exception")
         except roslaunch.xmlloader.XmlParseException:
             pass
 
@@ -1049,9 +1186,9 @@ class TestXmlLoader(unittest.TestCase):
         # Can have arg set in parent launch file, then include a file that sets
         # it constant, with pass_all_args="true"
         mock = RosLaunchMock()
-        filename = os.path.join(self.xml_dir, 'test-arg-valid-include.xml')
+        filename = os.path.join(self.xml_dir, "test-arg-valid-include.xml")
         # Just make sure there's no exception
-        loader.load(filename, mock)            
+        loader.load(filename, mock)
 
         # This test checks for exception behavior that would be nice to have,
         # but would require intrusive changes to how roslaunch passes arguments
@@ -1060,18 +1197,18 @@ class TestXmlLoader(unittest.TestCase):
         ## Test 3:
         ## Can't do explicit override of arg during inclusion of file that sets
         ## it constant, even when pass_all_args="true"
-        #mock = RosLaunchMock()
-        #filename = os.path.join(self.xml_dir, 'test-arg-invalid-include2.xml')
-        #try:
-        #    loader.load(filename, mock)            
+        # mock = RosLaunchMock()
+        # filename = os.path.join(self.xml_dir, 'test-arg-invalid-include2.xml')
+        # try:
+        #    loader.load(filename, mock)
         #    self.fail('should have thrown an exception')
-        #except roslaunch.xmlloader.XmlParseException:
+        # except roslaunch.xmlloader.XmlParseException:
         #    pass
 
     # Test for $(dirname) behaviour across included files.
     def test_dirname(self):
         loader = roslaunch.xmlloader.XmlLoader()
-        filename = os.path.join(self.xml_dir, 'test-dirname.xml')
+        filename = os.path.join(self.xml_dir, "test-dirname.xml")
 
         mock = RosLaunchMock()
         loader.load(filename, mock)
@@ -1080,7 +1217,7 @@ class TestXmlLoader(unittest.TestCase):
         for p in mock.params:
             param_d[p.key] = p.value
 
-        self.assertEqual(param_d['/base'], self.xml_dir)
-        self.assertEqual(param_d['/foo'], self.xml_dir + '/bar')
-        self.assertEqual(param_d['/baz'], self.xml_dir + '/baz')
-        self.assertEqual(param_d['/bar'], self.xml_dir + '/test-dirname/baz')
+        self.assertEqual(param_d["/base"], self.xml_dir)
+        self.assertEqual(param_d["/foo"], self.xml_dir + "/bar")
+        self.assertEqual(param_d["/baz"], self.xml_dir + "/baz")
+        self.assertEqual(param_d["/bar"], self.xml_dir + "/test-dirname/baz")

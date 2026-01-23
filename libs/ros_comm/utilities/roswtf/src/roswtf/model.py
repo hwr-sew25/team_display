@@ -38,6 +38,7 @@ the process of creating instances of L{WtfError}s and L{WtfWarning}s,
 but these objects can be used directly if desired.
 """
 
+
 class WtfError(object):
     def __init__(self, msg, format_msg=None, return_val=None):
         self.msg = msg
@@ -49,6 +50,7 @@ class WtfError(object):
             self.return_val = True
         else:
             self.return_val = return_val
+
 
 class WtfWarning(object):
     def __init__(self, msg, format_msg=None, return_val=None):

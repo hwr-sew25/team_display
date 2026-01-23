@@ -51,16 +51,22 @@ def generate_environment_script(env_script):
     code = []
     _append_header(code)
 
-    _append_comment(code, 'based on a snapshot of the environment before and after calling the setup script')
-    _append_comment(code, 'it emulates the modifications of the setup script without recurring computations')
+    _append_comment(
+        code,
+        "based on a snapshot of the environment before and after calling the setup script",
+    )
+    _append_comment(
+        code,
+        "it emulates the modifications of the setup script without recurring computations",
+    )
 
     # fetch current environment
     env = os.environ
 
     # fetch environment after calling setup
-    python_code = 'import os; print(dict(os.environ))'
-    output = subprocess.check_output([env_script, sys.executable, '-c', python_code])
-    env_after = ast.literal_eval(output.decode('utf8'))
+    python_code = "import os; print(dict(os.environ))"
+    output = subprocess.check_output([env_script, sys.executable, "-c", python_code])
+    env_after = ast.literal_eval(output.decode("utf8"))
 
     # calculate added and modified environment variables
     added = {}
@@ -71,18 +77,18 @@ def generate_environment_script(env_script):
         elif env[key] != value:
             modified[key] = [env[key], value]
 
-    code.append('')
-    _append_comment(code, 'new environment variables')
+    code.append("")
+    _append_comment(code, "new environment variables")
     for key in sorted(added.keys()):
         _set_variable(code, key, added[key])
 
-    code.append('')
-    _append_comment(code, 'modified environment variables')
+    code.append("")
+    _append_comment(code, "modified environment variables")
     for key in sorted(modified.keys()):
         (old_value, new_value) = modified[key]
         if new_value.endswith(os.pathsep + old_value):
-            variable = ('$%s' if _is_not_windows() else '%%%s%%') % key
-            new_value = new_value[:-len(old_value)] + variable
+            variable = ("$%s" if _is_not_windows() else "%%%s%%") % key
+            new_value = new_value[: -len(old_value)] + variable
             if _is_not_windows():
                 new_value = '"%s"' % new_value
             _set_variable(code, key, new_value)
@@ -93,31 +99,31 @@ def generate_environment_script(env_script):
 
 
 def _is_not_windows():
-    return platform.system() != 'Windows'
+    return platform.system() != "Windows"
 
 
 def _append_header(code):
     if _is_not_windows():
-        code.append('#!/usr/bin/env sh')
+        code.append("#!/usr/bin/env sh")
     else:
-        code.append('@echo off')
+        code.append("@echo off")
 
-    _append_comment(code, 'generated from catkin/python/catkin/environment_cache.py')
-    code.append('')
+    _append_comment(code, "generated from catkin/python/catkin/environment_cache.py")
+    code.append("")
 
 
 def _append_comment(code, value):
     if _is_not_windows():
-        comment_prefix = '#'
+        comment_prefix = "#"
     else:
-        comment_prefix = 'REM'
-    code.append('%s %s' % (comment_prefix, value))
+        comment_prefix = "REM"
+    code.append("%s %s" % (comment_prefix, value))
 
 
 def _set_variable(code, key, value):
     if _is_not_windows():
         if not value.startswith('"') or not value.endswith('"'):
             value = "'%s'" % value
-        code.append('export %s=%s' % (key, value))
+        code.append("export %s=%s" % (key, value))
     else:
-        code.append('set %s=%s' % (key, value))
+        code.append("set %s=%s" % (key, value))

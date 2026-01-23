@@ -34,7 +34,7 @@
 #
 # Author: Brian Gerkey
 
-PKG = 'topic_tools'
+PKG = "topic_tools"
 
 import unittest
 import rospy
@@ -44,64 +44,66 @@ from topic_tools.srv import MuxDelete
 from topic_tools.srv import MuxList
 from topic_tools.srv import MuxSelect
 
+
 class MuxServiceTestCase(unittest.TestCase):
     def make_srv_proxies(self):
         try:
-            rospy.wait_for_service('mux/add', 5)
-            rospy.wait_for_service('mux/delete', 5)
-            rospy.wait_for_service('mux/list', 5)
-            rospy.wait_for_service('mux/select', 5)
+            rospy.wait_for_service("mux/add", 5)
+            rospy.wait_for_service("mux/delete", 5)
+            rospy.wait_for_service("mux/list", 5)
+            rospy.wait_for_service("mux/select", 5)
         except rospy.ROSException as e:
-            self.fail('failed to find a required service: ' + repr(e))
+            self.fail("failed to find a required service: " + repr(e))
 
-        add_srv = rospy.ServiceProxy('mux/add', MuxAdd)
-        delete_srv = rospy.ServiceProxy('mux/delete', MuxDelete)
-        list_srv = rospy.ServiceProxy('mux/list', MuxList)
-        select_srv = rospy.ServiceProxy('mux/select', MuxSelect)
+        add_srv = rospy.ServiceProxy("mux/add", MuxAdd)
+        delete_srv = rospy.ServiceProxy("mux/delete", MuxDelete)
+        list_srv = rospy.ServiceProxy("mux/list", MuxList)
+        select_srv = rospy.ServiceProxy("mux/select", MuxSelect)
 
         return (add_srv, delete_srv, list_srv, select_srv)
-            
+
     def test_add_delete_list(self):
         add_srv, delete_srv, list_srv, select_srv = self.make_srv_proxies()
         # Check initial condition
         topics = list_srv().topics
-        self.assertEqual(set(topics), set(['/input']))
+        self.assertEqual(set(topics), set(["/input"]))
         # Add a topic and make sure it's there
-        add_srv('/new_input')
+        add_srv("/new_input")
         topics = list_srv().topics
-        self.assertEqual(set(topics), set(['/input', '/new_input']))
+        self.assertEqual(set(topics), set(["/input", "/new_input"]))
         # Try to add the same topic again, make sure it fails, and that
         # nothing changes.
         try:
-            add_srv('/new_input')
+            add_srv("/new_input")
         except rospy.ServiceException:
             pass
         else:
-            self.fail('service call should have thrown an exception')
+            self.fail("service call should have thrown an exception")
         topics = list_srv().topics
-        self.assertEqual(set(topics), set(['/input', '/new_input']))
+        self.assertEqual(set(topics), set(["/input", "/new_input"]))
         # Select a topic, then try to delete it, make sure it fails, and
         # that nothing changes.
-        select_srv('/input')
+        select_srv("/input")
         try:
-            delete_srv('/input')
+            delete_srv("/input")
         except rospy.ServiceException:
             pass
         else:
-            self.fail('service call should have thrown an exception')
+            self.fail("service call should have thrown an exception")
         topics = list_srv().topics
-        self.assertEqual(set(topics), set(['/input', '/new_input']))
+        self.assertEqual(set(topics), set(["/input", "/new_input"]))
         # Select nothing, to allow deletion
-        select_srv('__none')
+        select_srv("__none")
         # Delete topics
-        delete_srv('/input')
+        delete_srv("/input")
         topics = list_srv().topics
-        self.assertEqual(set(topics), set(['/new_input']))
-        delete_srv('/new_input')
+        self.assertEqual(set(topics), set(["/new_input"]))
+        delete_srv("/new_input")
         topics = list_srv().topics
         self.assertEqual(set(topics), set([]))
 
+
 if __name__ == "__main__":
     import rostest
-    rostest.unitrun(PKG, 'mux_services', MuxServiceTestCase)
 
+    rostest.unitrun(PKG, "mux_services", MuxServiceTestCase)

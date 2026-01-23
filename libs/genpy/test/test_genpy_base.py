@@ -35,11 +35,28 @@ import genmsg
 
 def test_is_simple():
     from genpy.base import is_simple
-    for t in ['uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32', 'uint64', 'int64', 'float32', 'float64', 'byte', 'char']:
+
+    for t in [
+        "uint8",
+        "int8",
+        "uint16",
+        "int16",
+        "uint32",
+        "int32",
+        "uint64",
+        "int64",
+        "float32",
+        "float64",
+        "byte",
+        "char",
+    ]:
         assert is_simple(t)
 
 
 def test_SIMPLE_TYPES():
     from genpy.generator import SIMPLE_TYPES
+
     # tripwire to make sure we don't add builtin types without making sure that simple types has been updated
-    assert {'string', 'time', 'duration'} == set(genmsg.msgs.BUILTIN_TYPES) - set(SIMPLE_TYPES)
+    assert {"string", "time", "duration"} == set(genmsg.msgs.BUILTIN_TYPES) - set(
+        SIMPLE_TYPES
+    )

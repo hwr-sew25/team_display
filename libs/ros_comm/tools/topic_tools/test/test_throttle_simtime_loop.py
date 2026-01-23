@@ -61,8 +61,7 @@ class ClockPublisher(threading.Thread):
         self.finished.set()
 
     def reset(self, seconds=0):
-        self.clock = Clock(
-            clock=rospy.Time.from_seconds(seconds))
+        self.clock = Clock(clock=rospy.Time.from_seconds(seconds))
 
 
 class TestThrottleSimtimeLoop(TestCase):
@@ -73,9 +72,11 @@ class TestThrottleSimtimeLoop(TestCase):
         self.input_count = 0
         self.throttle_count = 0
         self.sub_throttle = rospy.Subscriber(
-            "input_throttle", String, self.callback_throttle, queue_size=1)
+            "input_throttle", String, self.callback_throttle, queue_size=1
+        )
         self.sub_input = rospy.Subscriber(
-            "input", String, self.callback_input, queue_size=1)
+            "input", String, self.callback_input, queue_size=1
+        )
 
     def tearDown(self):
         self.clock_pub.stop()
@@ -93,11 +94,13 @@ class TestThrottleSimtimeLoop(TestCase):
                 break
             time.sleep(0.1)
         self.assertGreater(
-            self.input_count, 0,
-            "Input message comes before rostime moves backward")
+            self.input_count, 0, "Input message comes before rostime moves backward"
+        )
         self.assertGreater(
-            self.throttle_count, 0,
-            "Throttle message comes before rostime moves backward")
+            self.throttle_count,
+            0,
+            "Throttle message comes before rostime moves backward",
+        )
 
         # reset /clock (rostime moves backward)
         self.clock_pub.reset()
@@ -111,16 +114,17 @@ class TestThrottleSimtimeLoop(TestCase):
                 break
             time.sleep(0.1)
         self.assertGreater(
-            self.input_count, 0,
-            "Input message comes after rostime moved backward")
+            self.input_count, 0, "Input message comes after rostime moved backward"
+        )
         self.assertGreater(
-            self.throttle_count, 0,
-            "Throttle message comes after rostime moved backward")
+            self.throttle_count,
+            0,
+            "Throttle message comes after rostime moved backward",
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import rostest
+
     rospy.init_node("test_throttle_simtime_loop")
-    rostest.rosrun("topic_tools",
-                   "test_throttle_simtime_loop",
-                   TestThrottleSimtimeLoop)
+    rostest.rosrun("topic_tools", "test_throttle_simtime_loop", TestThrottleSimtimeLoop)

@@ -35,6 +35,7 @@
 """
 Wrapper for running Python unittest within rosunit/rostest framework.
 """
+
 from __future__ import print_function
 from __future__ import with_statement
 
@@ -70,6 +71,7 @@ def unitrun(package, test_name, test, sysargs=None, coverage_packages=None):
     if sysargs is None:
         # lazy-init sys args
         import sys
+
         sysargs = sys.argv
 
     import unittest
@@ -81,10 +83,10 @@ def unitrun(package, test_name, test, sysargs=None, coverage_packages=None):
     result_file = None
     for arg in sysargs:
         if arg.startswith(XML_OUTPUT_FLAG):
-            result_file = arg[len(XML_OUTPUT_FLAG):]
-    text_mode = '--text' in sysargs
+            result_file = arg[len(XML_OUTPUT_FLAG) :]
+    text_mode = "--text" in sysargs
 
-    coverage_mode = '--cov' in sysargs or '--covhtml' in sysargs
+    coverage_mode = "--cov" in sysargs or "--covhtml" in sysargs
     if coverage_mode:
         start_coverage(coverage_packages)
 
@@ -101,7 +103,7 @@ def unitrun(package, test_name, test, sysargs=None, coverage_packages=None):
     else:
         result = create_xml_runner(package, test_name, result_file).run(suite)
     if coverage_mode:
-        cov_html_dir = 'covhtml' if '--covhtml' in sysargs else None
+        cov_html_dir = "covhtml" if "--covhtml" in sysargs else None
         stop_coverage(coverage_packages, html=cov_html_dir)
 
     # test over, summarize results and exit appropriately
@@ -109,6 +111,7 @@ def unitrun(package, test_name, test, sysargs=None, coverage_packages=None):
 
     if not result.wasSuccessful():
         import sys
+
         sys.exit(1)
 
 
@@ -120,16 +123,23 @@ def start_coverage(packages):
     global _cov
     try:
         import coverage
+
         try:
             _cov = coverage.coverage()
             # load previous results as we need to accumulate
             _cov.load()
             _cov.start()
         except coverage.CoverageException:
-            print("WARNING: you have an older version of python-coverage that is not support. Please update to the version provided by 'easy_install coverage'", file=sys.stderr)
+            print(
+                "WARNING: you have an older version of python-coverage that is not support. Please update to the version provided by 'easy_install coverage'",
+                file=sys.stderr,
+            )
     except ImportError:
-        print("""WARNING: cannot import python-coverage, coverage tests will not run.
-To install coverage, run 'easy_install coverage'""", file=sys.stderr)
+        print(
+            """WARNING: cannot import python-coverage, coverage tests will not run.
+To install coverage, run 'easy_install coverage'""",
+            file=sys.stderr,
+        )
 
 
 def stop_coverage(packages, html=None):
@@ -143,6 +153,7 @@ def stop_coverage(packages, html=None):
         return
     import os
     import sys
+
     try:
         _cov.stop()
         # accumulate results
@@ -152,13 +163,15 @@ def stop_coverage(packages, html=None):
         #   coverage-html tool. The reason we read and rewrite instead
         #   of append is that this does a uniqueness check to keep the
         #   file from growing unbounded
-        if os.path.exists('.coverage-modules'):
-            with open('.coverage-modules', 'r') as f:
-                all_packages = set([x for x in f.read().split('\n') if x.strip()] + packages)
+        if os.path.exists(".coverage-modules"):
+            with open(".coverage-modules", "r") as f:
+                all_packages = set(
+                    [x for x in f.read().split("\n") if x.strip()] + packages
+                )
         else:
             all_packages = set(packages)
-        with open('.coverage-modules', 'w') as f:
-            f.write('\n'.join(all_packages)+'\n')
+        with open(".coverage-modules", "w") as f:
+            f.write("\n".join(all_packages) + "\n")
 
         try:
             # list of all modules for html report
@@ -167,21 +180,35 @@ def stop_coverage(packages, html=None):
             # iterate over packages to generate per-package console reports
             for package in packages:
                 __import__(package)
-                m = [v for v in sys.modules.values() if v and v.__name__.startswith(package)]
+                m = [
+                    v
+                    for v in sys.modules.values()
+                    if v and v.__name__.startswith(package)
+                ]
                 all_mods.extend(m)
 
                 # generate overall report and per module analysis
                 _cov.report(m, show_missing=0)
                 for mod in m:
                     res = _cov.analysis(mod)
-                    print('\n%s:\nMissing lines: %s' % (res[0], res[3]))
+                    print("\n%s:\nMissing lines: %s" % (res[0], res[3]))
 
             if html:
-
-                print('=' * 80 + '\ngenerating html coverage report to %s\n' % html + '=' * 80)
+                print(
+                    "=" * 80
+                    + "\ngenerating html coverage report to %s\n" % html
+                    + "=" * 80
+                )
                 _cov.html_report(all_mods, directory=html)
         except ImportError:
-            print("WARNING: cannot import '%s', will not generate coverage report" % package, file=sys.stderr)
+            print(
+                "WARNING: cannot import '%s', will not generate coverage report"
+                % package,
+                file=sys.stderr,
+            )
     except ImportError:
-        print("""WARNING: cannot import python-coverage, coverage tests will not run.
-To install coverage, run 'easy_install coverage'""", file=sys.stderr)
+        print(
+            """WARNING: cannot import python-coverage, coverage tests will not run.
+To install coverage, run 'easy_install coverage'""",
+            file=sys.stderr,
+        )

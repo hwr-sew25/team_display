@@ -36,7 +36,7 @@
 import rospy
 from std_msgs.msg import Bool
 
-rospy.init_node('publish_once', anonymous=True)
-pub = rospy.Publisher('once_topic', Bool, queue_size=1, latch=True)
+rospy.init_node("publish_once", anonymous=True)
+pub = rospy.Publisher("once_topic", Bool, queue_size=1, latch=True)
 pub.publish(Bool(data=False))
 rospy.sleep(rospy.Duration(3))

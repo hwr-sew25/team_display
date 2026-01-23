@@ -47,10 +47,12 @@ import sys
 try:
     # Python 2.x
     from cStringIO import StringIO  # noqa: F401
+
     python3 = 0
 except ImportError:
     # Python 3.x
     from io import BytesIO  # noqa: F401
+
     python3 = 1
 
 try:
@@ -59,22 +61,23 @@ except ImportError:
     import urlparse  # noqa: F401
 
 # TODO: change this to rosgraph equivalents once we have ported this module
-ROS_IP = 'ROS_IP'
-ROS_HOSTNAME = 'ROS_HOSTNAME'
+ROS_IP = "ROS_IP"
+ROS_HOSTNAME = "ROS_HOSTNAME"
 
 SIOCGIFCONF = 0x8912
 SIOCGIFADDR = 0x8915
-if platform.system() == 'FreeBSD':
-    SIOCGIFADDR = 0xc0206921
-    if platform.architecture()[0] == '64bit':
-        SIOCGIFCONF = 0xc0106924
+if platform.system() == "FreeBSD":
+    SIOCGIFADDR = 0xC0206921
+    if platform.architecture()[0] == "64bit":
+        SIOCGIFCONF = 0xC0106924
     else:
-        SIOCGIFCONF = 0xc0086924
+        SIOCGIFCONF = 0xC0086924
 
 if 0:
     # disabling netifaces as it accounts for 50% of startup latency
     try:
         import netifaces
+
         _use_netifaces = True
     except Exception:
         # NOTE: in rare cases, I've seen Python fail to extract the egg
@@ -91,7 +94,7 @@ def _is_unix_like_platform():
     @rtype: bool
     """
     # return platform.system() in ['Linux', 'Mac OS X', 'Darwin']
-    return platform.system() in ['Linux', 'FreeBSD']
+    return platform.system() in ["Linux", "FreeBSD"]
 
 
 def get_address_override():
@@ -102,12 +105,14 @@ def get_address_override():
     """
     # #998: check for command-line remappings first
     for arg in sys.argv:
-        if arg.startswith('__hostname:=') or arg.startswith('__ip:='):
+        if arg.startswith("__hostname:=") or arg.startswith("__ip:="):
             try:
-                _, val = arg.split(':=')
+                _, val = arg.split(":=")
                 return val
             except Exception:  # split didn't unpack properly
-                raise ValueError("invalid ROS command-line remapping argument '%s'" % arg)
+                raise ValueError(
+                    "invalid ROS command-line remapping argument '%s'" % arg
+                )
 
     # check ROS_HOSTNAME and ROS_IP environment variables, which are
     # aliases for each other
@@ -129,7 +134,7 @@ def is_local_address(hostname):
     except socket.error:
         return False
     # 127. check is due to #1260
-    if reverse_ip not in get_local_addresses() and not reverse_ip.startswith('127.'):
+    if reverse_ip not in get_local_addresses() and not reverse_ip.startswith("127."):
         return False
     return True
 
@@ -147,10 +152,10 @@ def get_local_address():
         return addrs[0]
     for addr in addrs:
         # pick first non 127/8 address
-        if not addr.startswith('127.'):
+        if not addr.startswith("127."):
             return addr
     else:  # loopback
-        return '127.0.0.1'
+        return "127.0.0.1"
 
 
 # cache for performance reasons
@@ -175,7 +180,9 @@ def get_local_addresses():
         # see http://alastairs-place.net/netifaces/
         for i in netifaces.interfaces():
             try:
-                local_addrs.extend([d['addr'] for d in netifaces.ifaddresses(i)[netifaces.AF_INET]])
+                local_addrs.extend(
+                    [d["addr"] for d in netifaces.ifaddresses(i)[netifaces.AF_INET]]
+                )
             except KeyError:
                 pass
     elif _is_unix_like_platform():
@@ -187,22 +194,28 @@ def get_local_addresses():
         import array
 
         ifsize = 32
-        if platform.system() == 'Linux' and platform.architecture()[0] == '64bit':
+        if platform.system() == "Linux" and platform.architecture()[0] == "64bit":
             ifsize = 40  # untested
 
         # 32 interfaces allowed, far more than ROS can sanely deal with
 
         max_bytes = 32 * ifsize
         # according to http://docs.python.org/library/fcntl.html, the buffer limit is 1024 bytes
-        buff = array.array('B', b'\0' * max_bytes)
+        buff = array.array("B", b"\0" * max_bytes)
         # serialize the buffer length and address to ioctl
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        info = fcntl.ioctl(sock.fileno(), SIOCGIFCONF,
-                           struct.pack('iL', max_bytes, buff.buffer_info()[0]))
-        retbytes = struct.unpack('iL', info)[0]
+        info = fcntl.ioctl(
+            sock.fileno(),
+            SIOCGIFCONF,
+            struct.pack("iL", max_bytes, buff.buffer_info()[0]),
+        )
+        retbytes = struct.unpack("iL", info)[0]
         buffstr = buff.tostring()
-        if platform.system() == 'Linux':
-            local_addrs = [socket.inet_ntoa(buffstr[i+20:i+24]) for i in range(0, retbytes, ifsize)]
+        if platform.system() == "Linux":
+            local_addrs = [
+                socket.inet_ntoa(buffstr[i + 20 : i + 24])
+                for i in range(0, retbytes, ifsize)
+            ]
         else:
             # in FreeBSD, ifsize is variable: 16 + (16 or 28 or 56) bytes
             # When ifsize is 32 bytes, it contains the interface name and address,
@@ -214,7 +227,7 @@ def get_local_addresses():
                 bufpos += 16
                 ifreqsize = ord(buffstr[bufpos])
                 if ifreqsize == 16:
-                    local_addrs += [socket.inet_ntoa(buffstr[bufpos+4:bufpos+8])]
+                    local_addrs += [socket.inet_ntoa(buffstr[bufpos + 4 : bufpos + 8])]
                 bufpos += ifreqsize
     else:
         # cross-platform branch, can only resolve one address
@@ -234,11 +247,11 @@ def get_bind_address(address=None):
     """
     if address is None:
         address = get_address_override()
-    if address and (address == 'localhost' or address.startswith('127.')):
+    if address and (address == "localhost" or address.startswith("127.")):
         # localhost or 127/8
-        return '127.0.0.1'  # loopback
+        return "127.0.0.1"  # loopback
     else:
-        return '0.0.0.0'
+        return "0.0.0.0"
 
 
 # #528: semi-complicated logic for determining XML-RPC URI
@@ -255,7 +268,7 @@ def get_host_name():
             hostname = socket.gethostname()
         except Exception:
             pass
-        if not hostname or hostname == 'localhost' or hostname.startswith('127.'):
+        if not hostname or hostname == "localhost" or hostname.startswith("127."):
             hostname = get_local_address()
     return hostname
 
@@ -274,15 +287,17 @@ def create_local_xmlrpc_uri(port):
     """
     # TODO: merge logic in roslib.xmlrpc with this routine
     # in the future we may not want to be locked to http protocol nor root path
-    return 'http://%s:%s/' % (get_host_name(), port)
+    return "http://%s:%s/" % (get_host_name(), port)
 
 
 # handshake utils ###########################################
+
 
 class ROSHandshakeException(Exception):
     """
     Exception to represent errors decoding handshake
     """
+
     pass
 
 
@@ -299,32 +314,37 @@ def decode_ros_handshake_header(header_str):
     @return: key value pairs encoded in \a header_str
     @rtype: {str: str}
     """
-    (size, ) = struct.unpack('<I', header_str[0:4])
+    (size,) = struct.unpack("<I", header_str[0:4])
     size += 4  # add in 4 to include size of size field
     header_len = len(header_str)
     if size > header_len:
-        raise ROSHandshakeException('Incomplete header. Expected %s bytes but only have %s' % ((size+4), header_len))
+        raise ROSHandshakeException(
+            "Incomplete header. Expected %s bytes but only have %s"
+            % ((size + 4), header_len)
+        )
 
     d = {}
     start = 4
     while start < size:
-        (field_size, ) = struct.unpack('<I', header_str[start:start+4])
+        (field_size,) = struct.unpack("<I", header_str[start : start + 4])
         if field_size == 0:
-            raise ROSHandshakeException('Invalid 0-length handshake header field')
+            raise ROSHandshakeException("Invalid 0-length handshake header field")
         start += field_size + 4
         if start > size:
-            raise ROSHandshakeException('Invalid line length in handshake header: %s' % size)
-        line = header_str[start-field_size:start]
+            raise ROSHandshakeException(
+                "Invalid line length in handshake header: %s" % size
+            )
+        line = header_str[start - field_size : start]
 
         # python3 compatibility
         if python3 == 1:
             line = line.decode()
 
-        idx = line.find('=')
+        idx = line.find("=")
         if idx < 0:
-            raise ROSHandshakeException('Invalid line in handshake header: [%s]' % line)
+            raise ROSHandshakeException("Invalid line in handshake header: [%s]" % line)
         key = line[:idx]
-        value = line[idx+1:]
+        value = line[idx + 1 :]
         d[key.strip()] = value
     return d
 
@@ -347,19 +367,22 @@ def read_ros_handshake_header(sock, b, buff_size):
     while not header_str:
         d = sock.recv(buff_size)
         if not d:
-            raise ROSHandshakeException('connection from sender terminated before handshake header received. %s bytes were received. Please check sender for additional details.' % b.tell())
+            raise ROSHandshakeException(
+                "connection from sender terminated before handshake header received. %s bytes were received. Please check sender for additional details."
+                % b.tell()
+            )
         b.write(d)
         btell = b.tell()
         if btell > 4:
             # most likely we will get the full header in the first recv, so
             # not worth tiny optimizations possible here
             bval = b.getvalue()
-            (size,) = struct.unpack('<I', bval[0:4])
+            (size,) = struct.unpack("<I", bval[0:4])
             if btell - 4 >= size:
                 header_str = bval
 
                 # memmove the remnants of the buffer back to the start
-                leftovers = bval[size+4:]
+                leftovers = bval[size + 4 :]
                 b.truncate(len(leftovers))
                 b.seek(0)
                 b.write(leftovers)
@@ -382,17 +405,17 @@ def encode_ros_handshake_header(header):
     @return: header encoded as byte string
     @rtype: str
     """
-    fields = ['%s=%s' % (k, v) for k, v in header.items()]
+    fields = ["%s=%s" % (k, v) for k, v in header.items()]
 
     # in the usual configuration, the error 'TypeError: can't concat bytes to str' appears:
     if python3 == 0:
         # python 2
-        s = ''.join(['%s%s' % (struct.pack('<I', len(f)), f) for f in fields])
-        return struct.pack('<I', len(s)) + s
+        s = "".join(["%s%s" % (struct.pack("<I", len(f)), f) for f in fields])
+        return struct.pack("<I", len(s)) + s
     else:
         # python 3
-        s = b''.join([(struct.pack('<I', len(f)) + f.encode('utf-8')) for f in fields])
-        return struct.pack('<I', len(s)) + s
+        s = b"".join([(struct.pack("<I", len(f)) + f.encode("utf-8")) for f in fields])
+        return struct.pack("<I", len(s)) + s
 
 
 def write_ros_handshake_header(sock, header):

@@ -44,26 +44,34 @@ import os
 import sys
 import logging
 
+
 def printlog(msg, *args):
     if args:
-        msg = msg%args
-    logging.getLogger('rostest').info(msg)
+        msg = msg % args
+    logging.getLogger("rostest").info(msg)
     print("[ROSTEST]" + msg)
+
+
 def printlogerr(msg, *args):
     if args:
-        msg = msg%args
-    logging.getLogger('rostest').error(msg)
+        msg = msg % args
+    logging.getLogger("rostest").error(msg)
     print("[ROSTEST]" + msg, file=sys.stderr)
 
+
 _errors = None
+
+
 def getErrors():
     return _errors
+
 
 # Most of this code has been moved down into rosunit
 
 import rosunit
 
 rostest_name_from_path = rosunit.rostest_name_from_path
+
 
 def printRostestSummary(result, rostest_results):
     """
@@ -72,10 +80,11 @@ def printRostestSummary(result, rostest_results):
     # TODO: probably can removed this
     global _errors
     _errors = result.errors
-    return rosunit.print_runner_summary(result, rostest_results, runner_name='ROSTEST')
+    return rosunit.print_runner_summary(result, rostest_results, runner_name="ROSTEST")
+
 
 printSummary = rosunit.print_unittest_summary
 createXMLRunner = rosunit.create_xml_runner
-xmlResultsFile = rosunit.xml_results_file    
+xmlResultsFile = rosunit.xml_results_file
 test_failure_junit_xml = rosunit.junitxml.test_failure_junit_xml
 test_success_junit_xml = rosunit.junitxml.test_success_junit_xml

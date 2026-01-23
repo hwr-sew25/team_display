@@ -31,11 +31,11 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'roslaunch'
-NAME = 'test_roslaunch_ros_args'
+PKG = "roslaunch"
+NAME = "test_roslaunch_ros_args"
 
 import os
-import sys 
+import sys
 import unittest
 
 import rostest
@@ -43,25 +43,32 @@ import rostest
 import rospkg
 import roslaunch.arg_dump
 
-class TestRoslaunchRosArgs(unittest.TestCase):
 
+class TestRoslaunchRosArgs(unittest.TestCase):
     def setUp(self):
         self.vals = set()
         self.msgs = {}
 
     def test_roslaunch(self):
         rospack = rospkg.RosPack()
-        filename = os.path.join(rospack.get_path('test_roslaunch'), 'test', 'ros_args.launch')
+        filename = os.path.join(
+            rospack.get_path("test_roslaunch"), "test", "ros_args.launch"
+        )
 
         args = roslaunch.arg_dump.get_args([filename])
 
         expected_args = {
-                'foo': ("I pity the foo'.", 'true'),
-                'bar': ("Someone walks into this.", None,),
-                'baz': (None, 'false'),
-                'nop': (None, None)}
+            "foo": ("I pity the foo'.", "true"),
+            "bar": (
+                "Someone walks into this.",
+                None,
+            ),
+            "baz": (None, "false"),
+            "nop": (None, None),
+        }
 
         self.assertEqual(args, expected_args)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     rostest.run(PKG, NAME, TestRoslaunchRosArgs, sys.argv)

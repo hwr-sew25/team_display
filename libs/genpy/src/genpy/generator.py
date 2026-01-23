@@ -64,25 +64,25 @@ from genmsg import MsgGenerationException
 from genmsg import MsgSpec
 from genmsg.base import log
 
-from . base import SIMPLE_TYPES  # noqa: F401
-from . base import is_simple
-from . generate_numpy import NUMPY_DTYPE
-from . generate_numpy import pack_numpy
-from . generate_numpy import unpack_numpy
-from . generate_struct import clear_patterns
-from . generate_struct import compute_struct_pattern
-from . generate_struct import get_patterns
-from . generate_struct import int32_pack
-from . generate_struct import int32_unpack
-from . generate_struct import pack
-from . generate_struct import pack2
-from . generate_struct import reduce_pattern
-from . generate_struct import unpack
-from . generate_struct import unpack2
-from . generate_struct import unpack3
+from .base import SIMPLE_TYPES  # noqa: F401
+from .base import is_simple
+from .generate_numpy import NUMPY_DTYPE
+from .generate_numpy import pack_numpy
+from .generate_numpy import unpack_numpy
+from .generate_struct import clear_patterns
+from .generate_struct import compute_struct_pattern
+from .generate_struct import get_patterns
+from .generate_struct import int32_pack
+from .generate_struct import int32_unpack
+from .generate_struct import pack
+from .generate_struct import pack2
+from .generate_struct import reduce_pattern
+from .generate_struct import unpack
+from .generate_struct import unpack2
+from .generate_struct import unpack3
 
 # indent width
-INDENT = '  '
+INDENT = "  "
 
 
 def get_registered_ex(msg_context, type_):
@@ -96,14 +96,17 @@ def get_registered_ex(msg_context, type_):
     try:
         return msg_context.get_registered(type_)
     except Exception:
-        raise MsgGenerationException('Unknown type [%s]. Please check that the manifest.xml correctly declares dependencies.' % type_)
+        raise MsgGenerationException(
+            "Unknown type [%s]. Please check that the manifest.xml correctly declares dependencies."
+            % type_
+        )
 
 
 ################################################################################
 # Special type handling for ROS builtin types that are not primitives
 
-class Special:
 
+class Special:
     def __init__(self, constructor, post_deserialize, import_str):  # noqa: D205, D400
         """
         :param constructor: expression to instantiate new type instance for deserialization, ``str``
@@ -127,10 +130,12 @@ class Special:
 
 
 _SPECIAL_TYPES = {
-    genmsg.HEADER:   Special('std_msgs.msg._Header.Header()',     None, 'import std_msgs.msg'),
-    genmsg.TIME:     Special('genpy.Time()',     '%s.canon()', 'import genpy'),
-    genmsg.DURATION: Special('genpy.Duration()', '%s.canon()', 'import genpy'),
-    }
+    genmsg.HEADER: Special(
+        "std_msgs.msg._Header.Header()", None, "import std_msgs.msg"
+    ),
+    genmsg.TIME: Special("genpy.Time()", "%s.canon()", "import genpy"),
+    genmsg.DURATION: Special("genpy.Duration()", "%s.canon()", "import genpy"),
+}
 
 
 def is_special(type_):  # noqa: D200, D400, D401
@@ -150,6 +155,7 @@ def get_special(type_):  # noqa: D200, D400, D401
 ################################################################################
 # utilities
 
+
 # #671
 def default_value(msg_context, field_type, default_package):
     """
@@ -160,37 +166,55 @@ def default_value(msg_context, field_type, default_package):
     :returns: default value encoded in Python string representation, ``str``
     """
     if field_type in [
-        'byte', 'int8', 'int16', 'int32', 'int64',
-        'char', 'uint8', 'uint16', 'uint32', 'uint64',
+        "byte",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "char",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
     ]:
-        return '0'
-    elif field_type in ['float32', 'float64']:
-        return '0.'
-    elif field_type == 'string':
+        return "0"
+    elif field_type in ["float32", "float64"]:
+        return "0."
+    elif field_type == "string":
         return "''"
-    elif field_type == 'bool':
-        return 'False'
-    elif field_type.endswith(']'):  # array type
+    elif field_type == "bool":
+        return "False"
+    elif field_type.endswith("]"):  # array type
         base_type, is_array, array_len = genmsg.msgs.parse_type(field_type)
-        if base_type in ['char', 'uint8']:
+        if base_type in ["char", "uint8"]:
             # strings, char[], and uint8s are all optimized to be strings
             if array_len is not None:
                 return r"b'\0'*%s" % array_len
             else:
                 return "b''"
         elif array_len is None:  # var-length
-            return '[]'
+            return "[]"
         else:
             # fixed-length
             def_val = default_value(msg_context, base_type, default_package)
             if base_type in [
-                'byte', 'int8', 'int16', 'int32', 'int64', 'uint16', 'uint32',
-                'uint64', 'float32', 'float64', 'string', 'bool'
+                "byte",
+                "int8",
+                "int16",
+                "int32",
+                "int64",
+                "uint16",
+                "uint32",
+                "uint64",
+                "float32",
+                "float64",
+                "string",
+                "bool",
             ]:  # fill primitive values
-                return '[' + def_val + '] * ' + str(array_len)
+                return "[" + def_val + "] * " + str(array_len)
             else:  # fill values with distinct instances
                 def_val = default_value(msg_context, base_type, default_package)
-                return '[' + def_val + ' for _ in range(' + str(array_len) + ')]'
+                return "[" + def_val + " for _ in range(" + str(array_len) + ")]"
     else:
         return compute_constructor(msg_context, default_package, field_type)
 
@@ -214,7 +238,7 @@ def flatten(msg_context, msg):
             msg_spec = flatten(msg_context, msg_context.get_registered(t))
             new_types.extend(msg_spec.types)
             for n2 in msg_spec.names:
-                new_names.append(n+'.'+n2)
+                new_names.append(n + "." + n2)
         else:
             # I'm not sure if it's a performance win to flatten fixed-length arrays
             # as you get n __getitems__ method calls vs. a single *array call
@@ -230,8 +254,17 @@ def make_python_safe(spec):
     :param spec: msg spec to map to new, python-safe field names, ``MsgSpec``
     :returns: python-safe message specification, ``MsgSpec``
     """
-    new_c = [genmsg.Constant(c.type, _remap_reserved(c.name), c.val, c.val_text) for c in spec.constants]
-    return MsgSpec(spec.types, [_remap_reserved(n) for n in spec.names], new_c, spec.text, spec.full_name)
+    new_c = [
+        genmsg.Constant(c.type, _remap_reserved(c.name), c.val, c.val_text)
+        for c in spec.constants
+    ]
+    return MsgSpec(
+        spec.types,
+        [_remap_reserved(n) for n in spec.names],
+        new_c,
+        spec.text,
+        spec.full_name,
+    )
 
 
 def _remap_reserved(field_name):
@@ -242,21 +275,22 @@ def _remap_reserved(field_name):
     :returns: remapped name, ``str``
     """
     # include 'self' as well because we are within a class instance
-    idx = field_name.rfind('.')
+    idx = field_name.rfind(".")
     if idx > 0:
-        prefix = field_name[:idx+1]
-        sub_field_name = field_name[idx+1:]
+        prefix = field_name[: idx + 1]
+        sub_field_name = field_name[idx + 1 :]
     else:
-        prefix = ''
+        prefix = ""
         sub_field_name = field_name
 
-    if sub_field_name in keyword.kwlist + ['self']:
-        sub_field_name = sub_field_name + '_'
+    if sub_field_name in keyword.kwlist + ["self"]:
+        sub_field_name = sub_field_name + "_"
     return prefix + sub_field_name
 
 
 ################################################################################
 # (de)serialization routines
+
 
 def compute_post_deserialize(type_, varname):
     """
@@ -284,10 +318,10 @@ def compute_constructor(msg_context, package, type_):
         return None
     else:
         base_pkg, base_type_ = compute_pkg_type(package, type_)
-        if not msg_context.is_registered('%s/%s' % (base_pkg, base_type_)):
+        if not msg_context.is_registered("%s/%s" % (base_pkg, base_type_)):
             return None
         else:
-            return '%s.msg.%s()' % (base_pkg, base_type_)
+            return "%s.msg.%s()" % (base_pkg, base_type_)
 
 
 def compute_pkg_type(package, type_):  # noqa: D205, D400
@@ -302,7 +336,7 @@ def compute_pkg_type(package, type_):  # noqa: D205, D400
     elif len(splits) == 2:
         return tuple(splits)
     else:
-        raise MsgGenerationException('illegal message type: %s' % type_)
+        raise MsgGenerationException("illegal message type: %s" % type_)
 
 
 def compute_import(msg_context, package, type_):
@@ -319,13 +353,14 @@ def compute_import(msg_context, package, type_):
     # base_type is the resolved type stripped of any package name.
     # pkg is the actual package of type_.
     pkg, base_type = compute_pkg_type(package, orig_base_type)
-    full_msg_type = '%s/%s' % (pkg, base_type)  # compute fully-qualified type
+    full_msg_type = "%s/%s" % (pkg, base_type)  # compute fully-qualified type
     # important: have to do is_builtin check first. We do this check
     # against the unresolved type builtins/specials are never
     # relative. This requires some special handling for Header, which has
     # two names (Header and std_msgs/Header).
-    if genmsg.msgs.is_builtin(orig_base_type) or \
-            genmsg.msgs.is_header_type(orig_base_type):
+    if genmsg.msgs.is_builtin(orig_base_type) or genmsg.msgs.is_header_type(
+        orig_base_type
+    ):
         # of the builtin types, only special types require import
         # handling. we switch to base_type as special types do not
         # include package names.
@@ -336,12 +371,14 @@ def compute_import(msg_context, package, type_):
     elif not msg_context.is_registered(full_msg_type):
         retval = []
     else:
-        retval = ['import %s.msg' % pkg]
+        retval = ["import %s.msg" % pkg]
         iter_types = get_registered_ex(msg_context, full_msg_type).types
         for t in iter_types:
-            assert t != full_msg_type, 'msg [%s] has circular self-dependencies' % (full_msg_type)
-            full_sub_type = '%s/%s' % (package, t)
-            log('compute_import', full_msg_type, package, t)
+            assert t != full_msg_type, "msg [%s] has circular self-dependencies" % (
+                full_msg_type
+            )
+            full_sub_type = "%s/%s" % (package, t)
+            log("compute_import", full_msg_type, package, t)
             sub = compute_import(msg_context, package, t)
             retval.extend([x for x in sub if x not in retval])
     return retval
@@ -358,14 +395,14 @@ def compute_full_text_escaped(msg_context, spec):
     :returns: concatenated text for msg/srv file and embedded msg/srv types. Text will be escaped for triple-quote, ``str``
     """
     msg_definition = genmsg.compute_full_text(msg_context, spec)
-    msg_definition = msg_definition.replace('"""', r'\"\"\"')
+    msg_definition = msg_definition.replace('"""', r"\"\"\"")
     return msg_definition
 
 
 ################################################################################
 # (De)serialization generators
 
-_serial_context = ''
+_serial_context = ""
 _context_stack = []
 
 _counter = 0
@@ -375,7 +412,7 @@ def next_var():
     # we could optimize this by reusing vars once the context is popped
     global _counter
     _counter += 1
-    return '_v%s' % _counter
+    return "_v%s" % _counter
 
 
 def reset_var():
@@ -412,6 +449,7 @@ def pop_context():
 # using the context stack to manage any changes in variable-naming, so
 # that code can be reused as much as possible.
 
+
 def len_serializer_generator(var, is_string, serialize):  # noqa: D401
     """
     Generator for array-length serialization (32-bit, little-endian unsigned integer).
@@ -422,18 +460,18 @@ def len_serializer_generator(var, is_string, serialize):  # noqa: D401
       serialization. Other, generate code for deserialization, ``bool``
     """
     if serialize:
-        yield 'length = len(%s)' % var
+        yield "length = len(%s)" % var
         # NOTE: it's more difficult to save a call to struct.pack with
         # the array length as we are already using *array_val to pass
         # into struct.pack as *args. Although it's possible that
         # Python is not optimizing it, it is potentially worse for
         # performance to attempt to combine
         if not is_string:
-            yield int32_pack('length')
+            yield int32_pack("length")
     else:
-        yield 'start = end'
-        yield 'end += 4'
-        yield int32_unpack('length', 'str[start:end]')  # 4 = struct.calcsize('<i')
+        yield "start = end"
+        yield "end += 4"
+        yield int32_unpack("length", "str[start:end]")  # 4 = struct.calcsize('<i')
 
 
 def string_serializer_generator(package, type_, name, serialize):  # noqa: D401
@@ -450,16 +488,16 @@ def string_serializer_generator(package, type_, name, serialize):  # noqa: D401
     # work
     if _serial_context and serialize:
         # optimize as string serialization accesses field twice
-        yield '_x = %s%s' % (_serial_context, name)
-        var = '_x'
+        yield "_x = %s%s" % (_serial_context, name)
+        var = "_x"
     else:
-        var = _serial_context+name
+        var = _serial_context + name
 
     # the length generator is a noop if serialize is True as we
     # optimize the serialization call.
     base_type, is_array, array_len = genmsg.msgs.parse_type(type_)
     # - don't serialize length for fixed-length arrays of bytes
-    if base_type not in ['uint8', 'char'] or array_len is None:
+    if base_type not in ["uint8", "char"] or array_len is None:
         for y in len_serializer_generator(var, True, serialize):
             yield y  # serialize string length
 
@@ -468,39 +506,46 @@ def string_serializer_generator(package, type_, name, serialize):  # noqa: D401
 
         # check to see if its a uint8/byte type, in which case we need to convert to string before serializing
         base_type, is_array, array_len = genmsg.msgs.parse_type(type_)
-        if base_type in ['uint8', 'char']:
-            yield '# - if encoded as a list instead, serialize as bytes instead of string'
+        if base_type in ["uint8", "char"]:
+            yield "# - if encoded as a list instead, serialize as bytes instead of string"
             if array_len is None:
-                yield 'if type(%s) in [list, tuple]:' % var
-                yield INDENT+pack2("'<I%sB'%length", 'length, *%s' % var)
-                yield 'else:'
-                yield INDENT+pack2("'<I%ss'%length", 'length, %s' % var)
+                yield "if type(%s) in [list, tuple]:" % var
+                yield INDENT + pack2("'<I%sB'%length", "length, *%s" % var)
+                yield "else:"
+                yield INDENT + pack2("'<I%ss'%length", "length, %s" % var)
             else:
-                yield 'if type(%s) in [list, tuple]:' % var
-                yield INDENT+pack('%sB' % array_len, '*%s' % var)
-                yield 'else:'
-                yield INDENT+pack('%ss' % array_len, var)
+                yield "if type(%s) in [list, tuple]:" % var
+                yield INDENT + pack("%sB" % array_len, "*%s" % var)
+                yield "else:"
+                yield INDENT + pack("%ss" % array_len, var)
         else:
             # FIXME: for py3k, this needs to be w/ encode(), but this interferes with actual byte data
-            yield 'if python3 or type(%s) == unicode:' % (var)
-            yield INDENT+"%s = %s.encode('utf-8')" % (var, var)  # For unicode-strings in Python2, encode using utf-8
-            yield INDENT+'length = len(%s)' % (var)  # Update the length after utf-8 conversion
+            yield "if python3 or type(%s) == unicode:" % (var)
+            yield INDENT + "%s = %s.encode('utf-8')" % (
+                var,
+                var,
+            )  # For unicode-strings in Python2, encode using utf-8
+            yield INDENT + "length = len(%s)" % (
+                var
+            )  # Update the length after utf-8 conversion
 
-            yield pack2("'<I%ss'%length", 'length, %s' % var)
+            yield pack2("'<I%ss'%length", "length, %s" % var)
     else:
-        yield 'start = end'
+        yield "start = end"
         if array_len is not None:
-            yield 'end += %s' % array_len
-            yield '%s = str[start:end]' % var
+            yield "end += %s" % array_len
+            yield "%s = str[start:end]" % var
         else:
-            yield 'end += length'
-            if base_type in ['uint8', 'char']:
-                yield '%s = str[start:end]' % (var)
+            yield "end += length"
+            if base_type in ["uint8", "char"]:
+                yield "%s = str[start:end]" % (var)
             else:
-                yield 'if python3:'
-                yield INDENT+"%s = str[start:end].decode('utf-8', 'rosmsg')" % (var)  # If messages are python3-decode back to unicode
-                yield 'else:'
-                yield INDENT+'%s = str[start:end]' % (var)
+                yield "if python3:"
+                yield INDENT + "%s = str[start:end].decode('utf-8', 'rosmsg')" % (
+                    var
+                )  # If messages are python3-decode back to unicode
+                yield "else:"
+                yield INDENT + "%s = str[start:end]" % (var)
 
 
 def array_serializer_generator(msg_context, package, type_, name, serialize, is_numpy):  # noqa: D401
@@ -511,17 +556,17 @@ def array_serializer_generator(msg_context, package, type_, name, serialize, is_
     """
     base_type, is_array, array_len = genmsg.msgs.parse_type(type_)
     if not is_array:
-        raise MsgGenerationException('Invalid array spec: %s' % type_)
+        raise MsgGenerationException("Invalid array spec: %s" % type_)
     var_length = array_len is None
 
     # handle fixed-size byte arrays could be slightly more efficient
     # as we recalculated the length in the generated code.
-    if base_type in ['char', 'uint8']:  # treat unsigned int8 arrays as string type
+    if base_type in ["char", "uint8"]:  # treat unsigned int8 arrays as string type
         for y in string_serializer_generator(package, type_, name, serialize):
             yield y
         return
 
-    var = _serial_context+name
+    var = _serial_context + name
     # yield length serialization, if necessary
     if var_length:
         for y in len_serializer_generator(var, False, serialize):
@@ -539,72 +584,88 @@ def array_serializer_generator(msg_context, package, type_, name, serialize, is_
                 if is_numpy:
                     yield pack_numpy(var)
                 else:
-                    yield pack2('pattern', '*'+var)
+                    yield pack2("pattern", "*" + var)
             else:
-                yield 'start = end'
-                yield 's = struct.Struct(pattern)'
-                yield 'end += s.size'
+                yield "start = end"
+                yield "s = struct.Struct(pattern)"
+                yield "end += s.size"
                 if is_numpy:
                     dtype = NUMPY_DTYPE[base_type]
-                    yield unpack_numpy(var, 'length', dtype, 'str[start:end]')
+                    yield unpack_numpy(var, "length", dtype, "str[start:end]")
                 else:
-                    yield unpack3(var, 's', 'str[start:end]')
+                    yield unpack3(var, "s", "str[start:end]")
         else:
-            pattern = '%s%s' % (length, compute_struct_pattern([base_type]))
+            pattern = "%s%s" % (length, compute_struct_pattern([base_type]))
             if serialize:
                 if is_numpy:
                     yield pack_numpy(var)
                 else:
-                    yield pack(pattern, '*'+var)
+                    yield pack(pattern, "*" + var)
             else:
-                yield 'start = end'
-                yield 'end += %s' % struct.calcsize('<%s' % pattern)
+                yield "start = end"
+                yield "end += %s" % struct.calcsize("<%s" % pattern)
                 if is_numpy:
                     dtype = NUMPY_DTYPE[base_type]
-                    yield unpack_numpy(var, length, dtype, 'str[start:end]')
+                    yield unpack_numpy(var, length, dtype, "str[start:end]")
                 else:
-                    yield unpack(var, pattern, 'str[start:end]')
-        if not serialize and base_type == 'bool':
+                    yield unpack(var, pattern, "str[start:end]")
+        if not serialize and base_type == "bool":
             # convert uint8 to bool
-            if base_type == 'bool':
-                yield '%s = list(map(bool, %s))' % (var, var)
+            if base_type == "bool":
+                yield "%s = list(map(bool, %s))" % (var, var)
 
     else:
         # generic recursive serializer
         # NOTE: this is functionally equivalent to the is_registered branch of complex_serializer_generator
 
         # choose a unique temporary variable for iterating
-        loop_var = 'val%s' % len(_context_stack)
+        loop_var = "val%s" % len(_context_stack)
 
         # compute the variable context and factory to use
-        if base_type == 'string':
-            push_context('')
-            factory = string_serializer_generator(package, base_type, loop_var, serialize)
+        if base_type == "string":
+            push_context("")
+            factory = string_serializer_generator(
+                package, base_type, loop_var, serialize
+            )
         else:
-            push_context('%s.' % loop_var)
-            factory = serializer_generator(msg_context, make_python_safe(get_registered_ex(msg_context, base_type)), serialize, is_numpy)
+            push_context("%s." % loop_var)
+            factory = serializer_generator(
+                msg_context,
+                make_python_safe(get_registered_ex(msg_context, base_type)),
+                serialize,
+                is_numpy,
+            )
 
         if serialize:
             if array_len is not None:
-                yield 'if len(%s) != %s:' % (var, array_len)
-                yield INDENT + "self._check_types(ValueError(\"Expecting %%s items but found %%s when writing '%%s'\" %% (%s, len(%s), '%s')))" % (array_len, var, var)
-            yield 'for %s in %s:' % (loop_var, var)
+                yield "if len(%s) != %s:" % (var, array_len)
+                yield (
+                    INDENT
+                    + "self._check_types(ValueError(\"Expecting %%s items but found %%s when writing '%%s'\" %% (%s, len(%s), '%s')))"
+                    % (array_len, var, var)
+                )
+            yield "for %s in %s:" % (loop_var, var)
         else:
-            yield '%s = []' % var
+            yield "%s = []" % var
             if var_length:
-                yield 'for i in range(0, length):'
+                yield "for i in range(0, length):"
             else:
-                yield 'for i in range(0, %s):' % length
-            if base_type != 'string':
-                yield INDENT + '%s = %s' % (loop_var, compute_constructor(msg_context, package, base_type))
+                yield "for i in range(0, %s):" % length
+            if base_type != "string":
+                yield INDENT + "%s = %s" % (
+                    loop_var,
+                    compute_constructor(msg_context, package, base_type),
+                )
         for y in factory:
             yield INDENT + y
         if not serialize:
-            yield INDENT + '%s.append(%s)' % (var, loop_var)
+            yield INDENT + "%s.append(%s)" % (var, loop_var)
         pop_context()
 
 
-def complex_serializer_generator(msg_context, package, type_, name, serialize, is_numpy):  # noqa: D401
+def complex_serializer_generator(
+    msg_context, package, type_, name, serialize, is_numpy
+):  # noqa: D401
     """
     Generator for serializing complex type.
 
@@ -623,30 +684,39 @@ def complex_serializer_generator(msg_context, package, type_, name, serialize, i
 
     # Array
     if is_array:
-        for y in array_serializer_generator(msg_context, package, type_, name, serialize, is_numpy):
+        for y in array_serializer_generator(
+            msg_context, package, type_, name, serialize, is_numpy
+        ):
             yield y
     # Embedded Message
-    elif type_ == 'string':
+    elif type_ == "string":
         for y in string_serializer_generator(package, type_, name, serialize):
             yield y
     else:
         if not is_special(type_):
             # canonicalize type
             pkg, base_type = compute_pkg_type(package, type_)
-            type_ = '%s/%s' % (pkg, base_type)
+            type_ = "%s/%s" % (pkg, base_type)
         if msg_context.is_registered(type_):
             # descend data structure ####################
             ctx_var = next_var()
-            yield '%s = %s' % (ctx_var, _serial_context+name)
-            push_context(ctx_var+'.')
+            yield "%s = %s" % (ctx_var, _serial_context + name)
+            push_context(ctx_var + ".")
             # unoptimized code
             # push_context(_serial_context+name+'.')
-            for y in serializer_generator(msg_context, make_python_safe(get_registered_ex(msg_context, type_)), serialize, is_numpy):
+            for y in serializer_generator(
+                msg_context,
+                make_python_safe(get_registered_ex(msg_context, type_)),
+                serialize,
+                is_numpy,
+            ):
                 yield y  # recurs on subtype
             pop_context()
         else:
             # Invalid
-            raise MsgGenerationException('Unknown type: %s. Package context is %s' % (type_, package))
+            raise MsgGenerationException(
+                "Unknown type: %s. Package context is %s" % (type_, package)
+            )
 
 
 # primitives that can be handled with struct
@@ -659,31 +729,35 @@ def simple_serializer_generator(msg_context, spec, start, end, serialize):  # no
     :param end: last field to serialize, ``int``
     """
     # optimize member var access
-    if end - start > 1 and _serial_context.endswith('.'):
-        yield '_x = '+_serial_context[:-1]
-        vars_ = '_x.' + (', _x.').join(spec.names[start:end])
-    elif serialize and end - start == 1 and _serial_context.endswith('.'):
-        yield '_x = %s%s' % (_serial_context, spec.names[start])
-        vars_ = '_x'
+    if end - start > 1 and _serial_context.endswith("."):
+        yield "_x = " + _serial_context[:-1]
+        vars_ = "_x." + (", _x.").join(spec.names[start:end])
+    elif serialize and end - start == 1 and _serial_context.endswith("."):
+        yield "_x = %s%s" % (_serial_context, spec.names[start])
+        vars_ = "_x"
     else:
-        vars_ = _serial_context + (', '+_serial_context).join(spec.names[start:end])
+        vars_ = _serial_context + (", " + _serial_context).join(spec.names[start:end])
 
     pattern = compute_struct_pattern(spec.types[start:end])
     if serialize:
         yield pack(pattern, vars_)
     else:
-        yield 'start = end'
-        yield 'end += %s' % struct.calcsize('<%s' % reduce_pattern(pattern))
-        yield unpack('(%s,)' % vars_, pattern, 'str[start:end]')
+        yield "start = end"
+        yield "end += %s" % struct.calcsize("<%s" % reduce_pattern(pattern))
+        yield unpack("(%s,)" % vars_, pattern, "str[start:end]")
 
         # convert uint8 to bool. this doesn't add much value as Python
         # equality test on a field will return that True == 1, but I
         # want to be consistent with bool
-        bool_vars = [(f, t) for f, t in zip(spec.names[start:end], spec.types[start:end]) if t == 'bool']
+        bool_vars = [
+            (f, t)
+            for f, t in zip(spec.names[start:end], spec.types[start:end])
+            if t == "bool"
+        ]
         for f, t in bool_vars:
             # TODO: could optimize this as well
-            var = _serial_context+f
-            yield '%s = bool(%s)' % (var, var)
+            var = _serial_context + f
+            yield "%s = bool(%s)" % (var, var)
 
 
 def serializer_generator(msg_context, spec, serialize, is_numpy):  # noqa: D401
@@ -702,10 +776,10 @@ def serializer_generator(msg_context, spec, serialize, is_numpy):  # noqa: D401
     # Simple types are batch serialized using the python struct module.
     # Complex types are individually serialized
     if spec is None:
-        raise MsgGenerationException('spec is none')
+        raise MsgGenerationException("spec is none")
     names, types = spec.names, spec.types
     if serialize and not len(names):  # Empty
-        yield 'pass'
+        yield "pass"
         return
 
     _max_chunk = 255
@@ -713,20 +787,26 @@ def serializer_generator(msg_context, spec, serialize, is_numpy):  # noqa: D401
     # yield serializer for any simple types we've encountered until
     # then, then yield the complex type serializer
     curr = 0
-    for (i, full_type) in enumerate(types):
+    for i, full_type in enumerate(types):
         if not is_simple(full_type):
             if i != curr:  # yield chunk of simples
                 for _start in range(curr, i, _max_chunk):
                     _end = min(_start + _max_chunk, i)
-                    for y in simple_serializer_generator(msg_context, spec, _start, _end, serialize):
+                    for y in simple_serializer_generator(
+                        msg_context, spec, _start, _end, serialize
+                    ):
                         yield y
-            curr = i+1
-            for y in complex_serializer_generator(msg_context, spec.package, full_type, names[i], serialize, is_numpy):
+            curr = i + 1
+            for y in complex_serializer_generator(
+                msg_context, spec.package, full_type, names[i], serialize, is_numpy
+            ):
                 yield y
     if curr < len(types):  # yield rest of simples
         for _start in range(curr, len(types), _max_chunk):
             _end = min(_start + _max_chunk, len(types))
-            for y in simple_serializer_generator(msg_context, spec, _start, _end, serialize):
+            for y in simple_serializer_generator(
+                msg_context, spec, _start, _end, serialize
+            ):
                 yield y
 
 
@@ -738,13 +818,13 @@ def serialize_fn_generator(msg_context, spec, is_numpy=False):  # noqa: D401
       datatypes instead of Python lists, ``bool``
     """
     # method-var context #########
-    yield 'try:'
-    push_context('self.')
+    yield "try:"
+    push_context("self.")
     # NOTE: we flatten the spec for optimal serialization
     # #3741: make sure to have sub-messages python safe
     flattened = make_python_safe(flatten(msg_context, spec))
     for y in serializer_generator(msg_context, flattened, True, is_numpy):
-        yield '  '+y
+        yield "  " + y
     pop_context()
     yield "except struct.error as se: self._check_types(struct.error(\"%s: '%s' when writing '%s'\" % (type(se), str(se), str(locals().get('_x', self)))))"
     yield "except TypeError as te: self._check_types(ValueError(\"%s: '%s' when writing '%s'\" % (type(te), str(te), str(locals().get('_x', self)))))"
@@ -758,36 +838,39 @@ def deserialize_fn_generator(msg_context, spec, is_numpy=False):  # noqa: D401
     :param is_numpy: if True, generate serializer code for numpy
       datatypes instead of Python lists, ``bool``
     """
-    yield 'if python3:'
-    yield INDENT+'codecs.lookup_error("rosmsg").msg_type = self._type'
-    yield 'try:'
+    yield "if python3:"
+    yield INDENT + 'codecs.lookup_error("rosmsg").msg_type = self._type'
+    yield "try:"
     package = spec.package
     # Instantiate embedded type classes
     for type_, name in spec.fields():
         if msg_context.is_registered(type_):
-            yield '  if self.%s is None:' % name
-            yield '    self.%s = %s' % (name, compute_constructor(msg_context, package, type_))
-    yield '  end = 0'  # initialize var
+            yield "  if self.%s is None:" % name
+            yield "    self.%s = %s" % (
+                name,
+                compute_constructor(msg_context, package, type_),
+            )
+    yield "  end = 0"  # initialize var
 
     # method-var context #########
-    push_context('self.')
+    push_context("self.")
     # NOTE: we flatten the spec for optimal serialization
     # #3741: make sure to have sub-messages python safe
     flattened = make_python_safe(flatten(msg_context, spec))
     for y in serializer_generator(msg_context, flattened, False, is_numpy):
-        yield '  '+y
+        yield "  " + y
     pop_context()
     # done w/ method-var context #
 
     # generate post-deserialization code
     for type_, name in spec.fields():
-        code = compute_post_deserialize(type_, 'self.%s' % name)
+        code = compute_post_deserialize(type_, "self.%s" % name)
         if code:
-            yield '  %s' % code
+            yield "  %s" % code
 
-    yield '  return self'
-    yield 'except struct.error as e:'
-    yield '  raise genpy.DeserializationError(e)  # most likely buffer underfill'
+    yield "  return self"
+    yield "except struct.error as e:"
+    yield "  raise genpy.DeserializationError(e)  # most likely buffer underfill"
 
 
 def msg_generator(msg_context, spec, search_path):
@@ -807,7 +890,10 @@ def msg_generator(msg_context, spec, search_path):
     try:
         genmsg.msg_loader.load_depends(msg_context, spec, search_path)
     except InvalidMsgSpec as e:
-        raise MsgGenerationException('Cannot generate .msg for %s/%s: %s' % (spec.package, spec.short_name, str(e)))
+        raise MsgGenerationException(
+            "Cannot generate .msg for %s/%s: %s"
+            % (spec.package, spec.short_name, str(e))
+        )
     md5sum = genmsg.compute_md5(msg_context, spec)
 
     # remap spec names to be Python-safe
@@ -818,12 +904,12 @@ def msg_generator(msg_context, spec, search_path):
     # rewritten to not use globals
     clear_patterns()
 
-    yield '# This Python file uses the following encoding: utf-8'
+    yield "# This Python file uses the following encoding: utf-8"
     yield '"""autogenerated by genpy from %s.msg. Do not edit."""' % spec.full_name
-    yield 'import codecs'
-    yield 'import sys'
-    yield 'python3 = True if sys.hexversion > 0x03000000 else False'
-    yield 'import genpy\nimport struct\n'
+    yield "import codecs"
+    yield "import sys"
+    yield "python3 = True if sys.hexversion > 0x03000000 else False"
+    yield "import genpy\nimport struct\n"
     import_strs = []
     for t in spec.types:
         import_strs.extend(compute_import(msg_context, spec.package, t))
@@ -832,32 +918,35 @@ def msg_generator(msg_context, spec, search_path):
         if i:
             yield i
 
-    yield ''
+    yield ""
 
     fulltype = spec.full_name
     name = spec.short_name
 
     # Yield data class first, e.g. Point2D
-    yield 'class %s(genpy.Message):' % spec.short_name
+    yield "class %s(genpy.Message):" % spec.short_name
     yield '  _md5sum = "%s"' % (md5sum)
     yield '  _type = "%s"' % (fulltype)
-    yield '  _has_header = %s  # flag to mark the presence of a Header object' % spec.has_header()
+    yield (
+        "  _has_header = %s  # flag to mark the presence of a Header object"
+        % spec.has_header()
+    )
 
     full_text = compute_full_text_escaped(msg_context, spec)
     # escape trailing double-quote, unless already escaped, before wrapping in """
-    if full_text.endswith('"') and not full_text.endswith(r'\"'):
-        full_text = full_text[:-1] + r'\"'
+    if full_text.endswith('"') and not full_text.endswith(r"\""):
+        full_text = full_text[:-1] + r"\""
     yield '  _full_text = """%s"""' % full_text
 
     if spec.constants:
-        yield '  # Pseudo-constants'
+        yield "  # Pseudo-constants"
         for c in spec.constants:
-            if c.type == 'string':
+            if c.type == "string":
                 val = c.val
                 if '"' in val and "'" in val:
                     # crude escaping of \ and "
-                    escaped = c.val.replace('\\', '\\\\')
-                    escaped = escaped.replace('\"', '\\"')
+                    escaped = c.val.replace("\\", "\\\\")
+                    escaped = escaped.replace('"', '\\"')
                     yield '  %s = "%s"' % (c.name, escaped)
                 elif '"' in val:  # use raw encoding for prettiness
                     yield "  %s = r'%s'" % (c.name, val)
@@ -866,15 +955,15 @@ def msg_generator(msg_context, spec, search_path):
                 else:
                     yield "  %s = '%s'" % (c.name, val)
             else:
-                yield '  %s = %s' % (c.name, c.val)
-        yield ''
+                yield "  %s = %s" % (c.name, c.val)
+        yield ""
 
     if len(spec_names):
-        yield "  __slots__ = ['"+"','".join(spec_names)+"']"
-        yield "  _slot_types = ['"+"','".join(spec.types)+"']"
+        yield "  __slots__ = ['" + "','".join(spec_names) + "']"
+        yield "  _slot_types = ['" + "','".join(spec.types) + "']"
     else:
-        yield '  __slots__ = []'
-        yield '  _slot_types = []'
+        yield "  __slots__ = []"
+        yield "  _slot_types = []"
 
     yield """
   def __init__(self, *args, **kwds):
@@ -892,17 +981,23 @@ def msg_generator(msg_context, spec, search_path):
     to set specific fields.
     \"\"\"
     if args or kwds:
-      super(%s, self).__init__(*args, **kwds)""" % (','.join(spec_names), name)
+      super(%s, self).__init__(*args, **kwds)""" % (",".join(spec_names), name)
 
     if len(spec_names):
-        yield '      # message fields cannot be None, assign default values for those that are'
-        for (t, s) in zip(spec.types, spec_names):
-            yield '      if self.%s is None:' % s
-            yield '        self.%s = %s' % (s, default_value(msg_context, t, spec.package))
+        yield "      # message fields cannot be None, assign default values for those that are"
+        for t, s in zip(spec.types, spec_names):
+            yield "      if self.%s is None:" % s
+            yield "        self.%s = %s" % (
+                s,
+                default_value(msg_context, t, spec.package),
+            )
     if len(spec_names) > 0:
-        yield '    else:'
-        for (t, s) in zip(spec.types, spec_names):
-            yield '      self.%s = %s' % (s, default_value(msg_context, t, spec.package))
+        yield "    else:"
+        for t, s in zip(spec.types, spec_names):
+            yield "      self.%s = %s" % (
+                s,
+                default_value(msg_context, t, spec.package),
+            )
 
     yield """
   def _get_types(self):
@@ -917,7 +1012,7 @@ def msg_generator(msg_context, spec, search_path):
     :param buff: buffer, ``StringIO``
     \"\"\""""
     for y in serialize_fn_generator(msg_context, spec):
-        yield '    ' + y
+        yield "    " + y
     yield """
   def deserialize(self, str):
     \"\"\"
@@ -925,8 +1020,8 @@ def msg_generator(msg_context, spec, search_path):
     :param str: byte array of serialized message, ``str``
     \"\"\""""
     for y in deserialize_fn_generator(msg_context, spec):
-        yield '    ' + y
-    yield ''
+        yield "    " + y
+    yield ""
 
     yield """
   def serialize_numpy(self, buff, numpy):
@@ -936,7 +1031,7 @@ def msg_generator(msg_context, spec, search_path):
     :param numpy: numpy python module
     \"\"\""""
     for y in serialize_fn_generator(msg_context, spec, is_numpy=True):
-        yield '    ' + y
+        yield "    " + y
     yield """
   def deserialize_numpy(self, str, numpy):
     \"\"\"
@@ -945,27 +1040,27 @@ def msg_generator(msg_context, spec, search_path):
     :param numpy: numpy python module
     \"\"\""""
     for y in deserialize_fn_generator(msg_context, spec, is_numpy=True):
-        yield '    ' + y
-    yield ''
+        yield "    " + y
+    yield ""
 
     # #1807 : this will be much cleaner when msggenerator library is
     # rewritten to not use globals
-    yield '_struct_I = genpy.struct_I'
-    yield 'def _get_struct_I():'
-    yield '    global _struct_I'
-    yield '    return _struct_I'
+    yield "_struct_I = genpy.struct_I"
+    yield "def _get_struct_I():"
+    yield "    global _struct_I"
+    yield "    return _struct_I"
     patterns = get_patterns()
     for p in sorted(set(patterns)):
         # I patterns are already optimized
-        if p == 'I':
+        if p == "I":
             continue
-        var_name = '_struct_%s' % (p.replace('<', ''))
-        yield '%s = None' % var_name
-        yield 'def _get%s():' % var_name
-        yield '    global %s' % var_name
-        yield '    if %s is None:' % var_name
+        var_name = "_struct_%s" % (p.replace("<", ""))
+        yield "%s = None" % var_name
+        yield "def _get%s():" % var_name
+        yield "    global %s" % var_name
+        yield "    if %s is None:" % var_name
         yield '        %s = struct.Struct("<%s")' % (var_name, p)
-        yield '    return %s' % var_name
+        yield "    return %s" % var_name
     clear_patterns()
 
 
@@ -975,18 +1070,18 @@ def srv_generator(msg_context, spec, search_path):
             yield l
 
     name = spec.short_name
-    req, resp = ['%s%s' % (name, suff) for suff in ['Request', 'Response']]
+    req, resp = ["%s%s" % (name, suff) for suff in ["Request", "Response"]]
 
     fulltype = spec.full_name
 
     genmsg.msg_loader.load_depends(msg_context, spec, search_path)
     md5 = genmsg.compute_md5(msg_context, spec)
 
-    yield 'class %s(object):' % name
+    yield "class %s(object):" % name
     yield "  _type          = '%s'" % fulltype
     yield "  _md5sum = '%s'" % md5
-    yield '  _request_class  = %s' % req
-    yield '  _response_class = %s' % resp
+    yield "  _request_class  = %s" % req
+    yield "  _response_class = %s" % resp
 
 
 def _module_name(type_name):  # noqa: D205, D400
@@ -995,7 +1090,7 @@ def _module_name(type_name):  # noqa: D205, D400
       e.g. 'String'
     :returns str: name of python module for auto-generated code
     """
-    return '_'+type_name
+    return "_" + type_name
 
 
 def compute_resource_name(filename, ext):
@@ -1005,7 +1100,7 @@ def compute_resource_name(filename, ext):
     :param filename str: path to .msg/.srv file
     :returns str: name of ROS resource
     """
-    return os.path.basename(filename)[:-len(ext)]
+    return os.path.basename(filename)[: -len(ext)]
 
 
 def compute_outfile_name(outdir, infile_name, ext):  # noqa: D205, D400
@@ -1015,11 +1110,12 @@ def compute_outfile_name(outdir, infile_name, ext):  # noqa: D205, D400
     """
     # Use leading _ so that module name does not collide with message name. It also
     # makes it more clear that the .py file should not be imported directly
-    return os.path.join(outdir, _module_name(compute_resource_name(infile_name, ext))+'.py')
+    return os.path.join(
+        outdir, _module_name(compute_resource_name(infile_name, ext)) + ".py"
+    )
 
 
 class Generator(object):
-
     def __init__(self, what, ext, spec_loader_fn, generator_fn):
         self.what = what
         self.ext = ext
@@ -1036,9 +1132,9 @@ class Generator(object):
         # generate message files for request/response
         spec = self.spec_loader_fn(msg_context, f, full_type)
         outfile = compute_outfile_name(outdir, os.path.basename(f), self.ext)
-        with open(outfile, 'w') as f:
+        with open(outfile, "w") as f:
             for l in self.generator_fn(msg_context, spec, search_path):
-                f.write(l+'\n')
+                f.write(l + "\n")
         return outfile
 
     def generate_messages(self, package, package_files, outdir, search_path):  # noqa: D200, D400, D401
@@ -1046,7 +1142,10 @@ class Generator(object):
         :returns: return code, ``int``
         """
         if not genmsg.is_legal_resource_base_name(package):
-            raise MsgGenerationException("\nERROR: package name '%s' is illegal and cannot be used in message generation.\nPlease see http://ros.org/wiki/Names" % (package))
+            raise MsgGenerationException(
+                "\nERROR: package name '%s' is illegal and cannot be used in message generation.\nPlease see http://ros.org/wiki/Names"
+                % (package)
+            )
 
         # package/src/package/msg for messages, packages/src/package/srv for services
         msg_context = MsgContext.create_default()
@@ -1056,21 +1155,31 @@ class Generator(object):
                 f = os.path.abspath(f)
                 infile_name = os.path.basename(f)
                 full_type = genmsg.gentools.compute_full_type_name(package, infile_name)
-                self.generate(msg_context, full_type, f, outdir, search_path)  # actual generation
+                self.generate(
+                    msg_context, full_type, f, outdir, search_path
+                )  # actual generation
             except Exception as e:
-                if not isinstance(e, MsgGenerationException) and not isinstance(e, genmsg.msgs.InvalidMsgSpec):
+                if not isinstance(e, MsgGenerationException) and not isinstance(
+                    e, genmsg.msgs.InvalidMsgSpec
+                ):
                     traceback.print_exc()
-                print("\nERROR: Unable to generate %s for package '%s': while processing '%s': %s\n" % (self.what, package, f, e), file=sys.stderr)
+                print(
+                    "\nERROR: Unable to generate %s for package '%s': while processing '%s': %s\n"
+                    % (self.what, package, f, e),
+                    file=sys.stderr,
+                )
                 retcode = 1  # flag error
         return retcode
 
 
 class SrvGenerator(Generator):
-
     def __init__(self):
-        super(SrvGenerator, self).__init__('services', genmsg.EXT_SRV,
-                                           genmsg.msg_loader.load_srv_from_file,
-                                           srv_generator)
+        super(SrvGenerator, self).__init__(
+            "services",
+            genmsg.EXT_SRV,
+            genmsg.msg_loader.load_srv_from_file,
+            srv_generator,
+        )
 
 
 class MsgGenerator(Generator):
@@ -1082,6 +1191,9 @@ class MsgGenerator(Generator):
     """
 
     def __init__(self):
-        super(MsgGenerator, self).__init__('messages', genmsg.EXT_MSG,
-                                           genmsg.msg_loader.load_msg_from_file,
-                                           msg_generator)
+        super(MsgGenerator, self).__init__(
+            "messages",
+            genmsg.EXT_MSG,
+            genmsg.msg_loader.load_msg_from_file,
+            msg_generator,
+        )

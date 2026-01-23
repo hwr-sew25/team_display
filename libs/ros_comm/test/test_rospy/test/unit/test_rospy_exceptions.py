@@ -37,23 +37,35 @@ import struct
 import unittest
 import time
 
-class TestRospyExceptions(unittest.TestCase):
 
+class TestRospyExceptions(unittest.TestCase):
     def test_exceptions(self):
         # not really testing anything here other than typos
-        from rospy.exceptions import ROSException, ROSSerializationException, ROSInternalException, ROSInitException, \
-            TransportException, TransportTerminated, TransportInitError
-        
+        from rospy.exceptions import (
+            ROSException,
+            ROSSerializationException,
+            ROSInternalException,
+            ROSInitException,
+            TransportException,
+            TransportTerminated,
+            TransportInitError,
+        )
+
         for e in [ROSException, ROSInitException, ROSSerializationException]:
-            exc = e('foo')
+            exc = e("foo")
             self.assertTrue(isinstance(exc, ROSException))
-        for e in [ROSInternalException, 
-                  TransportException, TransportTerminated, TransportInitError]:
-            exc = e('foo')
+        for e in [
+            ROSInternalException,
+            TransportException,
+            TransportTerminated,
+            TransportInitError,
+        ]:
+            exc = e("foo")
             self.assertTrue(isinstance(exc, ROSInternalException))
 
     def test_ROSInterruptException(self):
         from rospy.exceptions import ROSInterruptException, ROSException
+
         try:
             raise ROSInterruptException("test")
         except ROSException:
@@ -64,7 +76,11 @@ class TestRospyExceptions(unittest.TestCase):
             pass
 
     def test_ROSTimeMovedBackwardsException(self):
-        from rospy.exceptions import ROSTimeMovedBackwardsException, ROSInterruptException
+        from rospy.exceptions import (
+            ROSTimeMovedBackwardsException,
+            ROSInterruptException,
+        )
+
         try:
             raise ROSTimeMovedBackwardsException(1.0)
         except ROSInterruptException as e:

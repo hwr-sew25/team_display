@@ -31,27 +31,28 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'test_roslaunch'
-NAME = 'test_env'
+PKG = "test_roslaunch"
+NAME = "test_env"
 
 import os, sys, unittest
 
 import rostest
 import rospkg
 
+
 ## Test Roslaunch 'env' tags
 class TestEnv(unittest.TestCase):
     def test_env(self):
-        if '--noenv' in sys.argv:
-            self.assertEqual(None, os.environ.get('TEST_ENV', None))
-            self.assertEqual(None, os.environ.get('TEST_ENV_SUBSTITUTION', None))
+        if "--noenv" in sys.argv:
+            self.assertEqual(None, os.environ.get("TEST_ENV", None))
+            self.assertEqual(None, os.environ.get("TEST_ENV_SUBSTITUTION", None))
         else:
-            self.assertEqual('test env', os.environ.get('TEST_ENV', None))
+            self.assertEqual("test env", os.environ.get("TEST_ENV", None))
             rospack = rospkg.RosPack()
-            path1 = os.path.join(rospack.get_path('roslaunch'), 'src')
-            path2 = os.environ.get('TEST_ENV_SUBSTITUTION', None)
+            path1 = os.path.join(rospack.get_path("roslaunch"), "src")
+            path2 = os.environ.get("TEST_ENV_SUBSTITUTION", None)
             self.assertEqual(os.path.abspath(path1), os.path.abspath(path2))
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     rostest.rosrun(PKG, NAME, TestEnv)
-    

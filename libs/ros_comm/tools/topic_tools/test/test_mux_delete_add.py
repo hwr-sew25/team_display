@@ -34,7 +34,7 @@
 #
 # Author: Brian Gerkey
 
-PKG = 'topic_tools'
+PKG = "topic_tools"
 
 import rospy
 
@@ -44,31 +44,33 @@ from topic_tools.srv import MuxList
 from topic_tools.srv import MuxSelect
 from std_msgs.msg import String
 
+
 def go():
-    rospy.init_node('chatter')
+    rospy.init_node("chatter")
 
-    rospy.wait_for_service('mux/add', 5)
-    rospy.wait_for_service('mux/delete', 5)
-    rospy.wait_for_service('mux/list', 5)
-    rospy.wait_for_service('mux/select', 5)
+    rospy.wait_for_service("mux/add", 5)
+    rospy.wait_for_service("mux/delete", 5)
+    rospy.wait_for_service("mux/list", 5)
+    rospy.wait_for_service("mux/select", 5)
 
-    add_srv = rospy.ServiceProxy('mux/add', MuxAdd)
-    delete_srv = rospy.ServiceProxy('mux/delete', MuxDelete)
-    list_srv = rospy.ServiceProxy('mux/list', MuxList)
-    select_srv = rospy.ServiceProxy('mux/select', MuxSelect)
+    add_srv = rospy.ServiceProxy("mux/add", MuxAdd)
+    delete_srv = rospy.ServiceProxy("mux/delete", MuxDelete)
+    list_srv = rospy.ServiceProxy("mux/list", MuxList)
+    select_srv = rospy.ServiceProxy("mux/select", MuxSelect)
 
-    b_pub = rospy.Publisher('b', String)
+    b_pub = rospy.Publisher("b", String)
 
     # Execute the sequence given in #2863
-    select_srv('c')
-    delete_srv('b')
-    add_srv('b')
-    select_srv('b')
+    select_srv("c")
+    delete_srv("b")
+    add_srv("b")
+    select_srv("b")
 
     # Now start publishing on b
     while not rospy.is_shutdown():
-        b_pub.publish('foo')
+        b_pub.publish("foo")
         rospy.sleep(0.2)
+
 
 if __name__ == "__main__":
     go()

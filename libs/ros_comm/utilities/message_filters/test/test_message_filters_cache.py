@@ -38,7 +38,7 @@ from std_msgs.msg import String
 
 from message_filters import Cache, Subscriber
 
-PKG = 'message_filters'
+PKG = "message_filters"
 
 
 class AnonymMsg:
@@ -55,7 +55,6 @@ class AnonymMsg:
 
 
 class TestCache(unittest.TestCase):
-
     def test_all_funcs(self):
         sub = Subscriber("/empty", String)
         cache = Cache(sub, 5)
@@ -80,38 +79,37 @@ class TestCache(unittest.TestCase):
         msg.header.stamp = rospy.Time(4)
         cache.add(msg)
 
-        l = len(cache.getInterval(rospy.Time(2.5),
-                                  rospy.Time(3.5)))
-        self.assertEqual(l, 1, "invalid number of messages" +
-                                " returned in getInterval 1")
+        l = len(cache.getInterval(rospy.Time(2.5), rospy.Time(3.5)))
+        self.assertEqual(
+            l, 1, "invalid number of messages" + " returned in getInterval 1"
+        )
 
-        l = len(cache.getInterval(rospy.Time(2),
-                                  rospy.Time(3)))
-        self.assertEqual(l, 2, "invalid number of messages" +
-                                " returned in getInterval 2")
+        l = len(cache.getInterval(rospy.Time(2), rospy.Time(3)))
+        self.assertEqual(
+            l, 2, "invalid number of messages" + " returned in getInterval 2"
+        )
 
-        l = len(cache.getInterval(rospy.Time(0),
-                                  rospy.Time(4)))
-        self.assertEqual(l, 5, "invalid number of messages" +
-                                " returned in getInterval 3")
+        l = len(cache.getInterval(rospy.Time(0), rospy.Time(4)))
+        self.assertEqual(
+            l, 5, "invalid number of messages" + " returned in getInterval 3"
+        )
 
         s = cache.getElemAfterTime(rospy.Time(0)).header.stamp
-        self.assertEqual(s, rospy.Time(0),
-                         "invalid msg return by getElemAfterTime")
+        self.assertEqual(s, rospy.Time(0), "invalid msg return by getElemAfterTime")
 
         s = cache.getElemBeforeTime(rospy.Time(3.5)).header.stamp
-        self.assertEqual(s, rospy.Time(3),
-                         "invalid msg return by getElemBeforeTime")
+        self.assertEqual(s, rospy.Time(3), "invalid msg return by getElemBeforeTime")
 
         s = cache.getLatestTime()
-        self.assertEqual(s, rospy.Time(4),
-                         "invalid stamp return by getLatestTime")
-        self.assertEqual(s, cache.getLastestTime(),
-                         "stamps returned by getLatestTime and getLastestTime don't match")
+        self.assertEqual(s, rospy.Time(4), "invalid stamp return by getLatestTime")
+        self.assertEqual(
+            s,
+            cache.getLastestTime(),
+            "stamps returned by getLatestTime and getLastestTime don't match",
+        )
 
         s = cache.getOldestTime()
-        self.assertEqual(s, rospy.Time(0),
-                         "invalid stamp return by getOldestTime")
+        self.assertEqual(s, rospy.Time(0), "invalid stamp return by getOldestTime")
 
         # Add another msg to fill the buffer
         msg = AnonymMsg()
@@ -120,8 +118,7 @@ class TestCache(unittest.TestCase):
 
         # Test that it discarded the right one
         s = cache.getOldestTime()
-        self.assertEqual(s, rospy.Time(1),
-                         "wrong message discarded")
+        self.assertEqual(s, rospy.Time(1), "wrong message discarded")
 
     def test_headerless(self):
         sub = Subscriber("/empty", String)
@@ -130,8 +127,9 @@ class TestCache(unittest.TestCase):
         msg = String()
         cache.add(msg)
 
-        self.assertIsNone(cache.getElemAfterTime(rospy.Time(0)),
-                          "Headerless message invalidly added.")
+        self.assertIsNone(
+            cache.getElemAfterTime(rospy.Time(0)), "Headerless message invalidly added."
+        )
 
         cache = Cache(sub, 5, allow_headerless=True)
 
@@ -141,8 +139,7 @@ class TestCache(unittest.TestCase):
         cache.add(msg)
 
         s = cache.getElemAfterTime(rospy.Time(0))
-        self.assertEqual(s, msg,
-                         "invalid msg returned in headerless scenario")
+        self.assertEqual(s, msg, "invalid msg returned in headerless scenario")
 
         s = cache.getElemAfterTime(rospy.Time(1))
         self.assertIsNone(s, "invalid msg returned in headerless scenario")
@@ -151,14 +148,13 @@ class TestCache(unittest.TestCase):
         cache.add(msg)
 
         s = cache.getInterval(rospy.Time(0), rospy.Time(1))
-        self.assertEqual(s, [msg],
-                         "invalid msg returned in headerless scenario")
+        self.assertEqual(s, [msg], "invalid msg returned in headerless scenario")
 
         s = cache.getInterval(rospy.Time(0), rospy.Time(2))
-        self.assertEqual(s, [msg, msg],
-                         "invalid msg returned in headerless scenario")
+        self.assertEqual(s, [msg, msg], "invalid msg returned in headerless scenario")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import rosunit
-    rosunit.unitrun(PKG, 'test_message_filters_cache', TestCache)
+
+    rosunit.unitrun(PKG, "test_message_filters_cache", TestCache)

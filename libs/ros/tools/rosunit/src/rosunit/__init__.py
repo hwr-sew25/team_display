@@ -48,4 +48,4 @@ from .core import rostest_name_from_path  # noqa: F401
 from .core import xml_results_file  # noqa: F401
 from .pyunit import unitrun  # noqa: F401
 
-__version__ = '1.7.0'
+__version__ = "1.7.0"

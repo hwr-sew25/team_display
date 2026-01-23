@@ -43,23 +43,28 @@ from std_msgs.msg import *
 
 _publishing = False
 _pub = None
+
+
 def start_publishing():
     global _pub
     if _pub is not None:
         return
     print("registering onto listenerpublisher")
     _pub = rospy.Publisher("listenerpublisher", String, queue_size=0)
-    
+
+
 def callback(data):
-    print(rospy.get_caller_id(), "I heard %s"%data.data)
+    print(rospy.get_caller_id(), "I heard %s" % data.data)
     start_publishing()
     print("publishing", data.data)
     _pub.publish(String(data.data))
-    
+
+
 def listener():
     rospy.init_node("listenerpublisher")
     rospy.Subscriber("chatter", String, callback)
     rospy.spin()
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     listener()

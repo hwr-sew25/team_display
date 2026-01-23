@@ -32,16 +32,18 @@
 
 import sys
 
+
 def test_myargv():
     orig_argv = sys.argv
     try:
         from rosgraph import myargv
+
         args = myargv()
         assert args == sys.argv
-        assert ['foo', 'bar', 'baz'] == myargv(['foo','bar', 'baz'])
-        assert ['-foo', 'bar', '-baz'] == myargv(['-foo','bar', '-baz'])
-            
-        assert ['foo'] == myargv(['foo','bar:=baz'])
-        assert ['foo'] == myargv(['foo','-bar:=baz'])
+        assert ["foo", "bar", "baz"] == myargv(["foo", "bar", "baz"])
+        assert ["-foo", "bar", "-baz"] == myargv(["-foo", "bar", "-baz"])
+
+        assert ["foo"] == myargv(["foo", "bar:=baz"])
+        assert ["foo"] == myargv(["foo", "-bar:=baz"])
     finally:
         sys.argv = orig_argv

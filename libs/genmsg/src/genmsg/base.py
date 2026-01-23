@@ -33,33 +33,36 @@
 from __future__ import print_function
 import os, sys
 
-SEP = '/'
+SEP = "/"
 
-MSG_DIR = 'msg'
-SRV_DIR = 'srv'
+MSG_DIR = "msg"
+SRV_DIR = "srv"
 
-EXT_MSG = '.msg'
-EXT_SRV = '.srv'
+EXT_MSG = ".msg"
+EXT_SRV = ".srv"
 
 ## character that designates a constant assignment rather than a field
-CONSTCHAR   = '='
-COMMENTCHAR = '#'
-IODELIM   = '---'
+CONSTCHAR = "="
+COMMENTCHAR = "#"
+IODELIM = "---"
 
 
 verbose = False
 
 import inspect, pprint
 
+
 def log_verbose(value):
     global verbose
     verbose = value
+
 
 def log(*args):
     global verbose
     if verbose:
         print("%s:%d" % inspect.stack()[1][1:3], file=sys.stderr)
-        print(' '.join([str(x) for x in args]), file=sys.stderr)
+        print(" ".join([str(x) for x in args]), file=sys.stderr)
+
 
 def plog(msg, obj):
     if verbose:
@@ -67,9 +70,10 @@ def plog(msg, obj):
         print(msg, " ", file=sys.stderr)
         pprint.pprint(obj, file=sys.stderr)
 
+
 class InvalidMsgSpec(Exception):
     pass
 
+
 class MsgGenerationException(Exception):
     pass
-

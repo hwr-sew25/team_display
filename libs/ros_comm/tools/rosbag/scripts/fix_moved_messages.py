@@ -37,20 +37,21 @@ import rospy
 import rosbag
 import fileinput
 
+
 def fixbags(md5file, inbag, outbag):
     d = {}
     for line in fileinput.input(md5file):
         sp = line.split()
         d[sp[1]] = [sp[0], sp[2], sp[3]]
 
-    rebag = rosbag.Bag(outbag, 'w')
+    rebag = rosbag.Bag(outbag, "w")
 
     for topic, msg, t in rosbag.Bag(inbag).read_messages(raw=True):
         type, bytes, md5 = msg[0], msg[1], msg[2]
 
         if md5 in d:
             if type != d[md5][0]:
-                print('WARNING: found matching md5, but non-matching name')
+                print("WARNING: found matching md5, but non-matching name")
                 continue
             msg = (d[md5][1], msg[1], d[md5][2])
 
@@ -58,10 +59,12 @@ def fixbags(md5file, inbag, outbag):
 
     rebag.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import sys
+
     if len(sys.argv) == 4:
         fixbags(sys.argv[1], sys.argv[2], sys.argv[3])
     else:
-        print('usage: fix_moved_messages.py <name_md5_file> <inbag> <outbag>')
+        print("usage: fix_moved_messages.py <name_md5_file> <inbag> <outbag>")
         exit(2)

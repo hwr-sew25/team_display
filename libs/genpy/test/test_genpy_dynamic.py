@@ -41,18 +41,21 @@ import time
 def test_generate_dynamic():
     import genpy
     from genpy.dynamic import generate_dynamic
-    msgs = generate_dynamic('gd_msgs/EasyString', 'string data\n')
-    assert ['gd_msgs/EasyString'] == list(msgs.keys())
-    m_cls = msgs['gd_msgs/EasyString']
+
+    msgs = generate_dynamic("gd_msgs/EasyString", "string data\n")
+    assert ["gd_msgs/EasyString"] == list(msgs.keys())
+    m_cls = msgs["gd_msgs/EasyString"]
     m_instance = m_cls()
-    m_instance.data = 'foo'
+    m_instance.data = "foo"
     buff = StringIO()
     m_instance.serialize(buff)
     m_instance2 = m_cls().deserialize(buff.getvalue())
     assert m_instance == m_instance2
 
     try:
-        msgs = generate_dynamic('gd_msgs/MyAcceleration', 'float32 acceleration  # in m/s\xc2\xb2\n')
+        msgs = generate_dynamic(
+            "gd_msgs/MyAcceleration", "float32 acceleration  # in m/s\xc2\xb2\n"
+        )
     except UnicodeDecodeError:
         assert False, "Can't handle UTF-8 in comments"
 
@@ -60,17 +63,19 @@ def test_generate_dynamic():
         char = unichr
     except NameError:
         char = chr
-    m_instance.data = 'foo' + char(1234)
+    m_instance.data = "foo" + char(1234)
     buff = StringIO()
     m_instance.serialize(buff)
     m_instance2 = m_cls().deserialize(buff.getvalue())
     if sys.hexversion < 0x03000000:
         # python 2 requires manual decode into unicode
-        m_instance2.data = m_instance2.data.decode('utf-8')
+        m_instance2.data = m_instance2.data.decode("utf-8")
     assert m_instance == m_instance2
 
     # 'probot_msgs' is a test for #1183, failure if the package no longer exists
-    msgs = generate_dynamic('gd_msgs/MoveArmState', """Header header
+    msgs = generate_dynamic(
+        "gd_msgs/MoveArmState",
+        """Header header
 probot_msgs/ControllerStatus status
 
 #Current arm configuration
@@ -117,34 +122,71 @@ float64 applied_effort
 float64 commanded_effort
 byte is_calibrated
 
-""")
-    assert {'gd_msgs/MoveArmState', 'probot_msgs/JointState', 'probot_msgs/ControllerStatus', 'std_msgs/Header'} == set(msgs.keys())
-    m_instance1 = msgs['std_msgs/Header']()  # make sure default constructor works
-    m_instance2 = msgs['std_msgs/Header'](stamp=genpy.Time.from_sec(time.time()), frame_id='foo-%s' % time.time(), seq=12390)
+""",
+    )
+    assert {
+        "gd_msgs/MoveArmState",
+        "probot_msgs/JointState",
+        "probot_msgs/ControllerStatus",
+        "std_msgs/Header",
+    } == set(msgs.keys())
+    m_instance1 = msgs["std_msgs/Header"]()  # make sure default constructor works
+    m_instance2 = msgs["std_msgs/Header"](
+        stamp=genpy.Time.from_sec(time.time()),
+        frame_id="foo-%s" % time.time(),
+        seq=12390,
+    )
     _test_ser_deser(m_instance2, m_instance1)
 
-    m_instance1 = msgs['probot_msgs/ControllerStatus']()
-    m_instance2 = msgs['probot_msgs/ControllerStatus'](value=4, comment=str(time.time()))
-    d = {'UNDEFINED': 0, 'SUCCESS': 1, 'ABORTED': 2, 'PREEMPTED': 3, 'ACTIVE': 4}
+    m_instance1 = msgs["probot_msgs/ControllerStatus"]()
+    m_instance2 = msgs["probot_msgs/ControllerStatus"](
+        value=4, comment=str(time.time())
+    )
+    d = {"UNDEFINED": 0, "SUCCESS": 1, "ABORTED": 2, "PREEMPTED": 3, "ACTIVE": 4}
     for k, v in d.items():
         assert v == getattr(m_instance1, k)
     _test_ser_deser(m_instance2, m_instance1)
 
-    m_instance1 = msgs['probot_msgs/JointState']()
-    m_instance2 = msgs['probot_msgs/JointState'](position=time.time(), velocity=time.time(), applied_effort=time.time(), commanded_effort=time.time(), is_calibrated=2)
+    m_instance1 = msgs["probot_msgs/JointState"]()
+    m_instance2 = msgs["probot_msgs/JointState"](
+        position=time.time(),
+        velocity=time.time(),
+        applied_effort=time.time(),
+        commanded_effort=time.time(),
+        is_calibrated=2,
+    )
     _test_ser_deser(m_instance2, m_instance1)
 
-    m_instance1 = msgs['gd_msgs/MoveArmState']()
-    js = msgs['probot_msgs/JointState']
+    m_instance1 = msgs["gd_msgs/MoveArmState"]()
+    js = msgs["probot_msgs/JointState"]
     config = []
     goal = []
     # generate some data for config/goal
     for i in range(0, 10):
-        config.append(js(position=time.time(), velocity=time.time(), applied_effort=time.time(), commanded_effort=time.time(), is_calibrated=2))
-        goal.append(js(position=time.time(), velocity=time.time(), applied_effort=time.time(), commanded_effort=time.time(), is_calibrated=2))
-    m_instance2 = msgs['gd_msgs/MoveArmState'](header=msgs['std_msgs/Header'](),
-                                               status=msgs['probot_msgs/ControllerStatus'](),
-                                               configuration=config, goal=goal)
+        config.append(
+            js(
+                position=time.time(),
+                velocity=time.time(),
+                applied_effort=time.time(),
+                commanded_effort=time.time(),
+                is_calibrated=2,
+            )
+        )
+        goal.append(
+            js(
+                position=time.time(),
+                velocity=time.time(),
+                applied_effort=time.time(),
+                commanded_effort=time.time(),
+                is_calibrated=2,
+            )
+        )
+    m_instance2 = msgs["gd_msgs/MoveArmState"](
+        header=msgs["std_msgs/Header"](),
+        status=msgs["probot_msgs/ControllerStatus"](),
+        configuration=config,
+        goal=goal,
+    )
     _test_ser_deser(m_instance2, m_instance1)
 
 
@@ -158,16 +200,17 @@ def _test_ser_deser(m_instance1, m_instance2):
 def test_serialize_exception():
     import genpy
     from genpy.dynamic import generate_dynamic
-    msgs = generate_dynamic('gd_msgs/EasyInt32', 'int32 data\n')
-    assert ['gd_msgs/EasyInt32'] == list(msgs.keys())
-    m_cls = msgs['gd_msgs/EasyInt32']
+
+    msgs = generate_dynamic("gd_msgs/EasyInt32", "int32 data\n")
+    assert ["gd_msgs/EasyInt32"] == list(msgs.keys())
+    m_cls = msgs["gd_msgs/EasyInt32"]
     m_instance = m_cls()
-    m_instance.data = '1'  # the type is incorrect
+    m_instance.data = "1"  # the type is incorrect
     buff = StringIO()
     try:
         m_instance.serialize(buff)
-        assert False, 'This should have raised a genpy.SerializationError'
+        assert False, "This should have raised a genpy.SerializationError"
     except genpy.SerializationError:
         pass
     except Exception:
-        assert False, 'This should have raised a genpy.SerializationError instead'
+        assert False, "This should have raised a genpy.SerializationError instead"

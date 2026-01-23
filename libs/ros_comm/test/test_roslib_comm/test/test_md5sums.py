@@ -36,7 +36,6 @@ from test_roslib_comm.msg import *
 
 
 class TestMd5sums(unittest.TestCase):
-    
     def test_field_name_change(self):
         self.assertNotEqual(FieldNameChange1._md5sum, FieldNameChange2._md5sum)
 
@@ -48,4 +47,3 @@ class TestMd5sums(unittest.TestCase):
 
     def test_type_name_change_complex(self):
         self.assertEqual(TypeNameChangeComplex1._md5sum, TypeNameChangeComplex2._md5sum)
-

@@ -45,17 +45,22 @@ import warnings
 import roslib.names
 
 # caller ID for master calls where caller ID is not vital
-_GLOBAL_CALLER_ID = '/script'
+_GLOBAL_CALLER_ID = "/script"
 
 
 def deprecated(func):
     """This is a decorator which can be used to mark functions
     as deprecated. It will result in a warning being emitted
     when the function is used."""
+
     def newFunc(*args, **kwargs):
-        warnings.warn('Call to deprecated function %s.' % func.__name__,
-                      category=DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "Call to deprecated function %s." % func.__name__,
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
         return func(*args, **kwargs)
+
     newFunc.__name__ = func.__name__
     newFunc.__doc__ = func.__doc__
     newFunc.__dict__.update(func.__dict__)
@@ -103,7 +108,7 @@ def get_master():
         import xmlrpclib as xmlrpcclient  # Python 2.x
 
     # changed this to not look as sys args and remove dependency on roslib.rosenv for cleaner cleanup
-    uri = os.environ['ROS_MASTER_URI']
+    uri = os.environ["ROS_MASTER_URI"]
     return xmlrpcclient.ServerProxy(uri)
 
 

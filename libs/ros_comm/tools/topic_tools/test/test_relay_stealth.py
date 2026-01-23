@@ -16,8 +16,9 @@ class TestRelayStealth(unittest.TestCase):
     def test_stealth_relay(self):
         self.out_msg_count = 0
         self.monitor_msg_count = 0
-        sub_out = rospy.Subscriber("/relay_stealth/output", String,
-                                   self.out_callback, queue_size=1)
+        sub_out = rospy.Subscriber(
+            "/relay_stealth/output", String, self.out_callback, queue_size=1
+        )
         for i in range(5):
             if sub_out.get_num_connections() == 0:
                 rospy.sleep(1)
@@ -26,8 +27,9 @@ class TestRelayStealth(unittest.TestCase):
         rospy.sleep(5)
         self.assertEqual(self.out_msg_count, 0)
 
-        sub_monitor = rospy.Subscriber("/original_topic/relay", String,
-                                       self.monitor_callback, queue_size=1)
+        sub_monitor = rospy.Subscriber(
+            "/original_topic/relay", String, self.monitor_callback, queue_size=1
+        )
         rospy.sleep(5)
         self.assertGreater(self.monitor_msg_count, 0)
         self.assertGreater(self.out_msg_count, 0)
@@ -39,7 +41,8 @@ class TestRelayStealth(unittest.TestCase):
         self.assertLess(abs(cnt - self.out_msg_count), 30)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import rostest
+
     rospy.init_node("test_relay_stealth")
     rostest.rosrun("topic_tools", "test_relay_stealth", TestRelayStealth)

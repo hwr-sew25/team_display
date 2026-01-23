@@ -42,13 +42,15 @@ import roslib.msgs
 import roslib.srvs
 from roslib.packages import get_pkg_dir, InvalidROSPkgException, PACKAGE_FILE
 
+
 ## look for unknown tags in manifest
 def manifest_valid(ctx):
     errors = []
     if ctx.manifest is not None:
-        errors = ["<%s>"%t.tagName for t in ctx.manifest.unknown_tags]
+        errors = ["<%s>" % t.tagName for t in ctx.manifest.unknown_tags]
     return errors
-    
+
+
 def _manifest_msg_srv_export(ctx, type_):
     exist = []
     for pkg in ctx.pkgs:
@@ -56,43 +58,44 @@ def _manifest_msg_srv_export(ctx, type_):
         d = os.path.join(pkg_dir, type_)
         if os.path.isdir(d):
             files = os.listdir(d)
-            if filter(lambda x: x.endswith('.'+type_), files):
+            if filter(lambda x: x.endswith("." + type_), files):
                 try:
                     m_file = roslib.manifest.manifest_file(pkg, True)
                 except InvalidROSPkgException:
                     # ignore wet package from further investigation
                     env = os.environ
-                    pkg_path = get_pkg_dir(pkg, True, ros_root=env['ROS_ROOT'])
+                    pkg_path = get_pkg_dir(pkg, True, ros_root=env["ROS_ROOT"])
                     if os.path.exists(os.path.join(pkg_path, PACKAGE_FILE)):
                         continue
                     raise
                 m = roslib.manifest.parse_file(m_file)
-                cflags = m.get_export('cpp', 'cflags')
-                include = '-I${prefix}/%s/cpp'%type_
+                cflags = m.get_export("cpp", "cflags")
+                include = "-I${prefix}/%s/cpp" % type_
                 if filter(lambda x: include in x, cflags):
                     exist.append(pkg)
     return exist
-    
+
+
 def manifest_msg_srv_export(ctx):
-    msgs = set(_manifest_msg_srv_export(ctx, 'msg'))
-    srvs = set(_manifest_msg_srv_export(ctx, 'srv'))
+    msgs = set(_manifest_msg_srv_export(ctx, "msg"))
+    srvs = set(_manifest_msg_srv_export(ctx, "srv"))
     errors = []
 
     for pkg in msgs & srvs:
-        errors.append('%s: -I${prefix}/msg/cpp -I${prefix}/srv/cpp'%pkg)
+        errors.append("%s: -I${prefix}/msg/cpp -I${prefix}/srv/cpp" % pkg)
     for pkg in msgs - srvs:
-        errors.append('%s: -I${prefix}/msg/cpp'%pkg)
+        errors.append("%s: -I${prefix}/msg/cpp" % pkg)
     for pkg in srvs - msgs:
-        errors.append('%s: -I${prefix}/srv/cpp'%pkg)
+        errors.append("%s: -I${prefix}/srv/cpp" % pkg)
     return errors
-        
+
 
 def _check_for_rpath_flags(pkg, lflags):
     if not lflags:
         return
-    L_arg = '-L'
-    Wl_arg = '-Wl'
-    rpath_arg = '-rpath'
+    L_arg = "-L"
+    Wl_arg = "-Wl"
+    rpath_arg = "-rpath"
     lflags_args = lflags.split()
     # Collect the args we care about
     L_args = []
@@ -103,8 +106,8 @@ def _check_for_rpath_flags(pkg, lflags):
         if f.startswith(L_arg) and len(f) > len(L_arg):
             # normpath avoids problems with trailing slash vs. no trailing
             # slash, #2284
-            L_args.append(os.path.normpath(f[len(L_arg):]))
-        elif f == L_arg and (i+1) < len(lflags_args):
+            L_args.append(os.path.normpath(f[len(L_arg) :]))
+        elif f == L_arg and (i + 1) < len(lflags_args):
             i += 1
             # normpath avoids problems with trailing slash vs. no trailing
             # slash, #2284
@@ -112,13 +115,13 @@ def _check_for_rpath_flags(pkg, lflags):
         elif f.startswith(Wl_arg) and len(f) > len(Wl_arg):
             # -Wl can be followed by multiple, comma-separated arguments,
             # #2284.
-            args = f.split(',')
+            args = f.split(",")
             j = 1
             while j < (len(args) - 1):
                 if args[j] == rpath_arg:
-                   # normpath avoids problems with trailing slash vs. no trailing
-                   # slash, #2284
-                    rpath_args.append(os.path.normpath(args[j+1]))
+                    # normpath avoids problems with trailing slash vs. no trailing
+                    # slash, #2284
+                    rpath_args.append(os.path.normpath(args[j + 1]))
                     j += 2
                 else:
                     j += 1
@@ -126,10 +129,19 @@ def _check_for_rpath_flags(pkg, lflags):
     # Check for parallelism; not efficient, but these strings are short
     for f in L_args:
         if f not in rpath_args:
-            return '%s: found flag "-L%s", but no matching "-Wl,-rpath,%s"'%(pkg, f,f)
+            return '%s: found flag "-L%s", but no matching "-Wl,-rpath,%s"' % (
+                pkg,
+                f,
+                f,
+            )
     for f in rpath_args:
         if f not in L_args:
-            return '%s: found flag "-Wl,-rpath,%s", but no matching "-L%s"'%(pkg, f,f)
+            return '%s: found flag "-Wl,-rpath,%s", but no matching "-L%s"' % (
+                pkg,
+                f,
+                f,
+            )
+
 
 def manifest_rpath_flags(ctx):
     warn = []
@@ -137,29 +149,34 @@ def manifest_rpath_flags(ctx):
         # Use rospack to get lflags, so that they can be bash-expanded
         # first, #2286.
         import subprocess
-        lflags = subprocess.Popen(['rospack', 'export', '--lang=cpp', '--attrib=lflags', pkg], stdout=subprocess.PIPE).communicate()[0]
+
+        lflags = subprocess.Popen(
+            ["rospack", "export", "--lang=cpp", "--attrib=lflags", pkg],
+            stdout=subprocess.PIPE,
+        ).communicate()[0]
         err_msg = _check_for_rpath_flags(pkg, lflags)
         if err_msg:
             warn.append(err_msg)
     return warn
+
 
 def cmakelists_package_valid(ctx):
     missing = []
     for pkg in ctx.pkgs:
         found = False
         pkg_dir = roslib.packages.get_pkg_dir(pkg)
-        p = os.path.join(pkg_dir, 'CMakeLists.txt')
+        p = os.path.join(pkg_dir, "CMakeLists.txt")
         if not os.path.isfile(p):
-            continue #covered by cmakelists_exists
+            continue  # covered by cmakelists_exists
         f = open(p)
         try:
             for l in f:
                 # ignore all whitespace
-                l = l.strip().replace(' ', '')
-                
-                if l.startswith('rospack('):
+                l = l.strip().replace(" ", "")
+
+                if l.startswith("rospack("):
                     found = True
-                    if not l.startswith('rospack(%s)'%pkg):
+                    if not l.startswith("rospack(%s)" % pkg):
                         missing.append(pkg)
                         break
                     # there may be more than 1 rospack() declaration, so scan through entire
@@ -169,31 +186,34 @@ def cmakelists_package_valid(ctx):
         finally:
             f.close()
     # rospack exists outside our build system
-    if 'rospack' in missing:
-        missing.remove('rospack')
+    if "rospack" in missing:
+        missing.remove("rospack")
     return missing
+
 
 warnings = [
     # disabling as it is too common and regular
-    (cmakelists_package_valid,
-     "The following packages have incorrect rospack() declarations in CMakeLists.txt.\nPlease switch to using rosbuild_init():"),
-    
-    (manifest_msg_srv_export,
-     'The following packages have msg/srv-related cflags exports that are no longer necessary\n\t<export>\n\t\t<cpp cflags="..."\n\t</export>:'),
+    (
+        cmakelists_package_valid,
+        "The following packages have incorrect rospack() declarations in CMakeLists.txt.\nPlease switch to using rosbuild_init():",
+    ),
+    (
+        manifest_msg_srv_export,
+        'The following packages have msg/srv-related cflags exports that are no longer necessary\n\t<export>\n\t\t<cpp cflags="..."\n\t</export>:',
+    ),
     (manifest_valid, "%(pkg)s/manifest.xml has unrecognized tags:"),
-
-    ]
+]
 errors = [
     (manifest_rpath_flags, "The following packages have rpath issues in manifest.xml:"),
-    ]
+]
+
 
 def wtf_check(ctx):
     # no package in context to verify
     if not ctx.pkgs:
         return
-    
+
     for r in warnings:
         warning_rule(r, r[0](ctx), ctx)
     for r in errors:
         error_rule(r, r[0](ctx), ctx)
-

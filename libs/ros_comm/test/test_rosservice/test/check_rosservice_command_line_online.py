@@ -32,7 +32,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys 
+import sys
 import time
 import unittest
 
@@ -44,6 +44,8 @@ import test_rosmaster.srv
 from subprocess import Popen, PIPE, check_call, call
 
 from threading import Thread
+
+
 class TestTask(Thread):
     def __init__(self, task):
         Thread.__init__(self)
@@ -51,7 +53,7 @@ class TestTask(Thread):
         self.success = False
         self.done = False
         self.value = None
-        
+
     def run(self):
         try:
             print("STARTING TASK")
@@ -60,26 +62,32 @@ class TestTask(Thread):
             self.success = True
         except:
             import traceback
+
             traceback.print_exc()
         self.done = True
 
-class TestRosserviceOnline(unittest.TestCase):
 
+class TestRosserviceOnline(unittest.TestCase):
     def setUp(self):
         pass
-        
+
     def test_rosservice(self):
         # wait for network to initialize
-        services = ['/add_two_ints', '/foo/add_two_ints', '/bar/add_two_ints']
+        services = ["/add_two_ints", "/foo/add_two_ints", "/bar/add_two_ints"]
         for s in services:
             rospy.wait_for_service(s)
 
-        cmd = 'rosservice'
-        names = ['add_two_ints', '/add_two_ints', 'foo/add_two_ints', '/bar/add_two_ints']
+        cmd = "rosservice"
+        names = [
+            "add_two_ints",
+            "/add_two_ints",
+            "foo/add_two_ints",
+            "/bar/add_two_ints",
+        ]
 
         # list
         # - hard to exact match as we are still adding builtin services to nodes (e.g. set_logger_level)
-        output = Popen([cmd, 'list'], stdout=PIPE).communicate()[0]
+        output = Popen([cmd, "list"], stdout=PIPE).communicate()[0]
         output = output.decode()
         l = set(output.split())
         for s in services:
@@ -87,81 +95,92 @@ class TestRosserviceOnline(unittest.TestCase):
 
         for name in names:
             # args
-            output = Popen([cmd, 'args', name], stdout=PIPE).communicate()[0]
-            self.assertEqual(b'a b', output.strip())
+            output = Popen([cmd, "args", name], stdout=PIPE).communicate()[0]
+            self.assertEqual(b"a b", output.strip())
 
             # type
-            output = Popen([cmd, 'type', name], stdout=PIPE).communicate()[0]
-            self.assertEqual(b'test_rosmaster/AddTwoInts', output.strip())
+            output = Popen([cmd, "type", name], stdout=PIPE).communicate()[0]
+            self.assertEqual(b"test_rosmaster/AddTwoInts", output.strip())
 
             # find
-            output = Popen([cmd, 'find', 'test_rosmaster/AddTwoInts'], stdout=PIPE).communicate()[0]
-            values = [v.strip() for v in output.decode().split('\n') if v.strip()]
+            output = Popen(
+                [cmd, "find", "test_rosmaster/AddTwoInts"], stdout=PIPE
+            ).communicate()[0]
+            values = [v.strip() for v in output.decode().split("\n") if v.strip()]
             self.assertEqual(set(values), set(services))
 
             # uri
-            output = Popen([cmd, 'uri', name], stdout=PIPE).communicate()[0]
+            output = Popen([cmd, "uri", name], stdout=PIPE).communicate()[0]
             # - no exact answer
-            self.assertTrue(output.decode().startswith('rosrpc://'), output)
+            self.assertTrue(output.decode().startswith("rosrpc://"), output)
 
             # call
-            output = Popen([cmd, 'call', '--wait', name, '1', '2'], stdout=PIPE).communicate()[0]
-            self.assertEqual(b'sum: 3', output.strip())
+            output = Popen(
+                [cmd, "call", "--wait", name, "1", "2"], stdout=PIPE
+            ).communicate()[0]
+            self.assertEqual(b"sum: 3", output.strip())
 
-            output = Popen([cmd, 'call', name, '1', '2'], stdout=PIPE).communicate()[0]
-            self.assertEqual(b'sum: 3', output.strip())
+            output = Popen([cmd, "call", name, "1", "2"], stdout=PIPE).communicate()[0]
+            self.assertEqual(b"sum: 3", output.strip())
 
-        name = 'header_echo'
+        name = "header_echo"
         # test with a Header so we can validate keyword args
         import yaml
         import time
+
         t = time.time()
-        
+
         # test with empty headers
-        for v in ['{}', '{header: {}}', '{header: {seq: 0}}']:
-            output = Popen([cmd, 'call', name, v], stdout=PIPE).communicate()[0]
+        for v in ["{}", "{header: {}}", "{header: {seq: 0}}"]:
+            output = Popen([cmd, "call", name, v], stdout=PIPE).communicate()[0]
             output = output.strip()
             self.assertTrue(output, output)
-            val = yaml.safe_load(output)['header']
-            self.assertEqual('', val['frame_id'])
-            self.assertTrue(val['seq'] >= 0)
-            self.assertEqual(0, val['stamp']['secs'])
-            self.assertEqual(0, val['stamp']['nsecs'])
+            val = yaml.safe_load(output)["header"]
+            self.assertEqual("", val["frame_id"])
+            self.assertTrue(val["seq"] >= 0)
+            self.assertEqual(0, val["stamp"]["secs"])
+            self.assertEqual(0, val["stamp"]["nsecs"])
 
         # test with auto headers
-        for v in ['{header: auto}', '{header: {stamp: now}}']:
-            output = Popen([cmd, 'call', name, v], stdout=PIPE).communicate()[0]
-            val = yaml.safe_load(output.strip())['header']
-            self.assertEqual('', val['frame_id'])
-            self.assertTrue(val['seq'] >= 0)
-            self.assertTrue(val['stamp']['secs'] >= int(t))
-        
+        for v in ["{header: auto}", "{header: {stamp: now}}"]:
+            output = Popen([cmd, "call", name, v], stdout=PIPE).communicate()[0]
+            val = yaml.safe_load(output.strip())["header"]
+            self.assertEqual("", val["frame_id"])
+            self.assertTrue(val["seq"] >= 0)
+            self.assertTrue(val["stamp"]["secs"] >= int(t))
 
         # verify that it respects ROS_NS
         # - the uris should be different as the names should resolve differently
         env = os.environ.copy()
-        env['ROS_NAMESPACE'] = 'foo'
-        uri1 = Popen([cmd, 'uri', 'add_two_ints'], stdout=PIPE).communicate()[0]
-        uri2 = Popen([cmd, 'uri', 'add_two_ints'], env=env, stdout=PIPE).communicate()[0]
-        self.assertTrue(uri2.decode().startswith('rosrpc://'))
+        env["ROS_NAMESPACE"] = "foo"
+        uri1 = Popen([cmd, "uri", "add_two_ints"], stdout=PIPE).communicate()[0]
+        uri2 = Popen([cmd, "uri", "add_two_ints"], env=env, stdout=PIPE).communicate()[
+            0
+        ]
+        self.assertTrue(uri2.decode().startswith("rosrpc://"))
         self.assertNotEqual(uri1, uri2)
 
         # test_call_wait
         def task1():
-            output = Popen([cmd, 'call', '--wait', 'wait_two_ints', '1', '2'], stdout=PIPE).communicate()[0]
-            self.assertEqual(b'sum: 3', output.strip())
-        timeout_t = time.time() + 5.
+            output = Popen(
+                [cmd, "call", "--wait", "wait_two_ints", "1", "2"], stdout=PIPE
+            ).communicate()[0]
+            self.assertEqual(b"sum: 3", output.strip())
+
+        timeout_t = time.time() + 5.0
         t1 = TestTask(task1)
         t1.start()
-        
-        rospy.init_node('test_call_wait')
-        rospy.Service("wait_two_ints", test_rosmaster.srv.AddTwoInts, lambda x: x.a + x.b)
+
+        rospy.init_node("test_call_wait")
+        rospy.Service(
+            "wait_two_ints", test_rosmaster.srv.AddTwoInts, lambda x: x.a + x.b
+        )
         while not t1.done and time.time() < timeout_t:
             time.sleep(0.5)
         self.assertTrue(t1.success)
-        
 
-PKG = 'test_rosservice'
-NAME = 'test_rosservice_command_line_online'
-if __name__ == '__main__':
+
+PKG = "test_rosservice"
+NAME = "test_rosservice_command_line_online"
+if __name__ == "__main__":
     rostest.run(PKG, NAME, TestRosserviceOnline, sys.argv)

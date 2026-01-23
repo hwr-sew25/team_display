@@ -34,7 +34,7 @@ from __future__ import print_function
 
 import os
 
-CATKIN_MARKER_FILE = '.catkin'
+CATKIN_MARKER_FILE = ".catkin"
 
 
 def get_workspaces():
@@ -44,10 +44,12 @@ def get_workspaces():
     :param _environ: environment module to use, ``dict``
     """
     # get all cmake prefix paths
-    env_name = 'CMAKE_PREFIX_PATH'
-    paths = [path for path in os.environ.get(env_name, '').split(os.pathsep) if path]
+    env_name = "CMAKE_PREFIX_PATH"
+    paths = [path for path in os.environ.get(env_name, "").split(os.pathsep) if path]
     # remove non-workspace paths
-    workspaces = [path for path in paths if os.path.isfile(os.path.join(path, CATKIN_MARKER_FILE))]
+    workspaces = [
+        path for path in paths if os.path.isfile(os.path.join(path, CATKIN_MARKER_FILE))
+    ]
     return workspaces
 
 
@@ -60,14 +62,16 @@ def get_source_paths(workspace):
     # determine source spaces
     filename = os.path.join(workspace, CATKIN_MARKER_FILE)
     if not os.path.isfile(filename):
-        raise ValueError('Not a catkin workspace: "%s", missing file %s' % (workspace, filename))
+        raise ValueError(
+            'Not a catkin workspace: "%s", missing file %s' % (workspace, filename)
+        )
     with open(filename) as f:
         data = f.read()
 
     source_paths = []
-    if data != '':
+    if data != "":
         real_source_paths = set()
-        for path in data.split(';'):
+        for path in data.split(";"):
             real_path = os.path.realpath(path)
             if real_path not in real_source_paths:
                 source_paths.append(path)

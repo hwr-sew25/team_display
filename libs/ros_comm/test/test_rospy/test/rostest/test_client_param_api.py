@@ -34,8 +34,8 @@
 ## Integration test for empty services to test serializers
 ## and transport
 
-PKG = 'test_rospy'
-NAME = 'test_param_api'
+PKG = "test_rospy"
+NAME = "test_param_api"
 
 import sys
 import time
@@ -44,69 +44,76 @@ import unittest
 import rospy
 import rostest
 
-class TestClientParamApi(unittest.TestCase):
 
+class TestClientParamApi(unittest.TestCase):
     def test_param_api(self):
         # test get_param_names
         param_names = rospy.get_param_names()
-        for n in ['/param1', 'param1', '~param1', 'param_int', 'param_float']:
+        for n in ["/param1", "param1", "~param1", "param_int", "param_float"]:
             self.assertTrue(rospy.resolve_name(n) in param_names)
-        
+
         # test has_param
-        self.assertTrue(rospy.has_param('/run_id'))
-        self.assertTrue(rospy.has_param('/param1'))
-        self.assertTrue(rospy.has_param('param1'))
-        self.assertTrue(rospy.has_param('~param1'))
+        self.assertTrue(rospy.has_param("/run_id"))
+        self.assertTrue(rospy.has_param("/param1"))
+        self.assertTrue(rospy.has_param("param1"))
+        self.assertTrue(rospy.has_param("~param1"))
 
         # test search_param
-        self.assertEqual(None, rospy.search_param('not_param1'))
-        self.assertEqual(rospy.resolve_name('~param1'), rospy.search_param('param1'))
-        self.assertEqual(rospy.resolve_name('parent_param'), rospy.search_param('parent_param'))
-        self.assertEqual("/global_param", rospy.search_param('global_param'))                
-        
+        self.assertEqual(None, rospy.search_param("not_param1"))
+        self.assertEqual(rospy.resolve_name("~param1"), rospy.search_param("param1"))
+        self.assertEqual(
+            rospy.resolve_name("parent_param"), rospy.search_param("parent_param")
+        )
+        self.assertEqual("/global_param", rospy.search_param("global_param"))
+
         # test get_param on params set in rostest file
-        self.assertEqual('global_param1', rospy.get_param('/param1'))
-        self.assertEqual('parent_param1', rospy.get_param('param1'))
-        self.assertEqual('private_param1', rospy.get_param('~param1'))
+        self.assertEqual("global_param1", rospy.get_param("/param1"))
+        self.assertEqual("parent_param1", rospy.get_param("param1"))
+        self.assertEqual("private_param1", rospy.get_param("~param1"))
         # - type tests
-        self.assertEqual(1, rospy.get_param('param_int'))
-        self.assertAlmostEqual(2., rospy.get_param('param_float'))        
-        self.assertEqual(True, rospy.get_param('param_bool'))
-        self.assertEqual("hello world", rospy.get_param('param_str'))
-        
-        # test default behavior get_param 
+        self.assertEqual(1, rospy.get_param("param_int"))
+        self.assertAlmostEqual(2.0, rospy.get_param("param_float"))
+        self.assertEqual(True, rospy.get_param("param_bool"))
+        self.assertEqual("hello world", rospy.get_param("param_str"))
+
+        # test default behavior get_param
         try:
-            rospy.get_param('not_param1')
+            rospy.get_param("not_param1")
             self.fail("should have raised KeyError")
-        except KeyError: pass
-        self.assertEqual('parent_param1', rospy.get_param('param1', 'foo'))
-        self.assertEqual('private_param1', rospy.get_param('~param1', 'foo'))
-        self.assertEqual('myval', rospy.get_param('not_param1', 'myval'))
-        self.assertEqual('myval', rospy.get_param('~not_param1', 'myval'))
-        self.assertEqual(None, rospy.get_param('not_param1', None))
-        self.assertEqual(None, rospy.get_param('~not_param1', None))
+        except KeyError:
+            pass
+        self.assertEqual("parent_param1", rospy.get_param("param1", "foo"))
+        self.assertEqual("private_param1", rospy.get_param("~param1", "foo"))
+        self.assertEqual("myval", rospy.get_param("not_param1", "myval"))
+        self.assertEqual("myval", rospy.get_param("~not_param1", "myval"))
+        self.assertEqual(None, rospy.get_param("not_param1", None))
+        self.assertEqual(None, rospy.get_param("~not_param1", None))
 
         # test set/get roundtrips
-        vals = [ '1', 1, 1., [1, 2, 3, 4], {'a': 1, 'b': 2}]
+        vals = ["1", 1, 1.0, [1, 2, 3, 4], {"a": 1, "b": 2}]
         for v in vals:
             self.assertFalse(rospy.has_param("cp_param"))
             try:
-                rospy.get_param('cp_param1')
+                rospy.get_param("cp_param1")
                 self.fail("should have thrown KeyError")
-            except KeyError: pass
-            self.assertEqual(None, rospy.get_param('cp_param', None))
-            self.assertEqual("default", rospy.get_param('cp_param', "default"))
+            except KeyError:
+                pass
+            self.assertEqual(None, rospy.get_param("cp_param", None))
+            self.assertEqual("default", rospy.get_param("cp_param", "default"))
             rospy.set_param("cp_param", v)
             self.assertTrue(rospy.has_param("cp_param"))
             self.assertEqual(v, rospy.get_param("cp_param"))
-            self.assertEqual(rospy.resolve_name('cp_param'), rospy.search_param('cp_param'))
+            self.assertEqual(
+                rospy.resolve_name("cp_param"), rospy.search_param("cp_param")
+            )
             # erase the param and recheck state
-            rospy.delete_param('cp_param')
+            rospy.delete_param("cp_param")
             self.assertFalse(rospy.has_param("cp_param"))
-            self.assertEqual(None, rospy.get_param('cp_param', None))
-            self.assertEqual("default", rospy.get_param('cp_param', "default"))
-            self.assertEqual(None, rospy.search_param('cp_param'))
-            
-if __name__ == '__main__':
+            self.assertEqual(None, rospy.get_param("cp_param", None))
+            self.assertEqual("default", rospy.get_param("cp_param", "default"))
+            self.assertEqual(None, rospy.search_param("cp_param"))
+
+
+if __name__ == "__main__":
     rospy.init_node(NAME)
     rostest.run(PKG, NAME, TestClientParamApi, sys.argv)

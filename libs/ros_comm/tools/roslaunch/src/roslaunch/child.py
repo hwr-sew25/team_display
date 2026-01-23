@@ -51,6 +51,7 @@ import roslaunch.pmon
 import roslaunch.server
 from roslaunch.nodeprocess import DEFAULT_TIMEOUT_SIGINT, DEFAULT_TIMEOUT_SIGTERM
 
+
 class ROSLaunchChild(object):
     """
     ROSLaunchChild infrastructure.
@@ -58,7 +59,14 @@ class ROSLaunchChild(object):
     This must be called from the Python Main thread due to signal registration.
     """
 
-    def __init__(self, run_id, name, server_uri, sigint_timeout=DEFAULT_TIMEOUT_SIGINT, sigterm_timeout=DEFAULT_TIMEOUT_SIGTERM):
+    def __init__(
+        self,
+        run_id,
+        name,
+        server_uri,
+        sigint_timeout=DEFAULT_TIMEOUT_SIGINT,
+        sigterm_timeout=DEFAULT_TIMEOUT_SIGTERM,
+    ):
         """
         Startup roslaunch remote client XML-RPC services. Blocks until shutdown
         @param run_id: UUID of roslaunch session
@@ -76,7 +84,7 @@ class ROSLaunchChild(object):
         @rtype:  str
         """
         roslaunch.core.set_child_mode(True)
-        
+
         self.logger = logging.getLogger("roslaunch.child")
         self.run_id = run_id
         self.name = name
@@ -99,20 +107,31 @@ class ROSLaunchChild(object):
             self.pm = roslaunch.pmon.start_process_monitor()
         if self.pm is None:
             # this should only happen if a shutdown signal is received during startup
-            raise roslaunch.core.RLException("cannot startup remote child: unable to start process monitor.")
+            raise roslaunch.core.RLException(
+                "cannot startup remote child: unable to start process monitor."
+            )
         self.logger.debug("started process monitor")
-        
+
     def run(self):
         """
         Runs child. Blocks until child processes exit.
         """
         try:
             try:
-                self.logger.info("starting roslaunch child process [%s], server URI is [%s]", self.name, self.server_uri)
+                self.logger.info(
+                    "starting roslaunch child process [%s], server URI is [%s]",
+                    self.name,
+                    self.server_uri,
+                )
                 self._start_pm()
-                self.child_server = roslaunch.server.ROSLaunchChildNode(self.run_id, self.name, self.server_uri,
-                                                                        self.pm, sigint_timeout=self.sigint_timeout,
-                                                                        sigterm_timeout=self.sigterm_timeout)
+                self.child_server = roslaunch.server.ROSLaunchChildNode(
+                    self.run_id,
+                    self.name,
+                    self.server_uri,
+                    self.pm,
+                    sigint_timeout=self.sigint_timeout,
+                    sigterm_timeout=self.sigterm_timeout,
+                )
                 self.logger.info("... creating XMLRPC server for child")
                 self.child_server.start()
                 self.logger.info("... started XMLRPC server for child")
@@ -127,7 +146,7 @@ class ROSLaunchChild(object):
                 self.pm.shutdown()
                 self.pm.join()
             if self.child_server:
-                self.child_server.shutdown('roslaunch child complete')
+                self.child_server.shutdown("roslaunch child complete")
 
     def shutdown(self):
         if self.pm:

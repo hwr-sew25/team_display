@@ -32,7 +32,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import roslib
-roslib.load_manifest('rosbag')
+
+roslib.load_manifest("rosbag")
 
 import os
 import unittest
@@ -41,20 +42,22 @@ import sys
 import signal
 from record_signal_cleanup_helper import test_signal_cleanup
 
-TEST_BAG_FILE_NAME = '/tmp/record_sigterm_cleanup_test.bag'
+TEST_BAG_FILE_NAME = "/tmp/record_sigterm_cleanup_test.bag"
+
 
 class RecordSigtermCleanup(unittest.TestCase):
+    def test_sigterm_cleanup(self):
+        """
+        Test that rosbag cleans up after handling SIGTERM
+        """
+        test_signal_cleanup(TEST_BAG_FILE_NAME, signal.SIGTERM)
 
-  def test_sigterm_cleanup(self):
-    """
-    Test that rosbag cleans up after handling SIGTERM
-    """
-    test_signal_cleanup(TEST_BAG_FILE_NAME, signal.SIGTERM)
-
-    # check that the recorded file is no longer active
-    self.assertTrue(os.path.isfile(TEST_BAG_FILE_NAME))
-    self.assertFalse(os.path.isfile(TEST_BAG_FILE_NAME+ '.active'))
+        # check that the recorded file is no longer active
+        self.assertTrue(os.path.isfile(TEST_BAG_FILE_NAME))
+        self.assertFalse(os.path.isfile(TEST_BAG_FILE_NAME + ".active"))
 
 
-if __name__ == '__main__':
-  rostest.unitrun('test_rosbag', 'test_sigterm_cleanup', RecordSigtermCleanup, sys.argv)
+if __name__ == "__main__":
+    rostest.unitrun(
+        "test_rosbag", "test_sigterm_cleanup", RecordSigtermCleanup, sys.argv
+    )

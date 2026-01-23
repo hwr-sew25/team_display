@@ -40,17 +40,23 @@ import rosgraph.network
 import roslaunch.parent
 
 import rosgraph
-master = rosgraph.Master('test_roslaunch_parent')
+
+master = rosgraph.Master("test_roslaunch_parent")
+
+
 def get_param(*args):
     return master.getParam(*args)
+
 
 ## Fake Process object
 class ProcessMock(roslaunch.pmon.Process):
     def __init__(self, package, name, args, env, respawn=False):
         super(ProcessMock, self).__init__(package, name, args, env, respawn)
         self.stopped = False
+
     def stop(self):
         self.stopped = True
+
 
 ## Fake ProcessMonitor object
 class ProcessMonitorMock(object):
@@ -59,7 +65,7 @@ class ProcessMonitorMock(object):
         self.procs = []
         self.listeners = []
         self.is_shutdown = False
-        
+
     def join(self, timeout=0):
         pass
 
@@ -71,10 +77,10 @@ class ProcessMonitorMock(object):
 
     def register_core_proc(self, p):
         self.core_procs.append(p)
-        
+
     def registrations_complete(self):
         pass
-        
+
     def unregister(self, p):
         self.procs.remove(p)
 
@@ -89,16 +95,16 @@ class ProcessMonitorMock(object):
 
     def has_main_thread_jobs(self):
         return False
-    
+
     def do_main_thread_jobs(self):
         pass
-    
+
     def kill_process(self, name):
         pass
-        
+
     def shutdown(self):
         self.is_shutdown = True
-        
+
     def get_active_names(self):
         return [p.name for p in self.procs]
 
@@ -109,16 +115,16 @@ class ProcessMonitorMock(object):
 
     def mainthread_spin_once(self):
         pass
-        
+
     def mainthread_spin(self):
         pass
 
     def run(self):
         pass
-            
+
+
 ## Test roslaunch.server
 class TestRoslaunchParent(unittest.TestCase):
-
     def setUp(self):
         self.pmon = ProcessMonitorMock()
 
@@ -130,26 +136,29 @@ class TestRoslaunchParent(unittest.TestCase):
 
     def _subroslaunchParent(self):
         from roslaunch.parent import ROSLaunchParent
+
         pmon = self.pmon
         try:
             # if there is a core up, we have to use its run id
-            run_id = get_param('/run_id')
+            run_id = get_param("/run_id")
         except:
-            run_id = 'test-rl-parent-%s'%time.time()
-        name = 'foo-bob'
-        server_uri = 'http://localhost:12345'
-        
-        p = ROSLaunchParent(run_id, [], is_core = True, port=None, local_only=False)
+            run_id = "test-rl-parent-%s" % time.time()
+        name = "foo-bob"
+        server_uri = "http://localhost:12345"
+
+        p = ROSLaunchParent(run_id, [], is_core=True, port=None, local_only=False)
         self.assertEqual(run_id, p.run_id)
         self.assertEqual(True, p.is_core)
         self.assertEqual(False, p.local_only)
 
-        rl_dir = rospkg.RosPack().get_path('roslaunch')
-        rl_file = os.path.join(rl_dir, 'resources', 'example.launch')
+        rl_dir = rospkg.RosPack().get_path("roslaunch")
+        rl_file = os.path.join(rl_dir, "resources", "example.launch")
         self.assertTrue(os.path.isfile(rl_file))
-        
+
         # validate load_config logic
-        p = ROSLaunchParent(run_id, [rl_file], is_core = False, port=None, local_only=True)
+        p = ROSLaunchParent(
+            run_id, [rl_file], is_core=False, port=None, local_only=True
+        )
         self.assertEqual(run_id, p.run_id)
         self.assertEqual(False, p.is_core)
         self.assertEqual(True, p.local_only)
@@ -160,7 +169,9 @@ class TestRoslaunchParent(unittest.TestCase):
         self.assertTrue(p.config.nodes)
 
         # try again with port override
-        p = ROSLaunchParent(run_id, [rl_file], is_core = False, port=11312, local_only=True)
+        p = ROSLaunchParent(
+            run_id, [rl_file], is_core=False, port=11312, local_only=True
+        )
         self.assertEqual(11312, p.port)
         self.assertTrue(p.config is None)
         p._load_config()
@@ -169,53 +180,59 @@ class TestRoslaunchParent(unittest.TestCase):
         self.assertEqual(11312, port)
 
         # try again with bad file
-        p = ROSLaunchParent(run_id, ['non-existent-fake.launch'])
+        p = ROSLaunchParent(run_id, ["non-existent-fake.launch"])
         self.assertTrue(p.config is None)
         try:
             p._load_config()
             self.fail("load config should have failed due to bad rl file")
-        except roslaunch.core.RLException: pass
+        except roslaunch.core.RLException:
+            pass
 
         # try again with bad xml
-        rl_dir = rospkg.RosPack().get_path('roslaunch')
-        rl_file = os.path.join(rl_dir, 'test', 'xml', 'test-params-invalid-1.xml')
+        rl_dir = rospkg.RosPack().get_path("roslaunch")
+        rl_file = os.path.join(rl_dir, "test", "xml", "test-params-invalid-1.xml")
         self.assertTrue(os.path.isfile(rl_file))
         p = ROSLaunchParent(run_id, [rl_file])
         self.assertTrue(p.config is None)
         try:
             p._load_config()
             self.fail("load config should have failed due to bad rl file")
-        except roslaunch.core.RLException: pass
-        
+        except roslaunch.core.RLException:
+            pass
+
         # Mess around with internal repr to get code coverage on _init_runner/_init_remote
-        p = ROSLaunchParent(run_id, [], is_core = False, port=None, local_only=True)
+        p = ROSLaunchParent(run_id, [], is_core=False, port=None, local_only=True)
         # no config, _init_runner/_init_remote/_start_server should fail
-        for m in ['_init_runner', '_init_remote', '_start_server']:
+        for m in ["_init_runner", "_init_remote", "_start_server"]:
             try:
                 getattr(p, m)()
-                self.fail('should have raised')
-            except roslaunch.core.RLException: pass
+                self.fail("should have raised")
+            except roslaunch.core.RLException:
+                pass
 
         # - initialize p.config
         p.config = roslaunch.config.ROSLaunchConfig()
-        
+
         # no pm, _init_runner/_init_remote/_start_server should fail
-        for m in ['_init_runner', '_init_remote', '_start_server']:
+        for m in ["_init_runner", "_init_remote", "_start_server"]:
             try:
                 getattr(p, m)()
-                self.fail('should have raised')
-            except roslaunch.core.RLException: pass
+                self.fail("should have raised")
+            except roslaunch.core.RLException:
+                pass
 
         # - initialize p.pm
         p.pm = pmon
-        
-        for m in ['_init_runner', '_init_remote']:
+
+        for m in ["_init_runner", "_init_remote"]:
             try:
                 getattr(p, m)()
-                self.fail('should have raised')
-            except roslaunch.core.RLException: pass
-            
+                self.fail("should have raised")
+            except roslaunch.core.RLException:
+                pass
+
         from roslaunch.server import ROSLaunchParentNode
+
         p.server = ROSLaunchParentNode(p.config, pmon)
         p._init_runner()
         # roslaunch runner should be initialized
@@ -225,16 +242,18 @@ class TestRoslaunchParent(unittest.TestCase):
         p.local_only = True
         p._init_remote()
         p.local_only = False
+
         # - this violates many abstractions to do this
         def ftrue():
             return True
+
         p.config.has_remote_nodes = ftrue
         p._init_remote()
         self.assertTrue(p.remote_runner is not None)
 
         self.assertFalse(pmon.is_shutdown)
         p.shutdown()
-        self.assertTrue(pmon.is_shutdown)        
+        self.assertTrue(pmon.is_shutdown)
 
 
 ## Test sigint_timeout and sigterm_timeout
@@ -242,6 +261,7 @@ class TestRoslaunchParent(unittest.TestCase):
 class TestRoslaunchTimeouts(unittest.TestCase):
     def setUp(self):
         from roslaunch.pmon import ProcessMonitor
+
         self.pmon = ProcessMonitor()
 
     def test_roslaunchTimeouts(self):
@@ -261,18 +281,25 @@ class TestRoslaunchTimeouts(unittest.TestCase):
         pmon.start()
         try:
             # if there is a core up, we have to use its run id
-            run_id = get_param('/run_id')
+            run_id = get_param("/run_id")
         except:
-            run_id = 'test-rl-parent-timeout-%s' % time.time()
+            run_id = "test-rl-parent-timeout-%s" % time.time()
 
-        rl_dir = rospkg.RosPack().get_path('roslaunch')
-        rl_file = os.path.join(rl_dir, 'resources', 'timeouts.launch')
+        rl_dir = rospkg.RosPack().get_path("roslaunch")
+        rl_file = os.path.join(rl_dir, "resources", "timeouts.launch")
 
         sigint_timeout = 2
         sigterm_timeout = 3
 
-        p = ROSLaunchParent(run_id, [rl_file], is_core=False, port=11312, local_only=True,
-                            sigint_timeout=sigint_timeout, sigterm_timeout=sigterm_timeout)
+        p = ROSLaunchParent(
+            run_id,
+            [rl_file],
+            is_core=False,
+            port=11312,
+            local_only=True,
+            sigint_timeout=sigint_timeout,
+            sigterm_timeout=sigterm_timeout,
+        )
         p._load_config()
         p.pm = pmon
         p.server = ROSLaunchParentNode(p.config, pmon)
@@ -303,7 +330,7 @@ class TestRoslaunchTimeouts(unittest.TestCase):
 
         signals = dict()
         try:
-            with open(signal_log_file, 'r') as f:
+            with open(signal_log_file, "r") as f:
                 lines = f.readlines()
                 for line in lines:
                     sig, timestamp = line.split(" ")
@@ -315,8 +342,14 @@ class TestRoslaunchTimeouts(unittest.TestCase):
 
         self.assertSetEqual({signal.SIGINT, signal.SIGTERM}, set(signals.keys()))
         self.assertAlmostEqual(before_stop_call_time, signals[signal.SIGINT], delta=1.0)
-        self.assertAlmostEqual(before_stop_call_time, signals[signal.SIGTERM] - sigint_timeout, delta=1)
-        self.assertAlmostEqual(before_stop_call_time, after_stop_call_time - sigint_timeout - sigterm_timeout, delta=1)
+        self.assertAlmostEqual(
+            before_stop_call_time, signals[signal.SIGTERM] - sigint_timeout, delta=1
+        )
+        self.assertAlmostEqual(
+            before_stop_call_time,
+            after_stop_call_time - sigint_timeout - sigterm_timeout,
+            delta=1,
+        )
 
 
 def kill_parent(p, delay=1.0):
@@ -324,4 +357,3 @@ def kill_parent(p, delay=1.0):
     time.sleep(delay)
     print("stopping parent")
     p.shutdown()
-

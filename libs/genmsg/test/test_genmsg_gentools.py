@@ -31,29 +31,33 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys 
-        
-TEST_CTX = 'rosgraph_msgs'
+import sys
+
+TEST_CTX = "rosgraph_msgs"
+
 
 def get_test_dir():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), 'md5tests'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "md5tests"))
+
 
 def get_test_msg_dir():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), 'files'))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "files"))
+
 
 def get_search_path():
     test_dir = get_test_msg_dir()
     search_path = {}
-    for pkg in ['std_msgs', 'rosgraph_msgs', 'test_ros', 'geometry_msgs']:
-        search_path[pkg] = [ os.path.join(test_dir, pkg, 'msg') ]
+    for pkg in ["std_msgs", "rosgraph_msgs", "test_ros", "geometry_msgs"]:
+        search_path[pkg] = [os.path.join(test_dir, pkg, "msg")]
     return search_path
+
 
 def _load_md5_tests(dir_name):
     test_dir = os.path.join(get_test_dir(), dir_name)
     tests = {}
     for f in os.listdir(test_dir):
         path = os.path.join(test_dir, f)
-        if not f.endswith('.txt'):
+        if not f.endswith(".txt"):
             continue
         name = f[:-4]
         while name and name[-1].isdigit():
@@ -64,76 +68,101 @@ def _load_md5_tests(dir_name):
         else:
             tests[name] = [path]
     return tests
-    
+
+
 def _compute_md5(msg_context, f):
     from genmsg import load_depends, compute_md5
     from genmsg.msg_loader import load_msg_from_string
 
-    text = open(f, 'r').read()
-    short_name = os.path.basename(f)[:-len('.msg')]
-    full_name = "%s/%s"%(TEST_CTX, short_name)
+    text = open(f, "r").read()
+    short_name = os.path.basename(f)[: -len(".msg")]
+    full_name = "%s/%s" % (TEST_CTX, short_name)
     spec = load_msg_from_string(msg_context, text, full_name)
     search_path = get_search_path()
     load_depends(msg_context, spec, search_path)
     return compute_md5(msg_context, spec)
-        
+
+
 def _compute_md5_text(msg_context, f):
     from genmsg import compute_md5_text, load_depends
     from genmsg.msg_loader import load_msg_from_string
 
-    text = open(f, 'r').read()
-    short_name = os.path.basename(f)[:-len('.msg')]
-    full_name = "%s/%s"%(TEST_CTX, short_name)
+    text = open(f, "r").read()
+    short_name = os.path.basename(f)[: -len(".msg")]
+    full_name = "%s/%s" % (TEST_CTX, short_name)
     spec = load_msg_from_string(msg_context, text, full_name)
     search_path = get_search_path()
     load_depends(msg_context, spec, search_path)
     return compute_md5_text(msg_context, spec)
 
+
 def test_compute_md5_text():
     from genmsg import MsgContext
+
     msg_context = MsgContext.create_default()
-    
+
     # this test is just verifying that the md5sum is what it was for cturtle->electric
     Header_md5 = "2176decaecbce78abc3b96ef049fabed"
-    rg_msg_dir = os.path.join(get_test_msg_dir(), TEST_CTX, 'msg')
-    clock_msg = os.path.join(rg_msg_dir, 'Clock.msg')
+    rg_msg_dir = os.path.join(get_test_msg_dir(), TEST_CTX, "msg")
+    clock_msg = os.path.join(rg_msg_dir, "Clock.msg")
     # a bit gory, but go ahead and regression test these important messages
     assert "time clock" == _compute_md5_text(msg_context, clock_msg)
-    log_msg = os.path.join(rg_msg_dir, 'Log.msg')
-    assert "byte DEBUG=1\nbyte INFO=2\nbyte WARN=4\nbyte ERROR=8\nbyte FATAL=16\n%s header\nbyte level\nstring name\nstring msg\nstring file\nstring function\nuint32 line\nstring[] topics"%Header_md5 == _compute_md5_text(msg_context, log_msg)
+    log_msg = os.path.join(rg_msg_dir, "Log.msg")
+    assert (
+        "byte DEBUG=1\nbyte INFO=2\nbyte WARN=4\nbyte ERROR=8\nbyte FATAL=16\n%s header\nbyte level\nstring name\nstring msg\nstring file\nstring function\nuint32 line\nstring[] topics"
+        % Header_md5
+        == _compute_md5_text(msg_context, log_msg)
+    )
 
-    tests = _load_md5_tests('md5text')
+    tests = _load_md5_tests("md5text")
     # text file #1 is the reference
     for k, files in tests.items():
         print("running tests", k)
-        ref_file = [f for f in files if f.endswith('%s1.txt'%k)]
+        ref_file = [f for f in files if f.endswith("%s1.txt" % k)]
         if not ref_file:
-            assert False, "failed to load %s"%k
+            assert False, "failed to load %s" % k
         ref_file = ref_file[0]
-        ref_text = open(ref_file, 'r').read().strip()
+        ref_text = open(ref_file, "r").read().strip()
         print("KEY", k)
-        files = [f for f in files if not f.endswith('%s1.txt'%k)]
+        files = [f for f in files if not f.endswith("%s1.txt" % k)]
         for f in files[1:]:
             f_text = _compute_md5_text(msg_context, f)
-            assert ref_text == f_text, "failed on %s\n%s\n%s: \n[%s]\nvs.\n[%s]\n"%(k, ref_file, f, ref_text, f_text)
-        
+            assert ref_text == f_text, "failed on %s\n%s\n%s: \n[%s]\nvs.\n[%s]\n" % (
+                k,
+                ref_file,
+                f,
+                ref_text,
+                f_text,
+            )
+
+
 def test_md5_equals():
     from genmsg import MsgContext
+
     msg_context = MsgContext.create_default()
 
     search_path = get_search_path()
-    tests = _load_md5_tests('same')
+    tests = _load_md5_tests("same")
     for k, files in tests.items():
         print("running tests", k)
         md5sum = _compute_md5(msg_context, files[0])
         for f in files[1:]:
-            assert md5sum == _compute_md5(msg_context, f), "failed on %s: \n[%s]\nvs.\n[%s]\n"%(k, _compute_md5_text(msg_context, files[0]), _compute_md5_text(msg_context, f))
-    
+            assert md5sum == _compute_md5(msg_context, f), (
+                "failed on %s: \n[%s]\nvs.\n[%s]\n"
+                % (
+                    k,
+                    _compute_md5_text(msg_context, files[0]),
+                    _compute_md5_text(msg_context, f),
+                )
+            )
+
+
 def test_md5_not_equals():
     from genmsg import MsgContext
+
     msg_context = MsgContext.create_default()
 
-    tests = _load_md5_tests('different')
+    tests = _load_md5_tests("different")
     for k, files in tests.items():
         print("running tests", k)
         md5s = set()
@@ -142,7 +171,8 @@ def test_md5_not_equals():
             md5s.add(_compute_md5(msg_context, f))
         # each md5 should be unique
         assert len(md5s) == len(files)
-    
+
+
 twist_with_covariance_stamped_full_text = """# This represents an estimate twist with reference coordinate frame and timestamp.
 Header header
 TwistWithCovariance twist
@@ -230,20 +260,27 @@ time stamp
 string frame_id
 """
 
+
 def test_compute_full_text():
     from genmsg import MsgContext, compute_full_text, load_msg_by_type, load_depends
+
     msg_context = MsgContext.create_default()
 
     search_path = get_search_path()
-    
-    # regression test against values used for cturtle-electric
-    
-    spec = load_msg_by_type(msg_context, 'rosgraph_msgs/Log', search_path)
-    load_depends(msg_context, spec, search_path)
-    val = compute_full_text(msg_context, spec)
-    assert val == log_full_text, "[%s][%s]"%(val, log_full_text)
 
-    spec = load_msg_by_type(msg_context, 'geometry_msgs/TwistWithCovarianceStamped', search_path)
+    # regression test against values used for cturtle-electric
+
+    spec = load_msg_by_type(msg_context, "rosgraph_msgs/Log", search_path)
     load_depends(msg_context, spec, search_path)
     val = compute_full_text(msg_context, spec)
-    assert val == twist_with_covariance_stamped_full_text, "[%s][%s]"%(val, twist_with_covariance_stamped_full_text)
+    assert val == log_full_text, "[%s][%s]" % (val, log_full_text)
+
+    spec = load_msg_by_type(
+        msg_context, "geometry_msgs/TwistWithCovarianceStamped", search_path
+    )
+    load_depends(msg_context, spec, search_path)
+    val = compute_full_text(msg_context, spec)
+    assert val == twist_with_covariance_stamped_full_text, "[%s][%s]" % (
+        val,
+        twist_with_covariance_stamped_full_text,
+    )

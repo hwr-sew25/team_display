@@ -38,11 +38,11 @@ import sys
 import urllib.request
 from optparse import OptionParser
 
-NAME = 'download_checkmd5.py'
+NAME = "download_checkmd5.py"
 
 
 def main():
-    parser = OptionParser(usage='usage: %prog URI dest [md5sum]', prog=NAME)
+    parser = OptionParser(usage="usage: %prog URI dest [md5sum]", prog=NAME)
     options, args = parser.parse_args()
     md5sum = None
     if len(args) == 2:
@@ -50,7 +50,7 @@ def main():
     elif len(args) == 3:
         uri, dest, md5sum = args
     else:
-        parser.error('wrong number of arguments')
+        parser.error("wrong number of arguments")
 
     # Create intermediate directories as necessary, #2970
     d = os.path.dirname(dest)
@@ -59,21 +59,24 @@ def main():
 
     fresh = False
     if not os.path.exists(dest):
-        sys.stdout.write('[rosbuild] Downloading %s to %s...' % (uri, dest))
+        sys.stdout.write("[rosbuild] Downloading %s to %s..." % (uri, dest))
         sys.stdout.flush()
         urllib.request.urlretrieve(uri, dest)
-        sys.stdout.write('Done\n')
+        sys.stdout.write("Done\n")
         fresh = True
 
     if md5sum:
         m = hashlib.md5(open(dest, "rb").read())
         d = m.hexdigest()
 
-        print('[rosbuild] Checking md5sum on %s' % (dest))
+        print("[rosbuild] Checking md5sum on %s" % (dest))
 
         if d != md5sum:
             if not fresh:
-                print('[rosbuild] WARNING: md5sum mismatch (%s != %s); re-downloading file %s' % (d, md5sum, dest))
+                print(
+                    "[rosbuild] WARNING: md5sum mismatch (%s != %s); re-downloading file %s"
+                    % (d, md5sum, dest)
+                )
                 os.remove(dest)
 
                 # Try one more time
@@ -82,11 +85,14 @@ def main():
                 d = m.hexdigest()
 
             if d != md5sum:
-                print('[rosbuild] ERROR: md5sum mismatch (%s != %s) on %s; aborting' % (d, md5sum, dest))
+                print(
+                    "[rosbuild] ERROR: md5sum mismatch (%s != %s) on %s; aborting"
+                    % (d, md5sum, dest)
+                )
                 return 1
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

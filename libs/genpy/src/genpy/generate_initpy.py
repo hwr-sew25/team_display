@@ -44,7 +44,7 @@ def _module_name(type_name):
     :param type_name str: Name of message type sans package, e.g. 'String'
     :returns str: name of python module for auto-generated code
     """
-    return '_' + type_name
+    return "_" + type_name
 
 
 def write_modules(outdir):
@@ -52,8 +52,8 @@ def write_modules(outdir):
         # TODO: warn?
         return 0
     types_in_dir = {
-        f[1:-3] for f in os.listdir(outdir)
-        if f.endswith('.py') and f != '__init__.py'}
+        f[1:-3] for f in os.listdir(outdir) if f.endswith(".py") and f != "__init__.py"
+    }
     generated_modules = [_module_name(f) for f in sorted(types_in_dir)]
     write_module(outdir, generated_modules)
     return 0
@@ -72,11 +72,13 @@ def write_module(basedir, generated_modules):
     if not os.path.exists(basedir):
         os.makedirs(basedir)
     elif not os.path.isdir(basedir):
-        raise MsgGenerationException('file preventing the creating of module directory: %s' % basedir)
-    p = os.path.join(basedir, '__init__.py')
-    with open(p, 'w') as f:
+        raise MsgGenerationException(
+            "file preventing the creating of module directory: %s" % basedir
+        )
+    p = os.path.join(basedir, "__init__.py")
+    with open(p, "w") as f:
         for mod in generated_modules:
-            f.write('from .%s import *\n' % mod)
+            f.write("from .%s import *\n" % mod)
 
     os.path.dirname(basedir)
     # p = os.path.join(parent_init, '__init__.py')

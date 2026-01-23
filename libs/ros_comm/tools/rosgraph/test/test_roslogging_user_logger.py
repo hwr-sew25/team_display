@@ -38,6 +38,7 @@ in rosgraph.roslogger.
 
 import logging
 import os
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -58,17 +59,17 @@ class UserCustomLogger(logging.Logger):
         """
         if sys.version_info > (3, 2):
             # Dummy last argument to match Python3 return type
-            return '<filename>', '<lineno>', '<func_name>', None
+            return "<filename>", "<lineno>", "<func_name>", None
         else:
-            return '<filename>', '<lineno>', '<func_name>'
+            return "<filename>", "<lineno>", "<func_name>"
 
     def _log(self, level, msg, args, exc_info=None, extra=None):
         """Write log with ROS_IP.
 
         This method is not being overwritten in rosgraph.roslogging.
         """
-        ros_ip = os.environ.get('ROS_IP', '<unknown ros_ip>')
-        msg = '%s %s' % (ros_ip, msg)
+        ros_ip = os.environ.get("ROS_IP", "<unknown ros_ip>")
+        msg = "%s %s" % (ros_ip, msg)
         logging.Logger._log(self, level, msg, args, exc_info, extra)
 
 
@@ -81,23 +82,25 @@ def teardown_module():
 
 
 def test_roslogging_user_logger():
-    os.environ['ROS_IP'] = '127.0.0.1'
-    os.environ['ROSCONSOLE_FORMAT'] = ' '.join([
-        '${severity}',
-        '${message}',
-        '${walltime}',
-        '${walltime:%Y-%m-%d %H:%M:%S}',
-        '${thread}',
-        '${logger}',
-        '${file}',
-        '${line}',
-        '${function}',
-        '${node}',
-        '${time}',
-        '${time:%Y-%m-%d %H:%M:%S}',
-    ])
-    rosgraph.roslogging.configure_logging('test_rosgraph', logging.INFO)
-    loginfo = logging.getLogger('rosout.custom_logger_test').info
+    os.environ["ROS_IP"] = "127.0.0.1"
+    os.environ["ROSCONSOLE_FORMAT"] = " ".join(
+        [
+            "${severity}",
+            "${message}",
+            "${walltime}",
+            "${walltime:%Y-%m-%d %H:%M:%S}",
+            "${thread}",
+            "${logger}",
+            "${file}",
+            "${line}",
+            "${function}",
+            "${node}",
+            "${time}",
+            "${time:%Y-%m-%d %H:%M:%S}",
+        ]
+    )
+    rosgraph.roslogging.configure_logging("test_rosgraph", logging.INFO)
+    loginfo = logging.getLogger("rosout.custom_logger_test").info
 
     # Remap stdout for testing
     try:
@@ -106,13 +109,15 @@ def test_roslogging_user_logger():
         from io import StringIO
     lout = StringIO()
     lerr = StringIO()
-    test_ros_handler = rosgraph.roslogging.RosStreamHandler(colorize=False, stdout=lout, stderr=lerr)
+    test_ros_handler = rosgraph.roslogging.RosStreamHandler(
+        colorize=False, stdout=lout, stderr=lerr
+    )
 
-    custom_logger = logging.getLogger('rosout.custom_logger_test')
+    custom_logger = logging.getLogger("rosout.custom_logger_test")
     assert len(custom_logger.handlers) == 0
 
     # log messages will be propagated to parent
-    rosout_logger = logging.getLogger('rosout')
+    rosout_logger = logging.getLogger("rosout")
     assert isinstance(rosout_logger.handlers[0], rosgraph.roslogging.RosStreamHandler)
     default_ros_handler = rosout_logger.handlers[0]
 
@@ -122,32 +127,32 @@ def test_roslogging_user_logger():
 
     try:
         # Logging
-        msg = 'Hello world.'
+        msg = "Hello world."
         loginfo(msg)
 
-        log_expected = ' '.join([
-            'INFO',
-            os.environ['ROS_IP'],
-            msg,
-            r'[0-9]*\.[0-9]*',
-            r'[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}',
-            '[0-9]*',
-            'rosout.custom_logger_test',
-            '<filename>',
-            '<lineno>',
-            '<func_name>',
-            # depending if rospy.get_name() is available
-            '(/unnamed|<unknown_node_name>)',
-            r'[0-9]*\.[0-9]*',
-            r'[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}',
-        ])
+        log_expected = " ".join(
+            [
+                "INFO",
+                os.environ["ROS_IP"],
+                msg,
+                r"[0-9]*\.[0-9]*",
+                r"[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}",
+                "[0-9]*",
+                "rosout.custom_logger_test",
+                "<filename>",
+                "<lineno>",
+                "<func_name>",
+                # depending if rospy.get_name() is available
+                "(/unnamed|<unknown_node_name>)",
+                r"[0-9]*\.[0-9]*",
+                r"[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}",
+            ]
+        )
         assert_regexp_matches(lout.getvalue().strip(), log_expected)
 
     finally:
         # restoring default ros handler
-        logging.getLogger('rosout').removeHandler(test_ros_handler)
-        logging.getLogger('rosout').addHandler(default_ros_handler)
+        logging.getLogger("rosout").removeHandler(test_ros_handler)
+        logging.getLogger("rosout").addHandler(default_ros_handler)
         lout.close()
         lerr.close()
-
-

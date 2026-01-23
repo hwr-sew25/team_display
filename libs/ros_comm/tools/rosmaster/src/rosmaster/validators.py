@@ -36,8 +36,9 @@
 
 from rosgraph.names import resolve_name, ANYTYPE
 
-TYPE_SEPARATOR = '/'
+TYPE_SEPARATOR = "/"
 ROSRPC = "rosrpc://"
+
 
 def isstring(s):
     """Small helper version to check an object is a string in a way that works
@@ -51,74 +52,110 @@ def isstring(s):
 
 class ParameterInvalid(Exception):
     """Exception that is raised when a parameter fails validation checks"""
+
     def __init__(self, message):
         self._message = message
 
     def __str__(self):
         return str(self._message)
 
+
 def non_empty(param_name):
     """Validator that checks that parameter is not empty"""
+
     def validator(param, context):
         if not param:
-            raise ParameterInvalid("ERROR: parameter [%s] must be specified and non-empty"%param_name)
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] must be specified and non-empty" % param_name
+            )
         return param
+
     return validator
+
 
 def non_empty_str(param_name):
     """Validator that checks that parameter is a string and non-empty"""
+
     def validator(param, context):
         if not param:
-            raise ParameterInvalid("ERROR: parameter [%s] must be specified and non-empty"%param_name)
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] must be specified and non-empty" % param_name
+            )
         elif not isstring(param):
-            raise ParameterInvalid("ERROR: parameter [%s] must be a string"%param_name)            
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] must be a string" % param_name
+            )
         return param
+
     return validator
-        
+
+
 def not_none(param_name):
     """Validator that checks that parameter is not None"""
+
     def validator(param, context):
         if param is None:
-            raise ParameterInvalid("ERROR: parameter [%s] must be specified"%param_name)
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] must be specified" % param_name
+            )
         return param
+
     return validator
 
 
 # Validators ######################################
+
 
 def is_api(paramName):
     """
     Validator that checks that parameter is a valid API handle
     (i.e. URI). Both http and rosrpc are allowed schemes.
     """
+
     def validator(param_value, callerId):
         if not param_value or not isstring(param_value):
-            raise ParameterInvalid("ERROR: parameter [%s] is not an XMLRPC URI"%paramName)
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] is not an XMLRPC URI" % paramName
+            )
         if not param_value.startswith("http://") and not param_value.startswith(ROSRPC):
-            raise ParameterInvalid("ERROR: parameter [%s] is not an RPC URI"%paramName)
-        #could do more fancy parsing, but the above catches the major cases well enough
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] is not an RPC URI" % paramName
+            )
+        # could do more fancy parsing, but the above catches the major cases well enough
         return param_value
+
     return validator
+
 
 def is_topic(param_name):
     """
     Validator that checks that parameter is a valid ROS topic name
-    """    
+    """
+
     def validator(param_value, caller_id):
         v = valid_name_validator_resolved(param_name, param_value, caller_id)
-        if param_value == '/':
-            raise ParameterInvalid("ERROR: parameter [%s] cannot be the global namespace"%param_name)            
+        if param_value == "/":
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] cannot be the global namespace" % param_name
+            )
         return v
+
     return validator
+
 
 def is_service(param_name):
     """Validator that checks that parameter is a valid ROS service name"""
+
     def validator(param_value, caller_id):
         v = valid_name_validator_resolved(param_name, param_value, caller_id)
-        if param_value == '/':
-            raise ParameterInvalid("ERROR: parameter [%s] cannot be the global namespace"%param_name)            
+        if param_value == "/":
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] cannot be the global namespace" % param_name
+            )
         return v
+
     return validator
+
 
 def empty_or_valid_name(param_name):
     """
@@ -126,33 +163,49 @@ def empty_or_valid_name(param_name):
     Validator that resolves names unless they an empty string is supplied, in which case
     an empty string is returned.
     """
+
     def validator(param_value, caller_id):
         if not isstring(param_value):
-            raise ParameterInvalid("ERROR: parameter [%s] must be a string"%param_name)              
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] must be a string" % param_name
+            )
         if not param_value:
-            return ''
-        #return resolve_name(param_value, namespace(caller_id))
+            return ""
+        # return resolve_name(param_value, namespace(caller_id))
         return resolve_name(param_value, caller_id)
+
     return validator
+
 
 def valid_name_validator_resolved(param_name, param_value, caller_id):
     if not param_value or not isstring(param_value):
-        raise ParameterInvalid("ERROR: parameter [%s] must be a non-empty string"%param_name)            
-    #TODO: actual validation of chars
+        raise ParameterInvalid(
+            "ERROR: parameter [%s] must be a non-empty string" % param_name
+        )
+    # TODO: actual validation of chars
     # I added the colon check as the common error will be to send an URI instead of name
-    if ':' in param_value or ' ' in param_value:
-        raise ParameterInvalid("ERROR: parameter [%s] contains illegal chars"%param_name) 
-    #return resolve_name(param_value, namespace(caller_id))
+    if ":" in param_value or " " in param_value:
+        raise ParameterInvalid(
+            "ERROR: parameter [%s] contains illegal chars" % param_name
+        )
+    # return resolve_name(param_value, namespace(caller_id))
     return resolve_name(param_value, caller_id)
+
+
 def valid_name_validator_unresolved(param_name, param_value, caller_id):
     if not param_value or not isstring(param_value):
-        raise ParameterInvalid("ERROR: parameter [%s] must be a non-empty string"%param_name)            
-    #TODO: actual validation of chars        
+        raise ParameterInvalid(
+            "ERROR: parameter [%s] must be a non-empty string" % param_name
+        )
+    # TODO: actual validation of chars
     # I added the colon check as the common error will be to send an URI instead of name
-    if ':' in param_value or ' ' in param_value:
-        raise ParameterInvalid("ERROR: parameter [%s] contains illegal chars"%param_name) 
+    if ":" in param_value or " " in param_value:
+        raise ParameterInvalid(
+            "ERROR: parameter [%s] contains illegal chars" % param_name
+        )
     return param_value
-    
+
+
 def valid_name(param_name, resolve=True):
     """
     Validator that resolves names and also ensures that they are not empty
@@ -164,11 +217,14 @@ def valid_name(param_name, resolve=True):
     @return: resolved parameter value
     @rtype: str
     """
+
     def validator(param_value, caller_id):
         if resolve:
             return valid_name_validator_resolved(param_name, param_value, caller_id)
-        return valid_name_validator_unresolved(param_name, param_value, caller_id)        
+        return valid_name_validator_unresolved(param_name, param_value, caller_id)
+
     return validator
+
 
 def global_name(param_name):
     """
@@ -176,24 +232,38 @@ def global_name(param_name):
     @return: parameter value
     @rtype: str
     """
+
     def validator(param_value, caller_id):
         if not param_value or not isstring(param_value):
-            raise ParameterInvalid("ERROR: parameter [%s] must be a non-empty string"%param_name)
-        #TODO: actual validation of chars
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] must be a non-empty string" % param_name
+            )
+        # TODO: actual validation of chars
         if not is_global(param_value):
-            raise ParameterInvalid("ERROR: parameter [%s] must be a globally referenced name"%param_name)            
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] must be a globally referenced name" % param_name
+            )
         return param_value
+
     return validator
+
 
 def valid_type_name(param_name):
     """validator that checks the type name is specified correctly"""
+
     def validator(param_value, caller_id):
         if param_value == ANYTYPE:
             return param_value
         if not param_value or not isstring(param_value):
-            raise ParameterInvalid("ERROR: parameter [%s] must be a non-empty string"%param_name)            
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] must be a non-empty string" % param_name
+            )
         if not len(param_value.split(TYPE_SEPARATOR)) == 2:
-            raise ParameterInvalid("ERROR: parameter [%s] is not a valid package resource name"%param_name)
-        #TODO: actual validation of chars
+            raise ParameterInvalid(
+                "ERROR: parameter [%s] is not a valid package resource name"
+                % param_name
+            )
+        # TODO: actual validation of chars
         return param_value
+
     return validator

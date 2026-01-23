@@ -32,8 +32,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys 
+import sys
 import unittest
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -41,138 +42,148 @@ except ImportError:
 import time
 
 import rospkg
-        
+
 import rosmsg
 
 from subprocess import Popen, PIPE, check_call, call
 
-#TODO: currently have an extra copy of msg and srv files in local dir
+
+# TODO: currently have an extra copy of msg and srv files in local dir
 # for historical/porting reasons.  Ideally there would only be one copy
 # in test_ros instead.
 def get_test_path():
     return os.path.abspath(os.path.dirname(__file__))
 
-class TestRosmsg(unittest.TestCase):
 
+class TestRosmsg(unittest.TestCase):
     def setUp(self):
         pass
 
     def test_fullusage(self):
         from rosmsg import MODE_MSG
+
         text = rosmsg.fullusage(MODE_MSG)
         self.assertTrue("Commands" in text)
-        cmds = ['show', 'md5', 'package', 'packages']
+        cmds = ["show", "md5", "package", "packages"]
         for c in cmds:
             self.assertTrue(c in text)
 
     def test_get_msg_text(self):
         d = get_test_path()
-        msg_d = os.path.join(d, 'msg')
-        
-        test_message_package = 'diagnostic_msgs'
+        msg_d = os.path.join(d, "msg")
+
+        test_message_package = "diagnostic_msgs"
         rospack = rospkg.RosPack()
-        msg_raw_d = os.path.join(rospack.get_path(test_message_package), 'msg')
-        t = 'KeyValue'
-        with open(os.path.join(msg_d, '%s.msg'%t), 'r') as f:
+        msg_raw_d = os.path.join(rospack.get_path(test_message_package), "msg")
+        t = "KeyValue"
+        with open(os.path.join(msg_d, "%s.msg" % t), "r") as f:
             text = f.read()
-        with open(os.path.join(msg_raw_d, '%s.msg'%t), 'r') as f:
+        with open(os.path.join(msg_raw_d, "%s.msg" % t), "r") as f:
             text_raw = f.read()
 
-        type_ = test_message_package+'/'+t
+        type_ = test_message_package + "/" + t
         self.assertEqual(text, rosmsg.get_msg_text(type_, raw=False))
         self.assertEqual(text_raw, rosmsg.get_msg_text(type_, raw=True))
-            
+
         # test recursive types
-        t = 'DiagnosticStatus'
-        with open(os.path.join(d, '%s_raw.txt'%t), 'r') as f:
+        t = "DiagnosticStatus"
+        with open(os.path.join(d, "%s_raw.txt" % t), "r") as f:
             text = f.read()
-        with open(os.path.join(msg_raw_d, '%s.msg'%t), 'r') as f:
+        with open(os.path.join(msg_raw_d, "%s.msg" % t), "r") as f:
             text_raw = f.read()
-        type_ = test_message_package+'/'+t
-        
+        type_ = test_message_package + "/" + t
+
         self.assertEqual(text, rosmsg.get_msg_text(type_, raw=False))
         self.assertEqual(text_raw, rosmsg.get_msg_text(type_, raw=True))
 
     def test_iterate_packages(self):
         from rosmsg import iterate_packages, MODE_MSG, MODE_SRV
         import rospkg
+
         rospack = rospkg.RosPack()
         found = {}
         for p, path in iterate_packages(rospack, MODE_MSG):
             found[p] = path
-            assert os.path.basename(path) == 'msg', path
+            assert os.path.basename(path) == "msg", path
             # make sure it's a package
             assert rospack.get_path(p)
         assert found
         for p, path in iterate_packages(rospack, MODE_SRV):
             found[p] = path
-            assert os.path.basename(path) == 'srv', path
+            assert os.path.basename(path) == "srv", path
             # make sure it's a package
             assert rospack.get_path(p)
         assert found
-        
+
     def test_list_types(self):
         try:
-            l = rosmsg.list_types('rosmsg', '.foo')
+            l = rosmsg.list_types("rosmsg", ".foo")
             self.fail("should have failed on invalid mode")
-        except ValueError: pass
+        except ValueError:
+            pass
 
         # test msgs
-        l = rosmsg.list_types('rospy', mode='.msg')
+        l = rosmsg.list_types("rospy", mode=".msg")
         self.assertEqual([], l)
-        l = rosmsg.list_types('diagnostic_msgs', mode='.msg')
-        for t in ['diagnostic_msgs/DiagnosticArray',
-                  'diagnostic_msgs/DiagnosticStatus',
-                  'diagnostic_msgs/KeyValue']:
+        l = rosmsg.list_types("diagnostic_msgs", mode=".msg")
+        for t in [
+            "diagnostic_msgs/DiagnosticArray",
+            "diagnostic_msgs/DiagnosticStatus",
+            "diagnostic_msgs/KeyValue",
+        ]:
             assert t in l
-        
-        l = rosmsg.list_types('rospy', mode='.srv')
-        self.assertEqual([], l)        
-        l = rosmsg.list_types('diagnostic_msgs', mode='.srv')
-        for t in ['diagnostic_msgs/AddDiagnostics', 'diagnostic_msgs/SelfTest']:
+
+        l = rosmsg.list_types("rospy", mode=".srv")
+        self.assertEqual([], l)
+        l = rosmsg.list_types("diagnostic_msgs", mode=".srv")
+        for t in ["diagnostic_msgs/AddDiagnostics", "diagnostic_msgs/SelfTest"]:
             assert t in l
 
     def test_get_srv_text(self):
         d = get_test_path()
-        srv_d = os.path.join(d, 'srv')
-        
-        test_srv_package = 'diagnostic_msgs'
+        srv_d = os.path.join(d, "srv")
+
+        test_srv_package = "diagnostic_msgs"
         rospack = rospkg.RosPack()
-        srv_raw_d = os.path.join(rospack.get_path(test_srv_package), 'srv')
-        for t in ['AddDiagnostics', 'SelfTest']:
-            with open(os.path.join(srv_d, '%s.srv'%t), 'r') as f:
+        srv_raw_d = os.path.join(rospack.get_path(test_srv_package), "srv")
+        for t in ["AddDiagnostics", "SelfTest"]:
+            with open(os.path.join(srv_d, "%s.srv" % t), "r") as f:
                 text = f.read()
-            with open(os.path.join(srv_raw_d, '%s.srv'%t), 'r') as f:
+            with open(os.path.join(srv_raw_d, "%s.srv" % t), "r") as f:
                 text_raw = f.read()
-                
-            type_ = test_srv_package+'/'+t
+
+            type_ = test_srv_package + "/" + t
             self.assertEqual(text, rosmsg.get_srv_text(type_, raw=False))
             self.assertEqual(text_raw, rosmsg.get_srv_text(type_, raw=True))
 
     def test_rosmsg_cmd_packages(self):
         from rosmsg import rosmsg_cmd_packages, MODE_MSG, MODE_SRV
+
         with fakestdout() as b:
-            rosmsg_cmd_packages(MODE_MSG, 'foo', ['packages'])
+            rosmsg_cmd_packages(MODE_MSG, "foo", ["packages"])
             val = b.getvalue().strip()
-            packages1 = val.split('\n')
-            assert 'std_msgs' in packages1
+            packages1 = val.split("\n")
+            assert "std_msgs" in packages1
         with fakestdout() as b:
-            rosmsg_cmd_packages(MODE_MSG, 'foo', ['packages', '-s'])
+            rosmsg_cmd_packages(MODE_MSG, "foo", ["packages", "-s"])
             val = b.getvalue().strip()
-            packages2 = val.split(' ')
-            assert 'std_msgs' in packages2
-        assert set(packages1) == set(packages2), "%s vs. %s"%(packages1, packages2)
+            packages2 = val.split(" ")
+            assert "std_msgs" in packages2
+        assert set(packages1) == set(packages2), "%s vs. %s" % (packages1, packages2)
 
     def test_rosmsg_cmd_list(self):
         from rosmsg import rosmsg_cmd_list, MODE_MSG, MODE_SRV
-        with fakestdout() as b:
-            rosmsg_cmd_list(MODE_MSG, 'messages', ['list'])
-            val = b.getvalue().strip()
-            packages1 = val.split('\n')
-            assert 'std_msgs/String' in packages1
 
-    
+        with fakestdout() as b:
+            rosmsg_cmd_list(MODE_MSG, "messages", ["list"])
+            val = b.getvalue().strip()
+            packages1 = val.split("\n")
+            assert "std_msgs/String" in packages1
+
+
 from contextlib import contextmanager
+
+
 @contextmanager
 def fakestdout():
     realstdout = sys.stdout
@@ -180,4 +191,3 @@ def fakestdout():
     sys.stdout = fakestdout
     yield fakestdout
     sys.stdout = realstdout
-        

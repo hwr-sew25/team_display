@@ -36,9 +36,10 @@ import random
 import genmsg.msgs
 import genpy.dynamic
 
+
 def get_sub_defs(msg_fqn, msg_txt):
     def_dict = {}
-    defs = msg_txt.split("\n" + "="*80 + "\n")
+    defs = msg_txt.split("\n" + "=" * 80 + "\n")
     def_dict[msg_fqn] = defs[0]
     for d in defs[1:]:
         lines = d.splitlines()
@@ -49,11 +50,14 @@ def get_sub_defs(msg_fqn, msg_txt):
         def_dict[type] = def_txt
     return def_dict
 
+
 class RandomMsgGen(object):
     def randstr(self, length=0):
         if length == 0:
-            length = self.rand.randint(3,10)
-        return ''.join([chr(self.rand.randint(ord('a'), ord('z'))) for i in range(length)])
+            length = self.rand.randint(3, 10)
+        return "".join(
+            [chr(self.rand.randint(ord("a"), ord("z"))) for i in range(length)]
+        )
 
     def __init__(self, seed, num_topics, duration):
         self.message_defs = {}
@@ -67,34 +71,40 @@ class RandomMsgGen(object):
         for i in range(num_topics):
             msg_pkg = self.randstr()
             msg_name = self.randstr()
-            msg_fqn = "%s/%s"%(msg_pkg,msg_name)
+            msg_fqn = "%s/%s" % (msg_pkg, msg_name)
             msg_fields = []
-            
+
             msg_def = ""
             msg_sub_defs = {}
-            
-            for j in range(self.rand.randint(3,5)):
-                field_name = self.randstr()
-                field_type = self.rand.choice(genmsg.msgs.BUILTIN_TYPES + list(self.message_defs.keys()))
-                field_array = self.rand.choice(5*[""]+["[]","[%d]"%self.rand.randint(1,10)])
 
-                if (field_type not in genmsg.msgs.BUILTIN_TYPES):
+            for j in range(self.rand.randint(3, 5)):
+                field_name = self.randstr()
+                field_type = self.rand.choice(
+                    genmsg.msgs.BUILTIN_TYPES + list(self.message_defs.keys())
+                )
+                field_array = self.rand.choice(
+                    5 * [""] + ["[]", "[%d]" % self.rand.randint(1, 10)]
+                )
+
+                if field_type not in genmsg.msgs.BUILTIN_TYPES:
                     tmp = get_sub_defs(field_type, self.message_defs[field_type])
-                    for (sm_type, sm_def) in tmp.items():
+                    for sm_type, sm_def in tmp.items():
                         msg_sub_defs[sm_type] = sm_def
 
-                msg_def = msg_def + "%s%s %s\n"%(field_type, field_array, field_name)
+                msg_def = msg_def + "%s%s %s\n" % (field_type, field_array, field_name)
 
-            for (t,d) in msg_sub_defs.items():
-                msg_def = msg_def + "\n" + "="*80 + "\n"
-                msg_def = msg_def + "MSG: %s\n"%(t)
+            for t, d in msg_sub_defs.items():
+                msg_def = msg_def + "\n" + "=" * 80 + "\n"
+                msg_def = msg_def + "MSG: %s\n" % (t)
                 msg_def = msg_def + d
 
             self.message_defs[msg_fqn] = msg_def
 
             topic_name = self.randstr()
 
-            self.message_dict[msg_fqn] = genpy.dynamic.generate_dynamic(msg_fqn, msg_def)[msg_fqn] 
+            self.message_dict[msg_fqn] = genpy.dynamic.generate_dynamic(
+                msg_fqn, msg_def
+            )[msg_fqn]
             self.topic_dict[topic_name] = self.message_dict[msg_fqn]
 
         time = 0.0
@@ -102,7 +112,7 @@ class RandomMsgGen(object):
             topic = self.rand.choice(list(self.topic_dict.keys()))
             msg_inst = self.rand_value(self.topic_dict[topic]._type)
             self.output.append((topic, msg_inst, time))
-            time = time + self.rand.random()*.01
+            time = time + self.rand.random() * 0.01
 
     def topics(self):
         return self.topic_dict.items()
@@ -113,86 +123,102 @@ class RandomMsgGen(object):
 
     def message_count(self):
         return len(self.output)
-    
+
     def rand_value(self, field_type):
-        if field_type == 'bool':
-            return self.rand.randint(0,1)
-        elif field_type == 'byte':
-            return self.rand.randint(0,2**7-1)
-        elif field_type == 'int8':
-            return self.rand.randint(-2**7,2**7-1)
-        elif field_type == 'int16':
-            return self.rand.randint(-2**15,2**15-1)
-        elif field_type == 'int32':
-            return self.rand.randint(-2**31,2**31-1)
-        elif field_type == 'int64':
-            return self.rand.randint(-2**63,2**63-1)
-        elif field_type == 'char':
-            return self.rand.randint(0,2**8-1)
-        elif field_type == 'uint8':
-            return self.rand.randint(0,2**8-1)
-        elif field_type == 'uint16':
-            return self.rand.randint(0,2**16-1)
-        elif field_type == 'uint32':
-            return self.rand.randint(0,2**32-1)
-        elif field_type == 'uint64':
-            return self.rand.randint(0,2**64-1)
-        elif field_type == 'float32':
+        if field_type == "bool":
+            return self.rand.randint(0, 1)
+        elif field_type == "byte":
+            return self.rand.randint(0, 2**7 - 1)
+        elif field_type == "int8":
+            return self.rand.randint(-(2**7), 2**7 - 1)
+        elif field_type == "int16":
+            return self.rand.randint(-(2**15), 2**15 - 1)
+        elif field_type == "int32":
+            return self.rand.randint(-(2**31), 2**31 - 1)
+        elif field_type == "int64":
+            return self.rand.randint(-(2**63), 2**63 - 1)
+        elif field_type == "char":
+            return self.rand.randint(0, 2**8 - 1)
+        elif field_type == "uint8":
+            return self.rand.randint(0, 2**8 - 1)
+        elif field_type == "uint16":
+            return self.rand.randint(0, 2**16 - 1)
+        elif field_type == "uint32":
+            return self.rand.randint(0, 2**32 - 1)
+        elif field_type == "uint64":
+            return self.rand.randint(0, 2**64 - 1)
+        elif field_type == "float32":
             return self.rand.random()
-        elif field_type == 'float64':
+        elif field_type == "float64":
             return self.rand.random()
-        elif field_type == 'string':
+        elif field_type == "string":
             return self.randstr(100)
-        elif field_type == 'duration':
+        elif field_type == "duration":
             return rospy.Duration.from_sec(self.rand.random())
-        elif field_type == 'time':
-            return rospy.Time.from_sec(self.rand.random()*1000)
-        elif field_type.endswith(']'): # array type
+        elif field_type == "time":
+            return rospy.Time.from_sec(self.rand.random() * 1000)
+        elif field_type.endswith("]"):  # array type
             base_type, is_array, array_len = genmsg.msgs.parse_type(field_type)
-            
+
             if array_len is None:
-                array_len = self.rand.randint(1,100)
+                array_len = self.rand.randint(1, 100)
 
             # Make this more efficient rather than depend on recursion inside the array check
-            if field_type == 'bool':
-                return [ self.rand.randint(0,1) for i in range(0,array_len) ]
-            elif field_type == 'byte':
-                return [ self.rand.randint(-2**7,2**7-1) for i in range(0,array_len) ]
-            elif field_type == 'int8':
-                return [ self.rand.randint(-2**7,2**7-1) for i in range(0,array_len) ]
-            elif field_type == 'int16':
-                return [ self.rand.randint(-2**15,2**15-1) for i in range(0,array_len) ]
-            elif field_type == 'int32':
-                return [ self.rand.randint(-2**31,2**31-1) for i in range(0,array_len) ]
-            elif field_type == 'int64':
-                return [ self.rand.randint(-2**63,2**63-1) for i in range(0,array_len) ]
-            elif field_type == 'char':
-                return [ self.rand.randint(0,2**8-1) for i in range(0,array_len) ]
-            elif field_type == 'uint8':
-                return [ self.rand.randint(0,2**8-1) for i in range(0,array_len) ]
-            elif field_type == 'uint16':
-                return [ self.rand.randint(0,2**16-1) for i in range(0,array_len) ]
-            elif field_type == 'uint32':
-                return [ self.rand.randint(0,2**32-1) for i in range(0,array_len) ]
-            elif field_type == 'uint64':
-                return [ self.rand.randint(0,2**64-1) for i in range(0,array_len) ]
-            elif field_type == 'float32':
-                return [ self.rand.random() for i in range(0,array_len) ]
-            elif field_type == 'float64':
-                return [ self.rand.random() for i in range(0,array_len) ]
-            elif field_type == 'string':
-                return [ self.randstr(100) for i in range(0,array_len) ]
-            elif field_type == 'duration':
-                return [ rospy.Duration.from_sec(self.rand.random()) for i in range(0,array_len) ]
-            elif field_type == 'time':
-                return [ rospy.Time.from_sec(self.rand.random()*1000) for i in range(0,array_len) ]
+            if field_type == "bool":
+                return [self.rand.randint(0, 1) for i in range(0, array_len)]
+            elif field_type == "byte":
+                return [
+                    self.rand.randint(-(2**7), 2**7 - 1) for i in range(0, array_len)
+                ]
+            elif field_type == "int8":
+                return [
+                    self.rand.randint(-(2**7), 2**7 - 1) for i in range(0, array_len)
+                ]
+            elif field_type == "int16":
+                return [
+                    self.rand.randint(-(2**15), 2**15 - 1) for i in range(0, array_len)
+                ]
+            elif field_type == "int32":
+                return [
+                    self.rand.randint(-(2**31), 2**31 - 1) for i in range(0, array_len)
+                ]
+            elif field_type == "int64":
+                return [
+                    self.rand.randint(-(2**63), 2**63 - 1) for i in range(0, array_len)
+                ]
+            elif field_type == "char":
+                return [self.rand.randint(0, 2**8 - 1) for i in range(0, array_len)]
+            elif field_type == "uint8":
+                return [self.rand.randint(0, 2**8 - 1) for i in range(0, array_len)]
+            elif field_type == "uint16":
+                return [self.rand.randint(0, 2**16 - 1) for i in range(0, array_len)]
+            elif field_type == "uint32":
+                return [self.rand.randint(0, 2**32 - 1) for i in range(0, array_len)]
+            elif field_type == "uint64":
+                return [self.rand.randint(0, 2**64 - 1) for i in range(0, array_len)]
+            elif field_type == "float32":
+                return [self.rand.random() for i in range(0, array_len)]
+            elif field_type == "float64":
+                return [self.rand.random() for i in range(0, array_len)]
+            elif field_type == "string":
+                return [self.randstr(100) for i in range(0, array_len)]
+            elif field_type == "duration":
+                return [
+                    rospy.Duration.from_sec(self.rand.random())
+                    for i in range(0, array_len)
+                ]
+            elif field_type == "time":
+                return [
+                    rospy.Time.from_sec(self.rand.random() * 1000)
+                    for i in range(0, array_len)
+                ]
             else:
-                return [ self.rand_value(base_type) for i in range(0,array_len) ]
+                return [self.rand_value(base_type) for i in range(0, array_len)]
 
         else:
             msg_class = self.message_dict[field_type]
             msg_inst = msg_class()
             for s in msg_inst.__slots__:
                 ind = msg_inst.__slots__.index(s)
-                msg_inst.__setattr__(s,self.rand_value(msg_inst._slot_types[ind]))
+                msg_inst.__setattr__(s, self.rand_value(msg_inst._slot_types[ind]))
             return msg_inst

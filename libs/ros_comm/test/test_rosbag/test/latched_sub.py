@@ -37,24 +37,24 @@ import rostest
 import sys
 from std_msgs.msg import *
 
+
 class LatchedSub(unittest.TestCase):
+    def msg_cb(self, msg):
+        self.success = True
 
-  def msg_cb(self, msg):
-    self.success = True
+    def test_latched_sub(self):
+        rospy.init_node("random_sub")
+
+        self.success = False
+
+        rospy.sleep(rospy.Duration.from_sec(5.0))
+
+        sub = rospy.Subscriber("chatter", String, self.msg_cb)
+
+        rospy.sleep(rospy.Duration.from_sec(5.0))
+
+        self.assertEqual(self.success, True)
 
 
-  def test_latched_sub(self):
-    rospy.init_node('random_sub')
-
-    self.success = False
-
-    rospy.sleep(rospy.Duration.from_sec(5.0))
-
-    sub = rospy.Subscriber("chatter", String, self.msg_cb)
-
-    rospy.sleep(rospy.Duration.from_sec(5.0))
-
-    self.assertEqual(self.success, True)
-
-if __name__ == '__main__':
-  rostest.rosrun('rosbag', 'lateched_sub', LatchedSub, sys.argv)
+if __name__ == "__main__":
+    rostest.rosrun("rosbag", "lateched_sub", LatchedSub, sys.argv)

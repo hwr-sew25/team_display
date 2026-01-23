@@ -32,17 +32,17 @@
 #
 # Revision $Id$
 """
-Internal use: ROS Node (Slave) API. 
+Internal use: ROS Node (Slave) API.
 
 The Node API is implemented by the L{ROSHandler}.
 
 API return convention: (statusCode, statusMessage, returnValue)
 
- - statusCode: an integer indicating the completion condition of the method. 
+ - statusCode: an integer indicating the completion condition of the method.
  - statusMessage: a human-readable string message for debugging
  - returnValue: the return value of the method; method-specific.
 
-Current status codes: 
+Current status codes:
 
  - -1: ERROR: Error on the part of the caller, e.g. an invalid parameter
  - 0: FAILURE: Method was attempted but failed to complete correctly.
@@ -62,7 +62,7 @@ import time
 import errno
 
 try:
-    #py3k
+    # py3k
     import urllib.parse as urlparse
 except ImportError:
     import urlparse
@@ -84,15 +84,18 @@ STATUS = 0
 MSG = 1
 VAL = 2
 
+
 # pseudo-validators ###############################
 # these validators actually return tuples instead of a function and it is up to a custom
 # validator on the class itself to perform the validation
 def is_publishers_list(paramName):
-    return ('is_publishers_list', paramName)
+    return ("is_publishers_list", paramName)
+
 
 _logger = logging.getLogger("rospy.impl.masterslave")
 
 LOG_API = True
+
 
 def apivalidate(error_return_value, validators=()):
     """
@@ -108,14 +111,18 @@ def apivalidate(error_return_value, validators=()):
       start with the second param.
     @type  validators: sequence
     """
+
     def check_validates(f):
-        assert len(validators) == f.__code__.co_argcount - 2, "%s failed arg check"%f #ignore self and caller_id
+        assert len(validators) == f.__code__.co_argcount - 2, (
+            "%s failed arg check" % f
+        )  # ignore self and caller_id
+
         def validated_f(*args, **kwds):
             if LOG_API:
                 _logger.debug("%s%s", f.__name__, str(args[1:]))
-                #print "%s%s"%(f.func_name, str(args[1:]))
+                # print "%s%s"%(f.func_name, str(args[1:]))
             if len(args) == 1:
-                _logger.error("%s invoked without caller_id parameter"%f.__name__)
+                _logger.error("%s invoked without caller_id parameter" % f.__name__)
                 return -1, "missing required caller_id parameter", error_return_value
             elif len(args) != f.__code__.co_argcount:
                 return -1, "Error: bad call arity", error_return_value
@@ -125,20 +132,26 @@ def apivalidate(error_return_value, validators=()):
             if not isinstance(caller_id, str):
                 _logger.error("%s: invalid caller_id param type", f.__name__)
                 return -1, "caller_id must be a string", error_return_value
-            
-            newArgs = [instance, caller_id] #canonicalized args
+
+            newArgs = [instance, caller_id]  # canonicalized args
             try:
-                for (v, a) in zip(validators, args[2:]):
+                for v, a in zip(validators, args[2:]):
                     if v:
                         try:
-                            #simultaneously validate + canonicalized args
+                            # simultaneously validate + canonicalized args
                             if type(v) == list or type(v) == tuple:
-                                newArgs.append(instance._custom_validate(v[0], v[1], a, caller_id))
+                                newArgs.append(
+                                    instance._custom_validate(v[0], v[1], a, caller_id)
+                                )
                             else:
-                                newArgs.append(v(a, caller_id)) 
+                                newArgs.append(v(a, caller_id))
                         except ParameterInvalid as e:
-                            _logger.error("%s: invalid parameter: %s", f.__name__, str(e) or 'error')
-                            return -1, str(e) or 'error', error_return_value
+                            _logger.error(
+                                "%s: invalid parameter: %s",
+                                f.__name__,
+                                str(e) or "error",
+                            )
+                            return -1, str(e) or "error", error_return_value
                     else:
                         newArgs.append(a)
 
@@ -149,17 +162,23 @@ def apivalidate(error_return_value, validators=()):
                 else:
                     code, msg, val = f(*newArgs, **kwds)
                     if val is None:
-                        return -1, "Internal error (None value returned)", error_return_value
+                        return (
+                            -1,
+                            "Internal error (None value returned)",
+                            error_return_value,
+                        )
                     return code, msg, val
-            except TypeError as te: #most likely wrong arg number
+            except TypeError as te:  # most likely wrong arg number
                 _logger.error(traceback.format_exc())
-                return -1, "Error: invalid arguments: %s"%te, error_return_value
-            except Exception as e: #internal failure
+                return -1, "Error: invalid arguments: %s" % te, error_return_value
+            except Exception as e:  # internal failure
                 _logger.error(traceback.format_exc())
-                return 0, "Internal failure: %s"%e, error_return_value
+                return 0, "Internal failure: %s" % e, error_return_value
+
         validated_f.__name__ = f.__name__
-        validated_f.__doc__ = f.__doc__ #preserve doc
+        validated_f.__doc__ = f.__doc__  # preserve doc
         return validated_f
+
     return check_validates
 
 
@@ -168,11 +187,11 @@ class ROSHandler(XmlRpcHandler):
     Base handler for both slave and master nodes. API methods
     generally provide the capability for establishing point-to-point
     connections with other nodes.
-    
+
     Instance methods are XML-RPC API methods, so care must be taken as
-    to what is added here. 
+    to what is added here.
     """
-    
+
     def __init__(self, name, master_uri):
         """
         Base constructor for ROS nodes/masters
@@ -192,11 +211,11 @@ class ROSHandler(XmlRpcHandler):
         handler = rospy.impl.tcpros.get_tcpros_handler()
         if handler is not None:
             self.protocol_handlers.append(handler)
-            
+
         self.reg_man = RegManager(self)
 
     ###############################################################################
-    # INTERNAL 
+    # INTERNAL
 
     def _is_registered(self):
         """
@@ -207,7 +226,6 @@ class ROSHandler(XmlRpcHandler):
             return False
         else:
             return self.reg_man.is_registered()
-        
 
     def _ready(self, uri):
         """
@@ -217,7 +235,7 @@ class ROSHandler(XmlRpcHandler):
         """
         _logger.info("_ready: %s", uri)
         self.uri = uri
-        #connect up topics in separate thread
+        # connect up topics in separate thread
         if self.reg_man:
             t = threading.Thread(target=self.reg_man.start, args=(uri, self.masterUri))
             rospy.core._add_shutdown_thread(t)
@@ -237,29 +255,37 @@ class ROSHandler(XmlRpcHandler):
         @raise ParameterInvalid: if the parameter does not meet validation
         @return: new value for parameter, after validation
         """
-        if validation == 'is_publishers_list':
+        if validation == "is_publishers_list":
             if not type(param_value) == list:
-                raise ParameterInvalid("ERROR: param [%s] must be a list"%param_name)
+                raise ParameterInvalid("ERROR: param [%s] must be a list" % param_name)
             for v in param_value:
                 if not isinstance(v, str):
-                    raise ParameterInvalid("ERROR: param [%s] must be a list of strings"%param_name)
+                    raise ParameterInvalid(
+                        "ERROR: param [%s] must be a list of strings" % param_name
+                    )
                 parsed = urlparse.urlparse(v)
-                if not parsed[0] or not parsed[1]: #protocol and host
-                    raise ParameterInvalid("ERROR: param [%s] does not contain valid URLs [%s]"%(param_name, v))
+                if not parsed[0] or not parsed[1]:  # protocol and host
+                    raise ParameterInvalid(
+                        "ERROR: param [%s] does not contain valid URLs [%s]"
+                        % (param_name, v)
+                    )
             return param_value
         else:
-            raise ParameterInvalid("ERROR: param [%s] has an unknown validation type [%s]"%(param_name, validation))
+            raise ParameterInvalid(
+                "ERROR: param [%s] has an unknown validation type [%s]"
+                % (param_name, validation)
+            )
 
     ## static map for tracking which arguments to a function should be remapped
     #  { methodName : [ arg indices ]
-    _remap_table = { } 
+    _remap_table = {}
 
     @classmethod
     def remappings(cls, methodName):
         """
         @internal
         @param cls: class to register remappings on
-        @type  cls: Class: class to register remappings on    
+        @type  cls: Class: class to register remappings on
         @return: parameters (by pos) that should be remapped because they are names
         @rtype: list
         """
@@ -267,26 +293,25 @@ class ROSHandler(XmlRpcHandler):
             return cls._remap_table[methodName]
         else:
             return []
-    
+
     ###############################################################################
     # UNOFFICIAL/PYTHON-ONLY API
 
-    @apivalidate('')
+    @apivalidate("")
     ## (Python-Only API) Get the XML-RPC URI of this server
     ## @param self
-    ## @param caller_id str: ROS caller id    
+    ## @param caller_id str: ROS caller id
     ## @return [int, str, str]: [1, "", xmlRpcUri]
     def getUri(self, caller_id):
         return 1, "", self.uri
 
-    @apivalidate('')
+    @apivalidate("")
     ## (Python-Only API) Get the ROS node name of this server
     ## @param self
-    ## @param caller_id str: ROS caller id    
+    ## @param caller_id str: ROS caller id
     ## @return [int, str, str]: [1, "", ROS node name]
     def getName(self, caller_id):
         return 1, "", self.name
-
 
     ###############################################################################
     # EXTERNAL API
@@ -295,33 +320,33 @@ class ROSHandler(XmlRpcHandler):
     def getBusStats(self, caller_id):
         """
         Retrieve transport/topic statistics
-        @param caller_id: ROS caller id    
+        @param caller_id: ROS caller id
         @type  caller_id: str
         @return: [publishStats, subscribeStats, serviceStats]::
            publishStats: [[topicName, messageDataSent, pubConnectionData]...[topicNameN, messageDataSentN, pubConnectionDataN]]
-               pubConnectionData: [connectionId, bytesSent, numSent, connected]* . 
+               pubConnectionData: [connectionId, bytesSent, numSent, connected]* .
            subscribeStats: [[topicName, subConnectionData]...[topicNameN, subConnectionDataN]]
-               subConnectionData: [connectionId, bytesReceived, dropEstimate, connected]* . dropEstimate is -1 if no estimate. 
-           serviceStats: not sure yet, probably akin to [numRequests, bytesReceived, bytesSent] 
+               subConnectionData: [connectionId, bytesReceived, dropEstimate, connected]* . dropEstimate is -1 if no estimate.
+           serviceStats: not sure yet, probably akin to [numRequests, bytesReceived, bytesSent]
         """
         pub_stats, sub_stats = get_topic_manager().get_pub_sub_stats()
-        #TODO: serviceStats
-        return 1, '', [pub_stats, sub_stats, []]
+        # TODO: serviceStats
+        return 1, "", [pub_stats, sub_stats, []]
 
     @apivalidate([])
     def getBusInfo(self, caller_id):
         """
         Retrieve transport/topic connection information
-        @param caller_id: ROS caller id    
+        @param caller_id: ROS caller id
         @type  caller_id: str
         """
         return 1, "bus info", get_topic_manager().get_pub_sub_info()
-    
-    @apivalidate('')
+
+    @apivalidate("")
     def getMasterUri(self, caller_id):
         """
         Get the URI of the master node.
-        @param caller_id: ROS caller id    
+        @param caller_id: ROS caller id
         @type  caller_id: str
         @return: [code, msg, masterUri]
         @rtype: [int, str, str]
@@ -331,7 +356,7 @@ class ROSHandler(XmlRpcHandler):
         else:
             return 0, "master URI not set", ""
 
-    def _shutdown(self, reason=''):
+    def _shutdown(self, reason=""):
         """
         @param reason: human-readable debug string
         @type  reason: str
@@ -346,9 +371,9 @@ class ROSHandler(XmlRpcHandler):
                 del self.protocol_handlers[:]
                 self.protocol_handlers = None
             return True
-        
-    @apivalidate(0, (None, ))
-    def shutdown(self, caller_id, msg=''):
+
+    @apivalidate(0, (None,))
+    def shutdown(self, caller_id, msg=""):
         """
         Stop this server
         @param caller_id: ROS caller id
@@ -359,11 +384,13 @@ class ROSHandler(XmlRpcHandler):
         @rtype: [int, str, int]
         """
         if msg:
-            print("shutdown request: %s"%msg)
+            print("shutdown request: %s" % msg)
         else:
             print("shutdown requst")
-        if self._shutdown('external shutdown request from [%s]: %s'%(caller_id, msg)):
-            signal_shutdown('external shutdown request from [%s]: [%s]'%(caller_id, msg))
+        if self._shutdown("external shutdown request from [%s]: %s" % (caller_id, msg)):
+            signal_shutdown(
+                "external shutdown request from [%s]: [%s]" % (caller_id, msg)
+            )
         return 1, "shutdown", 0
 
     @apivalidate(-1)
@@ -384,7 +411,7 @@ class ROSHandler(XmlRpcHandler):
     def getSubscriptions(self, caller_id):
         """
         Retrieve a list of topics that this node subscribes to.
-        @param caller_id: ROS caller id    
+        @param caller_id: ROS caller id
         @type  caller_id: str
         @return: list of topics this node subscribes to.
         @rtype: [int, str, [ [topic1, topicType1]...[topicN, topicTypeN]]]
@@ -395,14 +422,14 @@ class ROSHandler(XmlRpcHandler):
     def getPublications(self, caller_id):
         """
         Retrieve a list of topics that this node publishes.
-        @param caller_id: ROS caller id    
+        @param caller_id: ROS caller id
         @type  caller_id: str
         @return: list of topics published by this node.
         @rtype: [int, str, [ [topic1, topicType1]...[topicN, topicTypeN]]]
         """
         return 1, "publications", get_topic_manager().get_publications()
-    
-    def _connect_topic(self, topic, pub_uri): 
+
+    def _connect_topic(self, topic, pub_uri):
         """
         Connect subscriber to topic.
         @param topic: Topic name to connect.
@@ -416,19 +443,30 @@ class ROSHandler(XmlRpcHandler):
         caller_id = rospy.names.get_caller_id()
         sub = get_topic_manager().get_subscriber_impl(topic)
         if not sub:
-            return -1, "No subscriber for topic [%s]"%topic, 0
+            return -1, "No subscriber for topic [%s]" % topic, 0
         elif sub.has_connection(pub_uri):
-            return 1, "_connect_topic[%s]: subscriber already connected to publisher [%s]"%(topic, pub_uri), 0
-        
-        #Negotiate with source for connection
+            return (
+                1,
+                "_connect_topic[%s]: subscriber already connected to publisher [%s]"
+                % (topic, pub_uri),
+                0,
+            )
+
+        # Negotiate with source for connection
         # - collect supported protocols
         protocols = []
-        for h in self.protocol_handlers: #currently only TCPROS
+        for h in self.protocol_handlers:  # currently only TCPROS
             protocols.extend(h.get_supported())
         if not protocols:
             return 0, "ERROR: no available protocol handlers", 0
 
-        _logger.debug("connect[%s]: calling requestTopic(%s, %s, %s)", topic, caller_id, topic, str(protocols))
+        _logger.debug(
+            "connect[%s]: calling requestTopic(%s, %s, %s)",
+            topic,
+            caller_id,
+            topic,
+            str(protocols),
+        )
         # 1) have to preserve original (unresolved) params as this may
         #    go outside our graph
         # 2) xmlrpclib doesn't give us any way of affecting the
@@ -437,7 +475,7 @@ class ROSHandler(XmlRpcHandler):
         #    a *very* long time. All of the rospy code right now sets
         #    individual socket timeouts, but this could potentially
         #    affect user code.
-        socket.setdefaulttimeout(60.)
+        socket.setdefaulttimeout(60.0)
         success = False
         interval = 0.5  # seconds
         # while the ROS node is not shutdown try to get the topic information
@@ -446,11 +484,12 @@ class ROSHandler(XmlRpcHandler):
         # we know for sure the URI is invalid
         while not success and not is_shutdown():
             try:
-                code, msg, result = \
-                      xmlrpcapi(pub_uri, cache=False).requestTopic(caller_id, topic, protocols)
+                code, msg, result = xmlrpcapi(pub_uri, cache=False).requestTopic(
+                    caller_id, topic, protocols
+                )
                 success = True
             except Exception as e:
-                if getattr(e, 'errno', None) == errno.ECONNREFUSED:
+                if getattr(e, "errno", None) == errno.ECONNREFUSED:
                     code = -errno.ECONNREFUSED
                     msg = str(e)
                     break
@@ -461,20 +500,32 @@ class ROSHandler(XmlRpcHandler):
                         interval = interval * 2
                     time.sleep(interval)
 
-        #Create the connection (if possible)
+        # Create the connection (if possible)
         if code <= 0:
-            _logger.debug("connect[%s]: requestTopic did not succeed %s, %s", pub_uri, code, msg)
+            _logger.debug(
+                "connect[%s]: requestTopic did not succeed %s, %s", pub_uri, code, msg
+            )
             return code, msg, 0
         elif not result or type(protocols) != list:
-            return 0, "ERROR: publisher returned invalid protocol choice: %s"%(str(result)), 0
-        _logger.debug("connect[%s]: requestTopic returned protocol list %s", topic, result)
+            return (
+                0,
+                "ERROR: publisher returned invalid protocol choice: %s" % (str(result)),
+                0,
+            )
+        _logger.debug(
+            "connect[%s]: requestTopic returned protocol list %s", topic, result
+        )
         protocol = result[0]
         for h in self.protocol_handlers:
             if h.supports(protocol):
                 return h.create_transport(topic, pub_uri, result)
-        return 0, "ERROR: publisher returned unsupported protocol choice: %s"%result, 0
+        return (
+            0,
+            "ERROR: publisher returned unsupported protocol choice: %s" % result,
+            0,
+        )
 
-    @apivalidate(-1, (global_name('parameter_key'), None))
+    @apivalidate(-1, (global_name("parameter_key"), None))
     def paramUpdate(self, caller_id, parameter_key, parameter_value):
         """
         Callback from master of current publisher list for specified topic.
@@ -490,11 +541,11 @@ class ROSHandler(XmlRpcHandler):
         """
         try:
             get_param_server_cache().update(parameter_key, parameter_value)
-            return 1, '', 0
+            return 1, "", 0
         except KeyError:
-            return -1, 'not subscribed', 0
+            return -1, "not subscribed", 0
 
-    @apivalidate(-1, (is_topic('topic'), is_publishers_list('publishers')))
+    @apivalidate(-1, (is_topic("topic"), is_publishers_list("publishers")))
     def publisherUpdate(self, caller_id, topic, publishers):
         """
         Callback from master of current publisher list for specified topic.
@@ -511,19 +562,20 @@ class ROSHandler(XmlRpcHandler):
             for uri in publishers:
                 self.reg_man.publisher_update(topic, publishers)
         return 1, "", 0
-    
-    _remap_table['requestTopic'] = [0] # remap topic 
-    @apivalidate([], (is_topic('topic'), non_empty('protocols')))
+
+    _remap_table["requestTopic"] = [0]  # remap topic
+
+    @apivalidate([], (is_topic("topic"), non_empty("protocols")))
     def requestTopic(self, caller_id, topic, protocols):
         """
         Publisher node API method called by a subscriber node.
-   
+
         Request that source allocate a channel for communication. Subscriber provides
         a list of desired protocols for communication. Publisher returns the
         selected protocol along with any additional params required for
         establishing connection. For example, for a TCP/IP-based connection,
-        the source node may return a port number of TCP/IP server. 
-        @param caller_id str: ROS caller id    
+        the source node may return a port number of TCP/IP server.
+        @param caller_id str: ROS caller id
         @type  caller_id: str
         @param topic: topic name
         @type  topic: str
@@ -537,12 +589,13 @@ class ROSHandler(XmlRpcHandler):
         @rtype: [int, str, [str, XmlRpcLegalValue*]]
         """
         if not get_topic_manager().has_publication(topic):
-            return -1, "Not a publisher of [%s]"%topic, []
-        for protocol in protocols: #simple for now: select first implementation 
+            return -1, "Not a publisher of [%s]" % topic, []
+        for protocol in protocols:  # simple for now: select first implementation
             protocol_id = protocol[0]
             for h in self.protocol_handlers:
                 if h.supports(protocol_id):
-                    _logger.debug("requestTopic[%s]: choosing protocol %s", topic, protocol_id)
+                    _logger.debug(
+                        "requestTopic[%s]: choosing protocol %s", topic, protocol_id
+                    )
                     return h.init_publisher(topic, protocol)
         return 0, "no supported protocol implementations", []
-

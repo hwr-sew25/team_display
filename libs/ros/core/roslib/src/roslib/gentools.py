@@ -58,7 +58,7 @@ from roslib.msgs import MsgSpecException
 import rospkg
 
 # name of the Header type as gentools knows it
-_header_type_name = 'std_msgs/Header'
+_header_type_name = "std_msgs/Header"
 
 
 def _add_msgs_depends(rospack, spec, deps, package_context):
@@ -71,10 +71,13 @@ def _add_msgs_depends(rospack, spec, deps, package_context):
     @type  deps: [str]
     @raise KeyError for invalid dependent types due to missing package dependencies.
     """
+
     def _get_valid_packages(package_context, rospack):
-        valid_packages = ['', package_context]
+        valid_packages = ["", package_context]
         try:
-            valid_packages = valid_packages + rospack.get_depends(package_context, implicit=True)
+            valid_packages = valid_packages + rospack.get_depends(
+                package_context, implicit=True
+            )
         except rospkg.ResourceNotFound:
             # this happens in dynamic generation situations where the
             # package is not present.  we soft fail here because we assume
@@ -97,10 +100,10 @@ def _add_msgs_depends(rospack, spec, deps, package_context):
             if roslib.msgs.is_registered(t):
                 depspec = roslib.msgs.get_registered(t)
                 if t != roslib.msgs.HEADER:
-                    if '/' in t:
+                    if "/" in t:
                         deps.append(t)
                     else:
-                        deps.append(package_context+'/'+t)
+                        deps.append(package_context + "/" + t)
             else:
                 if valid_packages is None:
                     valid_packages = _get_valid_packages(package_context, rospack)
@@ -127,20 +130,20 @@ def compute_md5_text(get_deps_dict, spec, rospack=None):
     @return: text for ROS MD5-processing
     @rtype: str
     """
-    uniquedeps = get_deps_dict['uniquedeps']
-    package = get_deps_dict['package']
+    uniquedeps = get_deps_dict["uniquedeps"]
+    package = get_deps_dict["package"]
     # #1554: need to suppress computation of files in dynamic generation case
-    compute_files = 'files' in get_deps_dict
+    compute_files = "files" in get_deps_dict
 
     buff = StringIO()
 
     for c in spec.constants:
-        buff.write('%s %s=%s\n' % (c.type, c.name, c.val_text))
+        buff.write("%s %s=%s\n" % (c.type, c.name, c.val_text))
     for type_, name in zip(spec.types, spec.names):
         base_msg_type = roslib.msgs.base_msg_type(type_)
         # md5 spec strips package names
         if roslib.msgs.is_builtin(base_msg_type):
-            buff.write('%s %s\n' % (type_, name))
+            buff.write("%s %s\n" % (type_, name))
         else:
             # recursively generate md5 for subtype.  have to build up
             # dependency representation for subtype in order to
@@ -153,9 +156,11 @@ def compute_md5_text(get_deps_dict, spec, rospack=None):
             sub_pkg, _ = roslib.names.package_resource_name(base_msg_type)
             sub_pkg = sub_pkg or package
             sub_spec = roslib.msgs.get_registered(base_msg_type, package)
-            sub_deps = get_dependencies(sub_spec, sub_pkg, compute_files=compute_files, rospack=rospack)
+            sub_deps = get_dependencies(
+                sub_spec, sub_pkg, compute_files=compute_files, rospack=rospack
+            )
             sub_md5 = compute_md5(sub_deps, rospack)
-            buff.write('%s %s\n' % (sub_md5, name))
+            buff.write("%s %s\n" % (sub_md5, name))
 
     return buff.getvalue().strip()  # remove trailing new line
 
@@ -172,14 +177,19 @@ def _compute_hash(get_deps_dict, hash, rospack=None):
     # - root file
     from roslib.msgs import MsgSpec
     from roslib.srvs import SrvSpec
-    spec = get_deps_dict['spec']
+
+    spec = get_deps_dict["spec"]
     if isinstance(spec, MsgSpec):
         hash.update(compute_md5_text(get_deps_dict, spec, rospack=rospack).encode())
     elif isinstance(spec, SrvSpec):
-        hash.update(compute_md5_text(get_deps_dict, spec.request, rospack=rospack).encode())
-        hash.update(compute_md5_text(get_deps_dict, spec.response, rospack=rospack).encode())
+        hash.update(
+            compute_md5_text(get_deps_dict, spec.request, rospack=rospack).encode()
+        )
+        hash.update(
+            compute_md5_text(get_deps_dict, spec.response, rospack=rospack).encode()
+        )
     else:
-        raise Exception('[%s] is not a message or service' % spec)
+        raise Exception("[%s] is not a message or service" % spec)
     return hash.hexdigest()
 
 
@@ -191,8 +201,8 @@ def _compute_hash_v1(get_deps_dict, hash):
     @param hash: hash instance
     @type  hash: hash instance
     """
-    uniquedeps = get_deps_dict['uniquedeps']
-    spec = get_deps_dict['spec']
+    uniquedeps = get_deps_dict["uniquedeps"]
+    spec = get_deps_dict["spec"]
     # accumulate the hash
     # - root file
     hash.update(spec.text)
@@ -211,6 +221,7 @@ def compute_md5_v1(get_deps_dict):
     @rtype: str
     """
     import hashlib
+
     return _compute_hash_v1(get_deps_dict, hashlib.md5())
 
 
@@ -226,9 +237,11 @@ def compute_md5(get_deps_dict, rospack=None):
         # md5 is deprecated in Python 2.6 in favor of hashlib, but hashlib is
         # unavailable in Python 2.4
         import hashlib
+
         return _compute_hash(get_deps_dict, hashlib.md5(), rospack=rospack)
     except ImportError:
         import md5
+
         return _compute_hash(get_deps_dict, md5.new(), rospack=rospack)
 
 
@@ -250,17 +263,17 @@ def compute_full_text(get_deps_dict):
     @rtype:  str
     """
     buff = StringIO()
-    sep = '='*80+'\n'
+    sep = "=" * 80 + "\n"
 
     # write the text of the top-level type
-    buff.write(get_deps_dict['spec'].text)
-    buff.write('\n')
+    buff.write(get_deps_dict["spec"].text)
+    buff.write("\n")
     # append the text of the dependencies (embedded types)
-    for d in get_deps_dict['uniquedeps']:
+    for d in get_deps_dict["uniquedeps"]:
         buff.write(sep)
-        buff.write('MSG: %s\n' % d)
+        buff.write("MSG: %s\n" % d)
         buff.write(roslib.msgs.get_registered(d).text)
-        buff.write('\n')
+        buff.write("\n")
     # #1168: remove the trailing \n separator that is added by the concatenation logic
     return buff.getvalue()[:-1]
 
@@ -286,11 +299,18 @@ def get_file_dependencies(f, stdout=sys.stdout, stderr=sys.stderr, rospack=None)
     elif f.endswith(roslib.srvs.EXT):
         _, spec = roslib.srvs.load_from_file(f)
     else:
-        raise Exception('[%s] does not appear to be a message or service' % spec)
+        raise Exception("[%s] does not appear to be a message or service" % spec)
     return get_dependencies(spec, package, stdout, stderr, rospack=rospack)
 
 
-def get_dependencies(spec, package, compute_files=True, stdout=sys.stdout, stderr=sys.stderr, rospack=None):
+def get_dependencies(
+    spec,
+    package,
+    compute_files=True,
+    stdout=sys.stdout,
+    stderr=sys.stderr,
+    rospack=None,
+):
     """
     Compute dependencies of the specified Msgs/Srvs
     @param spec: message or service instance
@@ -329,9 +349,12 @@ def get_dependencies(spec, package, compute_files=True, stdout=sys.stdout, stder
             _add_msgs_depends(rospack, spec.request, deps, package)
             _add_msgs_depends(rospack, spec.response, deps, package)
         else:
-            raise MsgSpecException('spec does not appear to be a message or service')
+            raise MsgSpecException("spec does not appear to be a message or service")
     except KeyError as e:
-        raise MsgSpecException('Cannot load type %s.  Perhaps the package is missing a dependency.' % (str(e)))
+        raise MsgSpecException(
+            "Cannot load type %s.  Perhaps the package is missing a dependency."
+            % (str(e))
+        )
 
     # convert from type names to file names
 
@@ -351,6 +374,17 @@ def get_dependencies(spec, package, compute_files=True, stdout=sys.stdout, stder
             uniquedeps.append(d)
 
     if compute_files:
-        return {'files': files, 'deps': deps, 'spec': spec, 'package': package, 'uniquedeps': uniquedeps}
+        return {
+            "files": files,
+            "deps": deps,
+            "spec": spec,
+            "package": package,
+            "uniquedeps": uniquedeps,
+        }
     else:
-        return {'deps': deps, 'spec': spec, 'package': package, 'uniquedeps': uniquedeps}
+        return {
+            "deps": deps,
+            "spec": spec,
+            "package": package,
+            "uniquedeps": uniquedeps,
+        }

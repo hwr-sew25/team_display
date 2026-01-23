@@ -31,12 +31,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'roswtf'
-NAME = 'test_roswtf_command_line_online'
+PKG = "roswtf"
+NAME = "test_roswtf_command_line_online"
 
 import os
 import signal
-import sys 
+import sys
 import time
 import unittest
 
@@ -48,69 +48,103 @@ import std_msgs.msg
 
 from subprocess import Popen, PIPE, check_call, call
 
+
 def run_for(cmd, secs):
     popen = Popen(cmd, stdout=PIPE, stderr=PIPE, close_fds=True)
     timeout_t = time.time() + secs
     while time.time() < timeout_t:
         time.sleep(0.1)
     os.kill(popen.pid, signal.SIGKILL)
-    
-class TestRostopicOnline(unittest.TestCase):
 
+
+class TestRostopicOnline(unittest.TestCase):
     def setUp(self):
         self.vals = set()
         self.msgs = {}
 
     ## test that the rosmsg command works
     def test_cmd_help(self):
-        cmd = 'roswtf'
-        output = Popen([cmd, '-h'], stdout=PIPE).communicate()[0].decode()
-        self.assertTrue('Options' in output)
-            
+        cmd = "roswtf"
+        output = Popen([cmd, "-h"], stdout=PIPE).communicate()[0].decode()
+        self.assertTrue("Options" in output)
+
     def test_offline(self):
         # this test is disabled for now; now that test_roswtf is part
         # of ros_comm, the tricks before that were used no longer work
-        cmd = 'roswtf'
+        cmd = "roswtf"
 
         # pass in special test key to roswtf for ROS_PACKAGE_PATH
         env = os.environ.copy()
 
         rospack = rospkg.RosPack()
         # add all dependencies to ros package path
-        pkgs = ['roswtf',
-            'rosgraph', 'roslaunch', 'roslib', 'rosnode', 'rosservice',
-            'rosbag', 'rosbag_storage', 'roslz4', 'rosconsole', 'roscpp', 'rosgraph_msgs', 'roslang', 'rosmaster', 'rosmsg', 'rosout', 'rosparam', 'rospy', 'rostest', 'rostopic', 'topic_tools', 'xmlrpcpp',
-            'std_srvs',  # ros_comm_msgs
-            'cpp_common', 'roscpp_serialization', 'roscpp_traits', 'rostime',  # roscpp_core
-            'rosbuild', 'rosclean', 'rosunit',  # ros
-            'rospack', 'std_msgs', 'message_runtime', 'message_generation', 'gencpp', 'genlisp', 'genpy', 'genmsg', 'catkin',
+        pkgs = [
+            "roswtf",
+            "rosgraph",
+            "roslaunch",
+            "roslib",
+            "rosnode",
+            "rosservice",
+            "rosbag",
+            "rosbag_storage",
+            "roslz4",
+            "rosconsole",
+            "roscpp",
+            "rosgraph_msgs",
+            "roslang",
+            "rosmaster",
+            "rosmsg",
+            "rosout",
+            "rosparam",
+            "rospy",
+            "rostest",
+            "rostopic",
+            "topic_tools",
+            "xmlrpcpp",
+            "std_srvs",  # ros_comm_msgs
+            "cpp_common",
+            "roscpp_serialization",
+            "roscpp_traits",
+            "rostime",  # roscpp_core
+            "rosbuild",
+            "rosclean",
+            "rosunit",  # ros
+            "rospack",
+            "std_msgs",
+            "message_runtime",
+            "message_generation",
+            "gencpp",
+            "genlisp",
+            "genpy",
+            "genmsg",
+            "catkin",
         ]
         try:
             paths = [rospack.get_path(pkg) for pkg in pkgs]
         except rospkg.ResourceNotFound as e:
-            assert False, 'rospkg.ResourceNotFound: ' + str(e)
+            assert False, "rospkg.ResourceNotFound: " + str(e)
         try:
-            path = rospack.get_path('cmake_modules')
+            path = rospack.get_path("cmake_modules")
         except rospkg.ResourceNotFound:
             pass
         else:
             paths.append(path)
         try:
-            path = rospack.get_path('geneus')
+            path = rospack.get_path("geneus")
         except rospkg.ResourceNotFound:
             pass
         else:
             paths.append(path)
         try:
-            path = rospack.get_path('gennodejs')
+            path = rospack.get_path("gennodejs")
         except rospkg.ResourceNotFound:
             pass
         else:
             paths.append(path)
-        env['ROS_PACKAGE_PATH'] = os.pathsep.join(paths)
+        env["ROS_PACKAGE_PATH"] = os.pathsep.join(paths)
 
-        cwd  = rospack.get_path('roswtf')
-        kwds = { 'env': env, 'stdout': PIPE, 'stderr': PIPE, 'cwd': cwd}
+        cwd = rospack.get_path("roswtf")
+        kwds = {"env": env, "stdout": PIPE, "stderr": PIPE, "cwd": cwd}
 
         # run roswtf nakedly in the roswtf directory. Running in
         # ROS_ROOT effectively make roswtf have dependencies on
@@ -121,25 +155,29 @@ class TestRostopicOnline(unittest.TestCase):
 
         # run roswtf on a simple launch file online
         rospack = rospkg.RosPack()
-        p = os.path.join(rospack.get_path('roswtf'), 'test', 'min.launch')
+        p = os.path.join(rospack.get_path("roswtf"), "test", "min.launch")
         output = Popen([cmd, p], **kwds).communicate()[0].decode()
         self._check_output([cmd, p], output)
 
     def _check_output(self, cmd, output, error=None):
         # do both a positive and negative test
         self.assertTrue(
-            'No errors or warnings' in output or 'Found 1 error' in output,
-            'CMD[%s] OUTPUT[%s]%s' %
-            (' '.join(cmd), output, '\nstderr[%s]' % error if error else ''))
+            "No errors or warnings" in output or "Found 1 error" in output,
+            "CMD[%s] OUTPUT[%s]%s"
+            % (" ".join(cmd), output, "\nstderr[%s]" % error if error else ""),
+        )
         allowed_errors = 0
-        if 'Found 1 error' in output:
-            self.assertTrue(output.count('ERROR') == 1, 'OUTPUT[%s]' % output)
+        if "Found 1 error" in output:
+            self.assertTrue(output.count("ERROR") == 1, "OUTPUT[%s]" % output)
             self.assertTrue(
-                'ROS Dep database not updated' in output,
-                'OUTPUT[%s]' % output)
+                "ROS Dep database not updated" in output, "OUTPUT[%s]" % output
+            )
             allowed_errors += 1
-        if 'No errors or warnings' in output:
-            self.assertTrue(output.count('ERROR') <= allowed_errors, 'OUTPUT[%s]' % output)
+        if "No errors or warnings" in output:
+            self.assertTrue(
+                output.count("ERROR") <= allowed_errors, "OUTPUT[%s]" % output
+            )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     rostest.run(PKG, NAME, TestRostopicOnline, sys.argv)

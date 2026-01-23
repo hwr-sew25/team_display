@@ -34,40 +34,42 @@
 
 # Test that arg-parsing works
 
-PKG = 'topic_tools'
+PKG = "topic_tools"
 
 import unittest
 import os
 import sys
 from subprocess import call
 
-rosrun_script = 'rosrun.bat' if sys.platform == 'win32' else 'rosrun'
+rosrun_script = "rosrun.bat" if sys.platform == "win32" else "rosrun"
+
 
 class TopicToolsTestCase(unittest.TestCase):
-
     def test_drop_invalid(self):
-        cmd = [rosrun_script, 'topic_tools', 'drop']
+        cmd = [rosrun_script, "topic_tools", "drop"]
         self.assertNotEqual(0, call(cmd))
-        self.assertNotEqual(0, call(cmd + ['//', '1', '2', 'output']))
-        self.assertNotEqual(0, call(cmd + ['input', '1', '2', 'output', 'extra']))
-        self.assertNotEqual(0, call(cmd + ['input', '-1', '2', 'output']))
-        self.assertNotEqual(0, call(cmd + ['input', '1', '0', 'output']))
+        self.assertNotEqual(0, call(cmd + ["//", "1", "2", "output"]))
+        self.assertNotEqual(0, call(cmd + ["input", "1", "2", "output", "extra"]))
+        self.assertNotEqual(0, call(cmd + ["input", "-1", "2", "output"]))
+        self.assertNotEqual(0, call(cmd + ["input", "1", "0", "output"]))
 
     def test_mux_invalid(self):
-        cmd = [rosrun_script, 'topic_tools', 'mux']
+        cmd = [rosrun_script, "topic_tools", "mux"]
         self.assertNotEqual(0, call(cmd))
-        self.assertNotEqual(0, call(cmd + ['//', 'input']))
+        self.assertNotEqual(0, call(cmd + ["//", "input"]))
 
     def test_switch_mux_invalid(self):
-        cmd = [rosrun_script, 'topic_tools', 'switch_mux']
+        cmd = [rosrun_script, "topic_tools", "switch_mux"]
         self.assertNotEqual(0, call(cmd))
-        self.assertNotEqual(0, call(cmd + ['//', 'input']))
+        self.assertNotEqual(0, call(cmd + ["//", "input"]))
 
     def test_relay_invalid(self):
-        cmd = [rosrun_script, 'topic_tools', 'relay']
+        cmd = [rosrun_script, "topic_tools", "relay"]
         self.assertNotEqual(0, call(cmd))
-        self.assertNotEqual(0, call(cmd + ['//', 'input']))
+        self.assertNotEqual(0, call(cmd + ["//", "input"]))
+
 
 if __name__ == "__main__":
     import rostest
-    rostest.unitrun(PKG, 'topic_tools_arg_parsing', TopicToolsTestCase)
+
+    rostest.unitrun(PKG, "topic_tools_arg_parsing", TopicToolsTestCase)

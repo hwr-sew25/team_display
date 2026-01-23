@@ -37,9 +37,9 @@ import sys
 import rosbag.migration
 import roslib.message
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print('usage: fix_msg_defs.py <inbag> <outbag>')
+        print("usage: fix_msg_defs.py <inbag> <outbag>")
         exit(2)
 
     mm = rosbag.migration.MessageMigrator()
@@ -47,11 +47,11 @@ if __name__ == '__main__':
     checked = set()
     migrations = []
 
-    inbag = rosbag.Bag(sys.argv[1], 'r')
-    outbag = rosbag.Bag(sys.argv[2], 'w')
+    inbag = rosbag.Bag(sys.argv[1], "r")
+    outbag = rosbag.Bag(sys.argv[2], "w")
     lookup_cache = {}
 
-    #msg is: datatype, data, pytype._md5sum, bag_pos, pytype
+    # msg is: datatype, data, pytype._md5sum, bag_pos, pytype
     for topic, msg, t in inbag.read_messages(raw=True):
         if msg[4]._md5sum != msg[2]:
             k = (msg[0], msg[2])
@@ -60,20 +60,34 @@ if __name__ == '__main__':
             else:
                 real_msg_type = mm.lookup_type(k)
                 if real_msg_type != None:
-                    print("FOUND: %s [%s] was defined in migration system\n"%(msg[0], msg[2]), file=sys.stderr)
+                    print(
+                        "FOUND: %s [%s] was defined in migration system\n"
+                        % (msg[0], msg[2]),
+                        file=sys.stderr,
+                    )
                 else:
                     systype = roslib.message.get_message_class(msg[0])
                     if systype != None and systype._md5sum == msg[2]:
                         real_msg_type = systype
-                        print("FOUND: %s [%s] was defined on your package path\n"%(msg[0], msg[2]), file=sys.stderr)
+                        print(
+                            "FOUND: %s [%s] was defined on your package path\n"
+                            % (msg[0], msg[2]),
+                            file=sys.stderr,
+                        )
                 if real_msg_type == None:
                     real_msg_type = msg[4]
-                    print("WARNING: Type [%s] with md5sum [%s] has an unknown definition.\n"%(msg[0], msg[2]), file=sys.stderr)
+                    print(
+                        "WARNING: Type [%s] with md5sum [%s] has an unknown definition.\n"
+                        % (msg[0], msg[2]),
+                        file=sys.stderr,
+                    )
                 lookup_cache[k] = real_msg_type
-            outbag.write(topic, (msg[0], msg[1], msg[2], msg[3], real_msg_type), t, raw=True)
+            outbag.write(
+                topic, (msg[0], msg[1], msg[2], msg[3], real_msg_type), t, raw=True
+            )
         else:
             outbag.write(topic, msg, t, raw=True)
-        
+
     inbag.close()
     outbag.close()
 

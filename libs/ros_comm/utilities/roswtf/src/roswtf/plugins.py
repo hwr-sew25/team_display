@@ -44,6 +44,7 @@ import sys
 import roslib
 import rospkg
 
+
 def load_plugins():
     """
     @return: list of static roswtf plugins, list of online
@@ -51,45 +52,57 @@ def load_plugins():
     @rtype: [fn], [fn]
     """
     rospack = rospkg.RosPack()
-    to_check = rospack.get_depends_on('roswtf', implicit=False)
+    to_check = rospack.get_depends_on("roswtf", implicit=False)
     static_plugins = []
     online_plugins = []
     for pkg in to_check:
         m = rospack.get_manifest(pkg)
-        p_module = m.get_export('roswtf', 'plugin')
+        p_module = m.get_export("roswtf", "plugin")
         if not p_module:
             continue
         elif len(p_module) != 1:
-            print("Cannot load plugin [%s]: invalid 'plugin' attribute"%(pkg), file=sys.stderr)
+            print(
+                "Cannot load plugin [%s]: invalid 'plugin' attribute" % (pkg),
+                file=sys.stderr,
+            )
             continue
         p_module = p_module[0]
         try:
             # load that packages namespace
             roslib.load_manifest(pkg)
-            
+
             # import the specified plugin module
             mod = __import__(p_module)
-            for sub_mod in p_module.split('.')[1:]:
+            for sub_mod in p_module.split(".")[1:]:
                 mod = getattr(mod, sub_mod)
 
             # retrieve the roswtf_plugin_static and roswtf_plugin_online functions
             s_attr = o_attr = None
             try:
-                s_attr = getattr(mod, 'roswtf_plugin_static')
-            except AttributeError: pass
+                s_attr = getattr(mod, "roswtf_plugin_static")
+            except AttributeError:
+                pass
             try:
-                o_attr = getattr(mod, 'roswtf_plugin_online')
-            except AttributeError: pass
+                o_attr = getattr(mod, "roswtf_plugin_online")
+            except AttributeError:
+                pass
             if s_attr:
                 static_plugins.append(s_attr)
             if o_attr:
                 online_plugins.append(o_attr)
             if s_attr is None and o_attr is None:
-                print("Cannot load plugin [%s]: no 'roswtf_plugin_static' or 'roswtf_plugin_online' attributes [%s]"%(p_module), file=sys.stderr)
+                print(
+                    "Cannot load plugin [%s]: no 'roswtf_plugin_static' or 'roswtf_plugin_online' attributes [%s]"
+                    % (p_module),
+                    file=sys.stderr,
+                )
             else:
                 print("Loaded plugin", p_module)
 
         except Exception as e:
-            print("Unable to load plugin [%s] from package [%s]. Exception thrown: [%s]"%(p_module, pkg, str(e)), file=sys.stderr)
+            print(
+                "Unable to load plugin [%s] from package [%s]. Exception thrown: [%s]"
+                % (p_module, pkg, str(e)),
+                file=sys.stderr,
+            )
     return static_plugins, online_plugins
-

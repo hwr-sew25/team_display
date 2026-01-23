@@ -50,8 +50,8 @@ import rospkg
 ROS_ROOT = rospkg.environment.ROS_ROOT
 ROS_PACKAGE_PATH = rospkg.environment.ROS_PACKAGE_PATH
 
-STACK_FILE = 'stack.xml'
-ROS_STACK = 'ros'
+STACK_FILE = "stack.xml"
+ROS_STACK = "ros"
 
 
 class ROSStackException(Exception):
@@ -72,7 +72,9 @@ def stack_of(pkg, env=None):
     """
     if env is None:
         env = os.environ
-    pkg_dir = roslib.packages.get_pkg_dir(pkg, ros_root=env[ROS_ROOT], ros_package_path=env.get(ROS_PACKAGE_PATH, None))
+    pkg_dir = roslib.packages.get_pkg_dir(
+        pkg, ros_root=env[ROS_ROOT], ros_package_path=env.get(ROS_PACKAGE_PATH, None)
+    )
     d = pkg_dir
     while d and os.path.dirname(d) != d:
         stack_file = os.path.join(d, STACK_FILE)
@@ -169,11 +171,11 @@ def list_stacks_by_path(path, stacks=None, cache=None):
         elif MANIFEST_FILE in files:
             del dirs[:]
             continue  # leaf
-        elif 'rospack_nosubdirs' in files:
+        elif "rospack_nosubdirs" in files:
             del dirs[:]
             continue  # leaf
         # remove hidden dirs (esp. .svn/.git)
-        [dirs.remove(di) for di in dirs if di[0] == '.']
+        [dirs.remove(di) for di in dirs if di[0] == "."]
         for sub_d in dirs:
             # followlinks=True only available in Python 2.6, so we
             # have to implement manually
@@ -232,7 +234,7 @@ def get_stack_version_by_dir(stack_dir):
         if m.version:
             return m.version
 
-    cmake_filename = os.path.join(stack_dir, 'CMakeLists.txt')
+    cmake_filename = os.path.join(stack_dir, "CMakeLists.txt")
     if os.path.isfile(cmake_filename):
         with open(cmake_filename) as f:
             return _get_cmake_version(f.read())
@@ -241,10 +243,12 @@ def get_stack_version_by_dir(stack_dir):
 
 
 def _get_cmake_version(text):
-    for l in text.split('\n'):
-        if l.strip().startswith('rosbuild_make_distribution'):
-            x_re = re.compile(r'[()]')
+    for l in text.split("\n"):
+        if l.strip().startswith("rosbuild_make_distribution"):
+            x_re = re.compile(r"[()]")
             lsplit = x_re.split(l.strip())
             if len(lsplit) < 2:
-                raise ReleaseException("couldn't find version number in CMakeLists.txt:\n\n%s" % l)
+                raise ReleaseException(
+                    "couldn't find version number in CMakeLists.txt:\n\n%s" % l
+                )
             return lsplit[1]

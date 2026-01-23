@@ -33,4 +33,5 @@
 
 def test_exceptions():
     from roslib.exceptions import ROSLibException
+
     assert isinstance(ROSLibException(), Exception)

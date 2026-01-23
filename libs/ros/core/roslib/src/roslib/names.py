@@ -43,18 +43,20 @@ import re
 import sys
 
 # TODO: deprecate PRN_SEPARATOR
-PRN_SEPARATOR = '/'
+PRN_SEPARATOR = "/"
 TYPE_SEPARATOR = PRN_SEPARATOR  # alias
-SEP = '/'
-GLOBALNS = '/'
-PRIV_NAME = '~'
-REMAP = ':='
-ANYTYPE = '*'
+SEP = "/"
+GLOBALNS = "/"
+PRIV_NAME = "~"
+REMAP = ":="
+ANYTYPE = "*"
 
 if sys.hexversion > 0x03000000:  # Python3
+
     def isstring(s):
         return isinstance(s, str)  # Python 3.x
 else:
+
     def isstring(s):
         """
         Small helper version to check an object is a string in a way that works
@@ -76,11 +78,11 @@ def get_ros_namespace(env=None, argv=None):
     if argv is None:
         argv = sys.argv
     for a in argv:
-        if a.startswith('__ns:='):
-            return make_global_ns(a[len('__ns:='):])
+        if a.startswith("__ns:="):
+            return make_global_ns(a[len("__ns:=") :])
     if env is None:
         env = os.environ
-    return make_global_ns(env.get('ROS_NAMESPACE', GLOBALNS))
+    return make_global_ns(env.get("ROS_NAMESPACE", GLOBALNS))
 
 
 def make_caller_id(name):
@@ -107,7 +109,7 @@ def make_global_ns(name):
     @raise ValueError: if name is a ~name
     """
     if is_private(name):
-        raise ValueError('cannot turn [%s] into a global name' % name)
+        raise ValueError("cannot turn [%s] into a global name" % name)
     if not is_global(name):
         name = SEP + name
     if name[-1] != SEP:
@@ -152,16 +154,16 @@ def namespace(name):
     @rtype: str
     @raise ValueError: if name is invalid
     """
-    'map name to its namespace'
+    "map name to its namespace"
     if name is None:
-        raise ValueError('name')
+        raise ValueError("name")
     if not isstring(name):
-        raise TypeError('name')
+        raise TypeError("name")
     if not name:
         return SEP
     elif name[-1] == SEP:
         name = name[:-1]
-    return name[:name.rfind(SEP)+1] or SEP
+    return name[: name.rfind(SEP) + 1] or SEP
 
 
 def ns_join(ns, name):
@@ -203,7 +205,7 @@ def load_mappings(argv):
             try:
                 src, dst = [x.strip() for x in arg.split(REMAP)]
                 if src and dst:
-                    if len(src) > 1 and src[0] == '_' and src[1] != '_':
+                    if len(src) > 1 and src[0] == "_" and src[1] != "_":
                         # ignore parameter assignment mappings
                         pass
                     else:
@@ -216,6 +218,7 @@ def load_mappings(argv):
 #######################################################################
 # RESOURCE NAMES
 # resource names refer to entities in a file system
+
 
 def resource_name(res_pkg_name, name, my_pkg=None):
     """
@@ -233,7 +236,7 @@ def resource_name(res_pkg_name, name, my_pkg=None):
     @rtype: str
     """
     if res_pkg_name != my_pkg:
-        return res_pkg_name+PRN_SEPARATOR+name
+        return res_pkg_name + PRN_SEPARATOR + name
     return name
 
 
@@ -248,7 +251,7 @@ def resource_name_base(name):
     @rtype: str
     """
 
-    return name[name.rfind(PRN_SEPARATOR)+1:]
+    return name[name.rfind(PRN_SEPARATOR) + 1 :]
 
 
 def resource_name_package(name):
@@ -263,7 +266,7 @@ def resource_name_package(name):
 
     if PRN_SEPARATOR not in name:
         return None
-    return name[:name.find(PRN_SEPARATOR)]
+    return name[: name.find(PRN_SEPARATOR)]
 
 
 def package_resource_name(name):
@@ -279,11 +282,11 @@ def package_resource_name(name):
     if PRN_SEPARATOR in name:
         val = tuple(name.split(PRN_SEPARATOR))
         if len(val) != 2:
-            raise ValueError('invalid name [%s]' % name)
+            raise ValueError("invalid name [%s]" % name)
         else:
             return val
     else:
-        return '', name
+        return "", name
 
 
 def _is_safe_name(name, type_name):
@@ -297,7 +300,7 @@ def _is_safe_name(name, type_name):
 # NAME VALIDATORS
 
 # ascii char followed by (alphanumeric, _, /)
-RESOURCE_NAME_LEGAL_CHARS_P = re.compile(r'^[A-Za-z][\w_\/]*$')
+RESOURCE_NAME_LEGAL_CHARS_P = re.compile(r"^[A-Za-z][\w_\/]*$")
 
 
 def is_legal_resource_name(name):
@@ -315,11 +318,11 @@ def is_legal_resource_name(name):
         return False
     m = RESOURCE_NAME_LEGAL_CHARS_P.match(name)
     # '//' check makes sure there isn't double-slashes
-    return m is not None and m.group(0) == name and '//' not in name
+    return m is not None and m.group(0) == name and "//" not in name
 
 
 # ~,/, or ascii char followed by (alphanumeric, _, /)
-NAME_LEGAL_CHARS_P = re.compile(r'^[\~\/A-Za-z][\w_\/]*$')
+NAME_LEGAL_CHARS_P = re.compile(r"^[\~\/A-Za-z][\w_\/]*$")
 
 
 def is_legal_name(name):
@@ -336,13 +339,15 @@ def is_legal_name(name):
     if name is None:
         return False
     # empty string is a legal name as it resolves to namespace
-    if name == '':
+    if name == "":
         return True
     m = NAME_LEGAL_CHARS_P.match(name)
-    return m is not None and m.group(0) == name and '//' not in name
+    return m is not None and m.group(0) == name and "//" not in name
 
 
-BASE_NAME_LEGAL_CHARS_P = re.compile(r'^[A-Za-z][\w_]*$')  # ascii char followed by (alphanumeric, _)
+BASE_NAME_LEGAL_CHARS_P = re.compile(
+    r"^[A-Za-z][\w_]*$"
+)  # ascii char followed by (alphanumeric, _)
 
 
 def is_legal_base_name(name):
@@ -356,7 +361,9 @@ def is_legal_base_name(name):
     return m is not None and m.group(0) == name
 
 
-BASE_RESOURCE_NAME_LEGAL_CHARS_P = re.compile(r'^[A-Za-z][\w_]*$')  # ascii char followed by (alphanumeric, _)
+BASE_RESOURCE_NAME_LEGAL_CHARS_P = re.compile(
+    r"^[A-Za-z][\w_]*$"
+)  # ascii char followed by (alphanumeric, _)
 
 
 def is_legal_resource_base_name(name):
@@ -381,9 +388,9 @@ def canonicalize_name(name):
     if not name or name == SEP:
         return name
     elif name[0] == SEP:
-        return '/' + '/'.join([x for x in name.split(SEP) if x])
+        return "/" + "/".join([x for x in name.split(SEP) if x])
     else:
-        return '/'.join([x for x in name.split(SEP) if x])
+        return "/".join([x for x in name.split(SEP) if x])
 
 
 def resolve_name(name, namespace_, remappings=None):
@@ -430,10 +437,16 @@ def anonymous_name(id):
     """
     import random
     import socket
-    name = '%s_%s_%s_%s' % (id, socket.gethostname(), os.getpid(), random.randint(0, sys.maxsize))
+
+    name = "%s_%s_%s_%s" % (
+        id,
+        socket.gethostname(),
+        os.getpid(),
+        random.randint(0, sys.maxsize),
+    )
     # RFC 952 allows hyphens, IP addrs can have '.'s, both
     # of which are illegal for ROS names. For good
     # measure, screen ipv6 ':'.
-    name = name.replace('.', '_')
-    name = name.replace('-', '_')
-    return name.replace(':', '_')
+    name = name.replace(".", "_")
+    name = name.replace("-", "_")
+    return name.replace(":", "_")

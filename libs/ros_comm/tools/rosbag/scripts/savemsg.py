@@ -38,27 +38,37 @@ import sys
 import roslib.message
 import rosbag
 
-if __name__ == '__main__':
-    parser = optparse.OptionParser(usage='usage: savemsg.py [-b <bagfile] type')
-    parser.add_option('-b', '--bagfiles', action='store', dest='bagfile', default=None, help='Save message from a bagfile rather than system definition')
+if __name__ == "__main__":
+    parser = optparse.OptionParser(usage="usage: savemsg.py [-b <bagfile] type")
+    parser.add_option(
+        "-b",
+        "--bagfiles",
+        action="store",
+        dest="bagfile",
+        default=None,
+        help="Save message from a bagfile rather than system definition",
+    )
 
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
-        parser.error('Message type not specified.')
+        parser.error("Message type not specified.")
 
     if options.bagfile is None:
         sys_class = roslib.message.get_message_class(args[0])
         if sys_class is None:
-            print('Could not find message %s.' % args[0], file=sys.stderr)
+            print("Could not find message %s." % args[0], file=sys.stderr)
         else:
-            print('[%s]:' % args[0])
+            print("[%s]:" % args[0])
             print(sys_class._full_text)
     else:
         for topic, msg, t in rosbag.Bag(options.bagfile).read_messages(raw=True):
             if msg[0] == args[0]:
-                print('[%s]:' % args[0])
+                print("[%s]:" % args[0])
                 print(msg[4]._full_text)
                 exit(0)
 
-        print('Could not find message %s in bag %s.' % (args[0], options.bagfile), file=sys.stderr)
+        print(
+            "Could not find message %s in bag %s." % (args[0], options.bagfile),
+            file=sys.stderr,
+        )

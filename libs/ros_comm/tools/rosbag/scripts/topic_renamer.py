@@ -36,14 +36,17 @@ from __future__ import print_function
 import rospy
 import rosbag
 
+
 def rename_topic(intopic, inbag, outtopic, outbag):
-    rebag = rosbag.Bag(outbag, 'w')
+    rebag = rosbag.Bag(outbag, "w")
     for topic, msg, t in rosbag.Bag(inbag).read_messages(raw=True):
         rebag.write(outtopic if topic == intopic else topic, msg, t, raw=True)
     rebag.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import sys
+
     if len(sys.argv) == 5:
         rename_topic(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
     else:

@@ -31,8 +31,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'test_rosmaster'
-NAME = 'test_ps_values'
+PKG = "test_rosmaster"
+NAME = "test_ps_values"
 
 import sys
 
@@ -41,10 +41,12 @@ import rostest
 
 from param_server_test_case import ParamServerTestCase
 
+
 class PsValuesTestCase(ParamServerTestCase):
     def testParamValues(self):
         return self._testParamValues()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     rospy.init_node(NAME)
     rostest.rosrun(PKG, NAME, PsValuesTestCase, sys.argv)

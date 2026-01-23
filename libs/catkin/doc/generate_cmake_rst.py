@@ -46,10 +46,11 @@ import sys
 def crawl_for_cmake(path, excluded_files=None):
     """Crawls over path, looking for files named *.cmake, returns tuple of full and relative path."""
     cmake_files = []
-    for (parentdir, _, files) in os.walk(path):
+    for parentdir, _, files in os.walk(path):
         for filename in files:
-            if not filename.endswith('.cmake') or \
-                    (excluded_files and filename in excluded_files):
+            if not filename.endswith(".cmake") or (
+                excluded_files and filename in excluded_files
+            ):
                 continue
             fullpath = os.path.join(parentdir, filename)
             relpath = os.path.relpath(fullpath, path)
@@ -66,41 +67,53 @@ def generate_rst(files, skip_private=False, skip_undocumented=False):
     public = {}
     documented = {}
     undocumented = {}
-    for (fullpath, relpath) in files:
+    for fullpath, relpath in files:
         last_block = []
         last_block_public = False
-        with open(fullpath, 'r') as f:
+        with open(fullpath, "r") as f:
             lines = f.readlines()
         for line in lines:
-            if line.startswith('#'):
-                line = line.lstrip('#')
-                if line.strip() == '@public':
+            if line.startswith("#"):
+                line = line.lstrip("#")
+                if line.strip() == "@public":
                     last_block_public = True
                 else:
-                    last_block.append(line.rstrip('\n'))
+                    last_block.append(line.rstrip("\n"))
             else:
-                declaration = re.match(r'[a-zA-Z]+ *\([a-zA-Z0-9_ ]+\)', line)
+                declaration = re.match(r"[a-zA-Z]+ *\([a-zA-Z0-9_ ]+\)", line)
                 if declaration is None:
                     last_block = []
                     last_block_public = False
                 else:
-                    tokens = line.split('(')
+                    tokens = line.split("(")
                     dec_type = tokens[0].strip()
-                    dec_args = tokens[1].strip().rstrip(')').split(' ')
+                    dec_args = tokens[1].strip().rstrip(")").split(" ")
 
-                    if dec_type == 'function' or dec_type == 'macro':
+                    if dec_type == "function" or dec_type == "macro":
                         rst = []
                         # directives defined in catkin-sphinx
-                        dec_line = '.. _`%s_ref`:\n\n`%s`\n%s\n\n.. cmake:macro:: %s(%s)' % (dec_args[0], dec_args[0], '~' * (len(dec_args[0]) + 2), dec_args[0], ', '.join(dec_args[1:]))
+                        dec_line = (
+                            ".. _`%s_ref`:\n\n`%s`\n%s\n\n.. cmake:macro:: %s(%s)"
+                            % (
+                                dec_args[0],
+                                dec_args[0],
+                                "~" * (len(dec_args[0]) + 2),
+                                dec_args[0],
+                                ", ".join(dec_args[1:]),
+                            )
+                        )
                         rst.append(dec_line)
-                        rst.append('')
-                        rst.append(' *[%s defined in %s]*' % (dec_type, relpath))
+                        rst.append("")
+                        rst.append(" *[%s defined in %s]*" % (dec_type, relpath))
                         if last_block:
-                            rst.append('')
+                            rst.append("")
                             rst.extend(last_block)
 
                         if dec_args[0] in documented or dec_args[0] in undocumented:
-                            raise RuntimeError('Function/macro with same name "%s" exists multiple times' % dec_args[0])
+                            raise RuntimeError(
+                                'Function/macro with same name "%s" exists multiple times'
+                                % dec_args[0]
+                            )
                         if last_block_public:
                             public[dec_args[0]] = rst
                         elif last_block:
@@ -111,75 +124,91 @@ def generate_rst(files, skip_private=False, skip_undocumented=False):
                     last_block = []
                     last_block_public = False
 
-    rst = ['Extracted CMake API reference',
-           '=============================']
-    rst.append('This page was auto-generated from cmake source files using %s\n' % os.path.basename(__file__))
-    rst.append('.. ' + '!' * 70)
-    rst.append('.. !!!!!! Auto-generated file, do not modify')
-    rst.append('.. ' + '!' * 70)
-    rst.append('')
-    rst.append('.. contents::')
-    rst.append('   :local:')
-    rst.append('')
-    rst.append('')
-    rst.append('Public CMake functions / macros')
-    rst.append('-------------------------------')
-    rst.append('')
+    rst = ["Extracted CMake API reference", "============================="]
+    rst.append(
+        "This page was auto-generated from cmake source files using %s\n"
+        % os.path.basename(__file__)
+    )
+    rst.append(".. " + "!" * 70)
+    rst.append(".. !!!!!! Auto-generated file, do not modify")
+    rst.append(".. " + "!" * 70)
+    rst.append("")
+    rst.append(".. contents::")
+    rst.append("   :local:")
+    rst.append("")
+    rst.append("")
+    rst.append("Public CMake functions / macros")
+    rst.append("-------------------------------")
+    rst.append("")
     for name in sorted(public.keys()):
-        rst.append(' * :cmake:macro:`%s`' % name)
+        rst.append(" * :cmake:macro:`%s`" % name)
     for name in sorted(public.keys()):
-        rst.append('')
+        rst.append("")
         rst.extend(public[name])
-    rst.append('')
+    rst.append("")
 
     if not skip_private:
-        rst.append('Non-public CMake functions / macros')
-        rst.append('-----------------------------------')
-        rst.append('')
+        rst.append("Non-public CMake functions / macros")
+        rst.append("-----------------------------------")
+        rst.append("")
         for name in sorted(documented.keys()):
-            rst.append(' * :cmake:macro:`%s`' % name)
+            rst.append(" * :cmake:macro:`%s`" % name)
         for name in sorted(documented.keys()):
-            rst.append('')
+            rst.append("")
             rst.extend(documented[name])
-        rst.append('')
+        rst.append("")
 
     if not skip_undocumented:
-        rst.append('Not documented CMake functions / macros')
-        rst.append('---------------------------------------')
+        rst.append("Not documented CMake functions / macros")
+        rst.append("---------------------------------------")
         for name in sorted(undocumented.keys()):
-            rst.append('')
+            rst.append("")
             rst.extend(undocumented[name])
-        rst.append('')
+        rst.append("")
 
     return rst
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Crawls a path for .cmake files and extract documentation of functions and macros into reStructured text.')
-    parser.add_argument('path', nargs='?', default='.', help='The path to be crawled')
-    parser.add_argument('-o', '--output', help='The name of the generated rst file')
-    parser.add_argument('--skip_private', action='store_true', help='Skip documented items not marked with @public')
-    parser.add_argument('--skip_undocumented', action='store_true', help='Skip items without documentation.')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Crawls a path for .cmake files and extract documentation of functions and macros into reStructured text."
+    )
+    parser.add_argument("path", nargs="?", default=".", help="The path to be crawled")
+    parser.add_argument("-o", "--output", help="The name of the generated rst file")
+    parser.add_argument(
+        "--skip_private",
+        action="store_true",
+        help="Skip documented items not marked with @public",
+    )
+    parser.add_argument(
+        "--skip_undocumented",
+        action="store_true",
+        help="Skip items without documentation.",
+    )
 
     args = parser.parse_args()
 
-    exclusions = '{}/.sphinx_exclusions.json'.format(args.path)
+    exclusions = "{}/.sphinx_exclusions.json".format(args.path)
     excluded_files = []
     if os.path.exists(exclusions):
         try:
-            with open(exclusions, 'r') as f:
+            with open(exclusions, "r") as f:
                 excluded_files = json.load(f)
         except (TypeError, ValueError) as err:
-            print('unable to load exclusions\nerr={}\n'
-                  'make sure the file <{}> is valid json or remove it'.
-                  format(err, exclusions), file=sys.stderr)
+            print(
+                "unable to load exclusions\nerr={}\n"
+                "make sure the file <{}> is valid json or remove it".format(
+                    err, exclusions
+                ),
+                file=sys.stderr,
+            )
             sys.exit(-1)
 
     cmake_files = crawl_for_cmake(args.path, excluded_files)
     lines = generate_rst(cmake_files, args.skip_private, args.skip_undocumented)
     if args.output:
-        with open(args.output, 'w') as f:
-            f.write('\n'.join(lines))
+        with open(args.output, "w") as f:
+            f.write("\n".join(lines))
     else:
         for line in lines:
             print(line)

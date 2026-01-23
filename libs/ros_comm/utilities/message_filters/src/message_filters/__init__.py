@@ -37,7 +37,6 @@ from functools import reduce
 
 
 class SimpleFilter(object):
-
     def __init__(self):
         self.callbacks = {}
 
@@ -54,11 +53,11 @@ class SimpleFilter(object):
         return conn
 
     def signalMessage(self, *msg):
-        for (cb, args) in self.callbacks.values():
+        for cb, args in self.callbacks.values():
             cb(*(msg + args))
 
+
 class Subscriber(SimpleFilter):
-    
     """
     ROS subscription filter.  Identical arguments as :class:`rospy.Subscriber`.
 
@@ -66,10 +65,11 @@ class Subscriber(SimpleFilter):
     from a ROS subscription through to the filters which have connected
     to it.
     """
+
     def __init__(self, *args, **kwargs):
         SimpleFilter.__init__(self)
         self.topic = args[0]
-        kwargs['callback'] = self.callback
+        kwargs["callback"] = self.callback
         self.sub = rospy.Subscriber(*args, **kwargs)
 
     def callback(self, msg):
@@ -82,8 +82,8 @@ class Subscriber(SimpleFilter):
         """Serve same API as rospy.Subscriber"""
         return self.sub.__getattribute__(key)
 
-class Cache(SimpleFilter):
 
+class Cache(SimpleFilter):
     """
     Stores a time history of messages.
 
@@ -112,11 +112,13 @@ class Cache(SimpleFilter):
         self.incoming_connection = f.registerCallback(self.add)
 
     def add(self, msg):
-        if not hasattr(msg, 'header') or not hasattr(msg.header, 'stamp'):
+        if not hasattr(msg, "header") or not hasattr(msg.header, "stamp"):
             if not self.allow_headerless:
-                rospy.logwarn("Cannot use message filters with non-stamped messages. "
-                              "Use the 'allow_headerless' constructor option to "
-                              "auto-assign ROS time to headerless messages.")
+                rospy.logwarn(
+                    "Cannot use message filters with non-stamped messages. "
+                    "Use the 'allow_headerless' constructor option to "
+                    "auto-assign ROS time to headerless messages."
+                )
                 return
             stamp = rospy.Time.now()
         else:
@@ -127,7 +129,7 @@ class Cache(SimpleFilter):
         self.cache_msgs.append(msg)
 
         # Implement a ring buffer, discard older if oversized
-        if (len(self.cache_msgs) > self.cache_size):
+        if len(self.cache_msgs) > self.cache_size:
             del self.cache_msgs[0]
             del self.cache_times[0]
 
@@ -138,21 +140,30 @@ class Cache(SimpleFilter):
         """Query the current cache content between from_stamp to to_stamp."""
         assert from_stamp <= to_stamp
 
-        return [msg for (msg, time) in zip(self.cache_msgs, self.cache_times)
-                if from_stamp <= time <= to_stamp]
+        return [
+            msg
+            for (msg, time) in zip(self.cache_msgs, self.cache_times)
+            if from_stamp <= time <= to_stamp
+        ]
 
     def getElemAfterTime(self, stamp):
         """Return the oldest element after or equal the passed time stamp."""
-        newer = [msg for (msg, time) in zip(self.cache_msgs, self.cache_times)
-                 if time >= stamp]
+        newer = [
+            msg
+            for (msg, time) in zip(self.cache_msgs, self.cache_times)
+            if time >= stamp
+        ]
         if not newer:
             return None
         return newer[0]
 
     def getElemBeforeTime(self, stamp):
         """Return the newest element before or equal the passed time stamp."""
-        older = [msg for (msg, time) in zip(self.cache_msgs, self.cache_times)
-                 if time <= stamp]
+        older = [
+            msg
+            for (msg, time) in zip(self.cache_msgs, self.cache_times)
+            if time <= stamp
+        ]
         if not older:
             return None
         return older[-1]
@@ -172,7 +183,7 @@ class Cache(SimpleFilter):
         if not self.cache_times:
             return None
         return self.cache_times[0]
-        
+
     def getLast(self):
         if self.getLastestTime() is None:
             return None
@@ -180,7 +191,6 @@ class Cache(SimpleFilter):
 
 
 class TimeSynchronizer(SimpleFilter):
-
     """
     Synchronizes messages by their timestamps.
 
@@ -212,7 +222,8 @@ class TimeSynchronizer(SimpleFilter):
         self.latest_stamps = [rospy.Time(0) for f in fs]
         self.input_connections = [
             f.registerCallback(self.add, q, i_q)
-            for i_q, (f, q) in enumerate(zip(fs, self.queues))]
+            for i_q, (f, q) in enumerate(zip(fs, self.queues))
+        ]
 
     def add(self, msg, my_queue, my_queue_index=None):
         self.lock.acquire()
@@ -220,7 +231,9 @@ class TimeSynchronizer(SimpleFilter):
         is_simtime = not rospy.rostime.is_wallclock()
         if is_simtime and self.enable_reset and my_queue_index is not None:
             if now < self.latest_stamps[my_queue_index]:
-                rospy.logdebug("Detected jump back in time. Clearing message filter queue")
+                rospy.logdebug(
+                    "Detected jump back in time. Clearing message filter queue"
+                )
                 my_queue.clear()
             self.latest_stamps[my_queue_index] = now
         my_queue[msg.header.stamp] = msg
@@ -242,8 +255,8 @@ class TimeSynchronizer(SimpleFilter):
                 del q[t]
         self.lock.release()
 
-class ApproximateTimeSynchronizer(TimeSynchronizer):
 
+class ApproximateTimeSynchronizer(TimeSynchronizer):
     """
     Approximately synchronizes messages by their timestamps.
 
@@ -263,11 +276,13 @@ class ApproximateTimeSynchronizer(TimeSynchronizer):
         self.enable_reset = reset
 
     def add(self, msg, my_queue, my_queue_index=None):
-        if not hasattr(msg, 'header') or not hasattr(msg.header, 'stamp'):
+        if not hasattr(msg, "header") or not hasattr(msg.header, "stamp"):
             if not self.allow_headerless:
-                rospy.logwarn("Cannot use message filters with non-stamped messages. "
-                              "Use the 'allow_headerless' constructor option to "
-                              "auto-assign ROS time to headerless messages.")
+                rospy.logwarn(
+                    "Cannot use message filters with non-stamped messages. "
+                    "Use the 'allow_headerless' constructor option to "
+                    "auto-assign ROS time to headerless messages."
+                )
                 return
             stamp = rospy.Time.now()
         else:
@@ -278,7 +293,9 @@ class ApproximateTimeSynchronizer(TimeSynchronizer):
         is_simtime = not rospy.rostime.is_wallclock()
         if is_simtime and self.enable_reset and my_queue_index is not None:
             if now < self.latest_stamps[my_queue_index]:
-                rospy.logdebug("Detected jump back in time. Clearing message filter queue")
+                rospy.logdebug(
+                    "Detected jump back in time. Clearing message filter queue"
+                )
                 my_queue.clear()
             self.latest_stamps[my_queue_index] = now
         my_queue[stamp] = msg
@@ -286,7 +303,9 @@ class ApproximateTimeSynchronizer(TimeSynchronizer):
         # clear all buffers if jump backwards in time is detected
         now = rospy.Time.now()
         if now < self.last_added:
-            rospy.loginfo("ApproximateTimeSynchronizer: Detected jump back in time. Clearing buffer.")
+            rospy.loginfo(
+                "ApproximateTimeSynchronizer: Detected jump back in time. Clearing buffer."
+            )
             for q in self.queues:
                 q.clear()
         self.last_added = now
@@ -302,8 +321,9 @@ class ApproximateTimeSynchronizer(TimeSynchronizer):
         if my_queue_index is None:
             search_queues = self.queues
         else:
-            search_queues = self.queues[:my_queue_index] + \
-                self.queues[my_queue_index+1:]
+            search_queues = (
+                self.queues[:my_queue_index] + self.queues[my_queue_index + 1 :]
+            )
         # sort and leave only reasonable stamps for synchronization
         stamps = []
         for queue in search_queues:
@@ -324,11 +344,12 @@ class ApproximateTimeSynchronizer(TimeSynchronizer):
             if my_queue_index is not None:
                 vv.insert(my_queue_index, stamp)
             qt = list(zip(self.queues, vv))
-            if ( ((max(vv) - min(vv)) < self.slop) and
-                (len([1 for q,t in qt if t not in q]) == 0) ):
-                msgs = [q[t] for q,t in qt]
+            if ((max(vv) - min(vv)) < self.slop) and (
+                len([1 for q, t in qt if t not in q]) == 0
+            ):
+                msgs = [q[t] for q, t in qt]
                 self.signalMessage(*msgs)
-                for q,t in qt:
+                for q, t in qt:
                     del q[t]
                 break  # fast finish after the synchronization
         self.lock.release()

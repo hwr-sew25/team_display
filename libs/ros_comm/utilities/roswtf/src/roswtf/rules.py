@@ -49,6 +49,7 @@ L{WtfError} representation in roswtf.model.
 
 from roswtf.model import WtfWarning, WtfError
 
+
 def _check_rule(rule, ret, ctx, ctx_list, level):
     if ret:
         d = ctx.as_dictionary()
@@ -64,19 +65,20 @@ def _check_rule(rule, ret, ctx, ctx_list, level):
 
         if type(ret) in (tuple, list):
             f_msg = rule[1]
-            ret_str = '\n'.join([" * %s"%r for r in ret])
-            ctx_list.append(level(f_msg%d + "\n" + ret_str+'\n', f_msg, ret))
+            ret_str = "\n".join([" * %s" % r for r in ret])
+            ctx_list.append(level(f_msg % d + "\n" + ret_str + "\n", f_msg, ret))
         elif isstring(ret):
             f_msg = rule[1]
-            ctx_list.append(level(f_msg%d + ret%d, f_msg, ret))
+            ctx_list.append(level(f_msg % d + ret % d, f_msg, ret))
         else:
             f_msg = rule[1]
-            ctx_list.append(level(f_msg%d, f_msg, ret))
-    
+            ctx_list.append(level(f_msg % d, f_msg, ret))
+
+
 def warning_rule(rule, ret, ctx):
     """
     Check return value of rule and update ctx if rule failed.
-    
+
     @param rule: Rule/message pair.
     @type  rule: (rule_fn, format_msg)
     @param ret: return value of rule. If value is non-zero, rule failed
@@ -85,11 +87,12 @@ def warning_rule(rule, ret, ctx):
     @param ctx: L{WtfContext}
     """
     _check_rule(rule, ret, ctx, ctx.warnings, WtfWarning)
-    
+
+
 def error_rule(rule, ret, ctx):
     """
     Check return value of rule and update ctx if rule failed.
-    
+
     @param rule: Rule/message pair.
     @type  rule: (rule_fn, format_msg)
     @param ret: return value of rule. If value is non-zero, rule failed
@@ -98,4 +101,3 @@ def error_rule(rule, ret, ctx):
     @type  ctx: L{WtfContext}
     """
     _check_rule(rule, ret, ctx, ctx.errors, WtfError)
-    

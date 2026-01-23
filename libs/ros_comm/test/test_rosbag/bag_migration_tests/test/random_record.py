@@ -35,6 +35,7 @@ import unittest
 import rospy
 import rostest
 import sys
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -46,67 +47,67 @@ import signal
 import os
 import atexit
 
+
 class RandomRecord(unittest.TestCase):
+    def test_random_record(self):
+        rospy.init_node("random_pub")
 
-  def test_random_record(self):
-    rospy.init_node('random_pub')
-  
-    if (len(sys.argv) < 2):
-      raise Exception("Expected seed as first argument")
+        if len(sys.argv) < 2:
+            raise Exception("Expected seed as first argument")
 
-    seed = int(sys.argv[1])
+        seed = int(sys.argv[1])
 
-    seed    = int(sys.argv[1])
-    topics  = int(sys.argv[2])
-    length  = float(sys.argv[3])
+        seed = int(sys.argv[1])
+        topics = int(sys.argv[2])
+        length = float(sys.argv[3])
 
-    rmg = RandomMsgGen(seed, topics, length)
+        rmg = RandomMsgGen(seed, topics, length)
 
-    publishers = {}
+        publishers = {}
 
-    for (topic, msg_class) in rmg.topics():
-      publishers[topic] = rospy.Publisher(topic, msg_class)
+        for topic, msg_class in rmg.topics():
+            publishers[topic] = rospy.Publisher(topic, msg_class)
 
-    bagpath = os.path.join('/tmp', 'test_rosbag_random_record_%d'%seed)
-    cmd = ['rosbag', 'record', '-a', '-O', bagpath]
-    f1 = subprocess.Popen(cmd)
+        bagpath = os.path.join("/tmp", "test_rosbag_random_record_%d" % seed)
+        cmd = ["rosbag", "record", "-a", "-O", bagpath]
+        f1 = subprocess.Popen(cmd)
 
-    def finalkill():
-      try:
-        os.kill(f1.pid, signal.SIGKILL)
-      except:
-        pass
+        def finalkill():
+            try:
+                os.kill(f1.pid, signal.SIGKILL)
+            except:
+                pass
 
-    atexit.register(finalkill)
+        atexit.register(finalkill)
 
-    # Sleep an extra 5 seconds for good measure
-    rospy.sleep(rospy.Duration.from_sec(5.0))
+        # Sleep an extra 5 seconds for good measure
+        rospy.sleep(rospy.Duration.from_sec(5.0))
 
-    start = rospy.Time.now()
-    for (topic, msg, time) in rmg.messages():
-      d = start + rospy.Duration.from_sec(time) - rospy.Time.now()
-      rospy.sleep(d)
-      publishers[topic].publish(msg)
+        start = rospy.Time.now()
+        for topic, msg, time in rmg.messages():
+            d = start + rospy.Duration.from_sec(time) - rospy.Time.now()
+            rospy.sleep(d)
+            publishers[topic].publish(msg)
 
-    # Sleep an extra 5 seconds for good measure
-    rospy.sleep(rospy.Duration.from_sec(5.0))
+        # Sleep an extra 5 seconds for good measure
+        rospy.sleep(rospy.Duration.from_sec(5.0))
 
-    # Initial terminate using SIGINT so bag clean up nicely
-    os.kill(-os.getpgrp(), signal.SIGINT)
+        # Initial terminate using SIGINT so bag clean up nicely
+        os.kill(-os.getpgrp(), signal.SIGINT)
 
-    # Sleep an extra 5 seconds for good measure
-    rospy.sleep(rospy.Duration.from_sec(5.0))
+        # Sleep an extra 5 seconds for good measure
+        rospy.sleep(rospy.Duration.from_sec(5.0))
 
-    # Keep trying to kill until it's dead instead of blocking on communicate
-    while (f1.poll() is None):
-      try:
-        os.kill(f1.pid, signal.SIGKILL)
-      except:
-        pass
-      rospy.sleep(rospy.Duration.from_sec(1.0))
-      
-    self.assertEqual(f1.returncode, 0)
+        # Keep trying to kill until it's dead instead of blocking on communicate
+        while f1.poll() is None:
+            try:
+                os.kill(f1.pid, signal.SIGKILL)
+            except:
+                pass
+            rospy.sleep(rospy.Duration.from_sec(1.0))
+
+        self.assertEqual(f1.returncode, 0)
 
 
-if __name__ == '__main__':
-  rostest.rosrun('test_rosbag', 'random_record_play', RandomRecord, sys.argv)
+if __name__ == "__main__":
+    rostest.rosrun("test_rosbag", "random_record_play", RandomRecord, sys.argv)

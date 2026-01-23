@@ -36,14 +36,16 @@ import sys
 import struct
 import unittest
 import time
+
 try:
     from cStringIO import StringIO
 except ImportError:
     from io import StringIO
-        
+
 import rospy
 
 g_fileno = 1
+
 
 class MockSock:
     def __init__(self, buff):
@@ -51,28 +53,37 @@ class MockSock:
         g_fileno += 1
         self.buff = buff
         self._fileno = g_fileno
+
     def fileno(self):
         return self._fileno
+
     def recv(self, buff_size):
         return self.buff[:buff_size]
+
     def close(self):
         self.buff = None
+
     def getsockname(self):
         return (None, None)
+
+
 class MockEmptySock:
     def __init__(self):
         global g_fileno
         g_fileno += 1
         self._fileno = g_fileno
+
     def fileno(self):
         return self._fileno
+
     def recv(self, buff_size):
-        return ''
+        return ""
+
     def close(self):
         self.buff = None
 
-class TestRospyTcprosBase(unittest.TestCase):
 
+class TestRospyTcprosBase(unittest.TestCase):
     def test_constants(self):
         self.assertEqual("TCPROS", rospy.impl.tcpros_base.TCPROS)
         self.assertTrue(type(rospy.impl.tcpros_base.DEFAULT_BUFF_SIZE), int)
@@ -80,32 +91,33 @@ class TestRospyTcprosBase(unittest.TestCase):
     def test_recv_buff(self):
         from rospy.impl.tcpros_base import recv_buff
 
-
         buff = StringIO()
         try:
             recv_buff(MockEmptySock(), buff, 1)
             self.fail("recv_buff should have raised TransportTerminated")
         except rospy.impl.tcpros_base.TransportTerminated:
-            self.assertEqual('', buff.getvalue())
+            self.assertEqual("", buff.getvalue())
 
-        self.assertEqual(5, recv_buff(MockSock('1234567890'), buff, 5))
-        self.assertEqual('12345', buff.getvalue())
+        self.assertEqual(5, recv_buff(MockSock("1234567890"), buff, 5))
+        self.assertEqual("12345", buff.getvalue())
         buff = StringIO()
-        
-        self.assertEqual(10, recv_buff(MockSock('1234567890'), buff, 100))
-        self.assertEqual('1234567890', buff.getvalue())
+
+        self.assertEqual(10, recv_buff(MockSock("1234567890"), buff, 100))
+        self.assertEqual("1234567890", buff.getvalue())
 
     def test_TCPServer(self):
         from rospy.impl.tcpros_base import TCPServer
+
         def handler(sock, addr):
             pass
+
         s = None
         try:
             s = TCPServer(handler)
             self.assertTrue(s.port > 0)
             addr, port = s.get_full_addr()
             self.assertTrue(type(addr) == str)
-            self.assertEqual(handler, s.inbound_handler)        
+            self.assertEqual(handler, s.inbound_handler)
             self.assertFalse(s.is_shutdown)
         finally:
             if s is not None:
@@ -118,48 +130,50 @@ class TestRospyTcprosBase(unittest.TestCase):
 
         from rospy.impl.tcpros_base import TCPROSTransportProtocol
         from rospy.impl.transport import BIDIRECTIONAL
-        
-        p = TCPROSTransportProtocol('Bob', rospy.AnyMsg)
-        self.assertEqual('Bob', p.resolved_name)
+
+        p = TCPROSTransportProtocol("Bob", rospy.AnyMsg)
+        self.assertEqual("Bob", p.resolved_name)
         self.assertEqual(rospy.AnyMsg, p.recv_data_class)
         self.assertEqual(BIDIRECTIONAL, p.direction)
         self.assertEqual({}, p.get_header_fields())
         self.assertEqual(rospy.impl.tcpros_base.DEFAULT_BUFF_SIZE, p.buff_size)
 
         v = random.randint(1, 100)
-        p = TCPROSTransportProtocol('Bob', rospy.AnyMsg, queue_size=v)
+        p = TCPROSTransportProtocol("Bob", rospy.AnyMsg, queue_size=v)
         self.assertEqual(v, p.queue_size)
 
-        v = random.randint(1, 100)        
-        p = TCPROSTransportProtocol('Bob', rospy.AnyMsg, buff_size=v)
+        v = random.randint(1, 100)
+        p = TCPROSTransportProtocol("Bob", rospy.AnyMsg, buff_size=v)
         self.assertEqual(v, p.buff_size)
 
     def test_TCPROSTransport(self):
         import rospy.impl.tcpros_base
         from rospy.impl.tcpros_base import TCPROSTransport, TCPROSTransportProtocol
         from rospy.impl.transport import OUTBOUND
-        p = TCPROSTransportProtocol('Bob', rospy.AnyMsg)
+
+        p = TCPROSTransportProtocol("Bob", rospy.AnyMsg)
         p.direction = OUTBOUND
 
         try:
-            TCPROSTransport(p, '')
+            TCPROSTransport(p, "")
             self.fail("TCPROSTransport should not accept bad name")
-        except rospy.impl.tcpros_base.TransportInitError: pass
-        
-        t = TCPROSTransport(p, 'transport-name')
+        except rospy.impl.tcpros_base.TransportInitError:
+            pass
+
+        t = TCPROSTransport(p, "transport-name")
         self.assertTrue(t.socket is None)
         self.assertTrue(t.md5sum is None)
-        self.assertTrue(t.type is None)         
+        self.assertTrue(t.type is None)
         self.assertEqual(p, t.protocol)
-        self.assertEqual('TCPROS', t.transport_type)        
-        self.assertEqual(OUTBOUND, t.direction)        
-        self.assertEqual('unknown', t.endpoint_id)        
-        self.assertEqual(b'', t.read_buff.getvalue())
-        self.assertEqual(b'', t.write_buff.getvalue())
+        self.assertEqual("TCPROS", t.transport_type)
+        self.assertEqual(OUTBOUND, t.direction)
+        self.assertEqual("unknown", t.endpoint_id)
+        self.assertEqual(b"", t.read_buff.getvalue())
+        self.assertEqual(b"", t.write_buff.getvalue())
 
-        s = MockSock('12345')
-        t.set_socket(s, 'new_endpoint_id')
-        self.assertEqual('new_endpoint_id', t.endpoint_id)
+        s = MockSock("12345")
+        t.set_socket(s, "new_endpoint_id")
+        self.assertEqual("new_endpoint_id", t.endpoint_id)
         self.assertEqual(s, t.socket)
 
         t.close()

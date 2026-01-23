@@ -28,8 +28,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-PKG = 'test_rospy'
-NAME = 'test_latch_unsubscribe'
+PKG = "test_rospy"
+NAME = "test_latch_unsubscribe"
 
 import os
 import sys
@@ -41,11 +41,11 @@ from std_msgs.msg import String
 
 
 def _get_connections(process_info):
-    if hasattr(process_info, 'connections'):  # new naming
+    if hasattr(process_info, "connections"):  # new naming
         return process_info.connections()
-    elif hasattr(process_info, 'get_connections'):  # old naming
+    elif hasattr(process_info, "get_connections"):  # old naming
         return process_info.get_connections()
-    raise AttributeError('Wrong psutil version?')
+    raise AttributeError("Wrong psutil version?")
 
 
 def _get_connection_statii(process_info):
@@ -53,31 +53,39 @@ def _get_connection_statii(process_info):
 
 
 class TestLatch(unittest.TestCase):
-
     def setUp(self):
         pass
 
     def test_latch(self):
         import rospy
+
         proc_info = psutil.Process(os.getpid())
-        self.assertNotIn('CLOSE_WAIT', _get_connection_statii(proc_info),
-                         'CLOSE_WAIT sockets already before the test. This '
-                         'should not happen at all.')
+        self.assertNotIn(
+            "CLOSE_WAIT",
+            _get_connection_statii(proc_info),
+            "CLOSE_WAIT sockets already before the test. This "
+            "should not happen at all.",
+        )
 
         rospy.init_node(NAME)
-        pub = rospy.Publisher('chatter', String, latch=True, queue_size=0)
+        pub = rospy.Publisher("chatter", String, latch=True, queue_size=0)
         pub.publish(String("hello"))
         rospy.sleep(0.5)
-        self.assertNotIn('CLOSE_WAIT', _get_connection_statii(proc_info),
-                         'CLOSE_WAIT sockets after the subscriber exited. '
-                         '(#107)')
+        self.assertNotIn(
+            "CLOSE_WAIT",
+            _get_connection_statii(proc_info),
+            "CLOSE_WAIT sockets after the subscriber exited. (#107)",
+        )
         rospy.sleep(1.5)
         # also check for a second subscriber
-        self.assertNotIn('CLOSE_WAIT', _get_connection_statii(proc_info),
-                         'CLOSE_WAIT sockets after the second subscriber '
-                         'exited. (#107)')
+        self.assertNotIn(
+            "CLOSE_WAIT",
+            _get_connection_statii(proc_info),
+            "CLOSE_WAIT sockets after the second subscriber exited. (#107)",
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import rostest
+
     rostest.run(PKG, NAME, TestLatch, sys.argv)

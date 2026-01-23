@@ -44,7 +44,9 @@ except ImportError:
 import rosgraph
 import rosgraph.network
 
-_ID = '/roslaunch_netapi'
+_ID = "/roslaunch_netapi"
+
+
 def get_roslaunch_uris():
     """
     @return: list of roslaunch XML-RPC URIs for roscore that's in
@@ -53,19 +55,21 @@ def get_roslaunch_uris():
     """
     try:
         m = rosgraph.Master(_ID)
-        vals = m.getParam('/roslaunch/uris')
+        vals = m.getParam("/roslaunch/uris")
         return vals.values()
-    except rosgraph.MasterException: 
+    except rosgraph.MasterException:
         return None
+
 
 class NetProcess(object):
     def __init__(self, name, respawn_count, is_alive, roslaunch_uri):
         self.is_alive = is_alive
         self.respawn_count = respawn_count
         self.name = name
-        
+
         self.roslaunch_uri = roslaunch_uri
         self.machine, _ = rosgraph.network.parse_http_host_and_port(roslaunch_uri)
+
 
 def list_processes(roslaunch_uris=None):
     """
@@ -90,9 +94,8 @@ def list_processes(roslaunch_uris=None):
                 procs.extend([NetProcess(a[0], a[1], True, uri) for a in active])
                 procs.extend([NetProcess(d[0], d[1], False, uri) for d in dead])
         except:
-            #import traceback
-            #traceback.print_exc()
+            # import traceback
+            # traceback.print_exc()
             # don't have a mechanism for reporting these errors upwards yet
-            pass 
+            pass
     return procs
-

@@ -32,7 +32,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys 
+import sys
 import unittest
 import rostest
 
@@ -45,10 +45,14 @@ from subprocess import Popen, PIPE, check_call, call
 import rosgraph
 import rosparam
 
+
 def get_param_server():
-    return rosgraph.Master('/test_rosparam')
+    return rosgraph.Master("/test_rosparam")
+
 
 from contextlib import contextmanager
+
+
 @contextmanager
 def fakestdout():
     realstdout = sys.stdout
@@ -56,6 +60,7 @@ def fakestdout():
     sys.stdout = fakestdout
     yield fakestdout
     sys.stdout = realstdout
+
 
 @contextmanager
 def fakestdin(input_str):
@@ -65,14 +70,16 @@ def fakestdin(input_str):
     yield fakestdin
     sys.stdin = realstdin
 
+
 def tolist(b):
-    return [x.strip() for x in b.getvalue().split('\n') if x.strip()]
+    return [x.strip() for x in b.getvalue().split("\n") if x.strip()]
+
 
 def get_test_path():
     return os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
-class TestRosparam(unittest.TestCase):
 
+class TestRosparam(unittest.TestCase):
     def setUp(self):
         pass
 
@@ -82,59 +89,67 @@ class TestRosparam(unittest.TestCase):
         """
         for t in expected:
             self.assertTrue(t in actual)
+
     def _notcheck(self, not_expected, actual):
         """
         Make sure all elements of not_expected are not present in actual
         """
         for t in not_expected:
             self.assertFalse(t in actual)
-        
-    def test_rosparam_list(self):
-        cmd = 'rosparam'
 
-        params = ['/string', '/int', '/float',
-                  '/g1/string', '/g1/int', '/g1/float',
-                  '/g2/string', '/g2/int', '/g2/float',
-                  ]
-        l = rosparam.list_params('')
+    def test_rosparam_list(self):
+        cmd = "rosparam"
+
+        params = [
+            "/string",
+            "/int",
+            "/float",
+            "/g1/string",
+            "/g1/int",
+            "/g1/float",
+            "/g2/string",
+            "/g2/int",
+            "/g2/float",
+        ]
+        l = rosparam.list_params("")
         for t in params:
             self.assertTrue(t in l)
 
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'list'])
+            rosparam.yamlmain([cmd, "list"])
             self._check(params, tolist(b))
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'list', '/'])
+            rosparam.yamlmain([cmd, "list", "/"])
             self._check(params, tolist(b))
-            
+
         # test with namespace
-        g1p = [p for p in params if p.startswith('/g1/')]
-        not_g1p = [p for p in params if not p.startswith('/g1/')]
+        g1p = [p for p in params if p.startswith("/g1/")]
+        not_g1p = [p for p in params if not p.startswith("/g1/")]
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'list', '/g1'])
-            self._check(g1p, tolist(b))
-            self._notcheck(not_g1p, tolist(b))            
-        with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'list', '/g1/'])
+            rosparam.yamlmain([cmd, "list", "/g1"])
             self._check(g1p, tolist(b))
             self._notcheck(not_g1p, tolist(b))
-        # test with no match        
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'list', '/not/a/namespace/'])
+            rosparam.yamlmain([cmd, "list", "/g1/"])
+            self._check(g1p, tolist(b))
+            self._notcheck(not_g1p, tolist(b))
+        # test with no match
+        with fakestdout() as b:
+            rosparam.yamlmain([cmd, "list", "/not/a/namespace/"])
             self.assertEqual([], tolist(b))
-            
+
     def test_rosparam_load(self):
-        f = os.path.join(get_test_path(), 'test.yaml')
-        f_ns = os.path.join(get_test_path(), 'test_ns.yaml')
-        
-        cmd = 'rosparam'
+        f = os.path.join(get_test_path(), "test.yaml")
+        f_ns = os.path.join(get_test_path(), "test_ns.yaml")
+
+        cmd = "rosparam"
         try:
-            rosparam.yamlmain([cmd, 'load'])
+            rosparam.yamlmain([cmd, "load"])
             self.fail("command-line arg should have failed")
         except SystemExit as e:
             self.assertNotEqual(0, e.code)
         try:
-            rosparam.yamlmain([cmd, 'load', 'fake-file.yaml'])
+            rosparam.yamlmain([cmd, "load", "fake-file.yaml"])
             self.fail("command-line arg should have failed")
         except SystemExit as e:
             self.assertNotEqual(0, e.code)
@@ -142,236 +157,252 @@ class TestRosparam(unittest.TestCase):
         ps = get_param_server()
 
         # load into top-level
-        rosparam.yamlmain([cmd, 'load', f])
-        self.assertEqual('bar', ps.getParam('/foo'))
+        rosparam.yamlmain([cmd, "load", f])
+        self.assertEqual("bar", ps.getParam("/foo"))
         # - make sure it did an overlay, not erase
-        self.assertEqual('foo-value', ps.getParam('/string'))
-        
-        rosparam.yamlmain([cmd, 'load', '-v', f])
-        self.assertEqual('bar', ps.getParam('/foo'))
+        self.assertEqual("foo-value", ps.getParam("/string"))
+
+        rosparam.yamlmain([cmd, "load", "-v", f])
+        self.assertEqual("bar", ps.getParam("/foo"))
 
         # load into top-level from stdin
-        with fakestdin('stdin_string: stdin_foo\nstdin_string2: stdin_bar'):
-            rosparam.yamlmain([cmd, 'load', '-'])
-        self.assertEqual('stdin_foo', ps.getParam('/stdin_string'))
-        self.assertEqual('stdin_bar', ps.getParam('/stdin_string2'))
-        
+        with fakestdin("stdin_string: stdin_foo\nstdin_string2: stdin_bar"):
+            rosparam.yamlmain([cmd, "load", "-"])
+        self.assertEqual("stdin_foo", ps.getParam("/stdin_string"))
+        self.assertEqual("stdin_bar", ps.getParam("/stdin_string2"))
+
         # load into namespace
-        rosparam.yamlmain([cmd, 'load', f, '/rosparam_load/test'])
-        self.assertEqual('bar', ps.getParam('/rosparam_load/test/foo'))
-        rosparam.yamlmain([cmd, 'load', '-v', f, '/rosparam_load/test'])
-        self.assertEqual('bar', ps.getParam('/rosparam_load/test/foo'))
+        rosparam.yamlmain([cmd, "load", f, "/rosparam_load/test"])
+        self.assertEqual("bar", ps.getParam("/rosparam_load/test/foo"))
+        rosparam.yamlmain([cmd, "load", "-v", f, "/rosparam_load/test"])
+        self.assertEqual("bar", ps.getParam("/rosparam_load/test/foo"))
 
         # load file with namespace spec in it
         # - load into top-level
-        rosparam.yamlmain([cmd, 'load', f_ns])
-        self.assertEqual('baz', ps.getParam('/a/b/foo'))
-        self.assertEqual('bar', ps.getParam('/foo'))
-        rosparam.yamlmain([cmd, 'load', '-v', f_ns])
-        self.assertEqual('baz', ps.getParam('/a/b/foo'))        
-        
+        rosparam.yamlmain([cmd, "load", f_ns])
+        self.assertEqual("baz", ps.getParam("/a/b/foo"))
+        self.assertEqual("bar", ps.getParam("/foo"))
+        rosparam.yamlmain([cmd, "load", "-v", f_ns])
+        self.assertEqual("baz", ps.getParam("/a/b/foo"))
+
         # load into namespace
-        rosparam.yamlmain([cmd, 'load', f_ns, '/rosparam_load/test2'])
-        self.assertEqual('baz', ps.getParam('/rosparam_load/test2/a/b/foo'))
-        rosparam.yamlmain([cmd, 'load', '-v', f_ns, '/rosparam_load/test2'])
-        self.assertEqual('baz', ps.getParam('/rosparam_load/test2/a/b/foo'))
-        
+        rosparam.yamlmain([cmd, "load", f_ns, "/rosparam_load/test2"])
+        self.assertEqual("baz", ps.getParam("/rosparam_load/test2/a/b/foo"))
+        rosparam.yamlmain([cmd, "load", "-v", f_ns, "/rosparam_load/test2"])
+        self.assertEqual("baz", ps.getParam("/rosparam_load/test2/a/b/foo"))
+
     def test_rosparam_get(self):
         import rosparam
-        cmd = 'rosparam'
+
+        cmd = "rosparam"
         try:
-            rosparam.yamlmain([cmd, 'get'])
+            rosparam.yamlmain([cmd, "get"])
             self.fail("command-line arg should have failed")
         except SystemExit as e:
             self.assertNotEqual(0, e.code)
 
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', "string"])
-            self.assertEqual('foo-value', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "string"])
+            self.assertEqual("foo-value", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', '-p', "string"])
-            self.assertEqual('foo-value', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "-p", "string"])
+            self.assertEqual("foo-value", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', "/string"])
-            self.assertEqual('foo-value', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "/string"])
+            self.assertEqual("foo-value", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', "/g1/string"])
-            self.assertEqual('g1-foo-value', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "/g1/string"])
+            self.assertEqual("g1-foo-value", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', "g1/string"])
-            self.assertEqual('g1-foo-value', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "g1/string"])
+            self.assertEqual("g1-foo-value", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', "int"])
-            self.assertEqual('1', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "int"])
+            self.assertEqual("1", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', "/int"])
-            self.assertEqual('1', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "/int"])
+            self.assertEqual("1", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', '-p', "int"])
-            self.assertEqual('1', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "-p", "int"])
+            self.assertEqual("1", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', "/g1/int"])
-            self.assertEqual('10', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "/g1/int"])
+            self.assertEqual("10", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', "g1/int"])
-            self.assertEqual('10', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "g1/int"])
+            self.assertEqual("10", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', "float"])
-            self.assertEqual('1.0', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "float"])
+            self.assertEqual("1.0", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', '-p', "float"])
-            self.assertEqual('1.0', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "-p", "float"])
+            self.assertEqual("1.0", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', '-p', "g1/float"])
-            self.assertEqual('10.0', b.getvalue().strip())
+            rosparam.yamlmain([cmd, "get", "-p", "g1/float"])
+            self.assertEqual("10.0", b.getvalue().strip())
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', "g1"])
+            rosparam.yamlmain([cmd, "get", "g1"])
             import yaml
+
             d = yaml.safe_load(b.getvalue())
-            self.assertEqual(d['float'], 10.0)
-            self.assertEqual(d['int'], 10.0)
-            self.assertEqual(d['string'], "g1-foo-value")
-            self.assertEqual(set(['float', 'int', 'string']), set(d.keys()))
+            self.assertEqual(d["float"], 10.0)
+            self.assertEqual(d["int"], 10.0)
+            self.assertEqual(d["string"], "g1-foo-value")
+            self.assertEqual(set(["float", "int", "string"]), set(d.keys()))
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', '-p', "g1"])
+            rosparam.yamlmain([cmd, "get", "-p", "g1"])
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'get', '-pv', "g1"])
+            rosparam.yamlmain([cmd, "get", "-pv", "g1"])
 
     def test_rosparam_set(self):
         import rosparam
-        cmd = 'rosparam'
+
+        cmd = "rosparam"
 
         ps = get_param_server()
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'set', "/rosparam_set/test1", "1"])
-            self.assertEqual(1, ps.getParam('/rosparam_set/test1'))
-        with fakestdout() as b:            
+            rosparam.yamlmain([cmd, "set", "/rosparam_set/test1", "1"])
+            self.assertEqual(1, ps.getParam("/rosparam_set/test1"))
+        with fakestdout() as b:
             # -- verbose
-            rosparam.yamlmain([cmd, 'set', '-v', "/rosparam_set/test1", "1"])
-            self.assertEqual(1, ps.getParam('/rosparam_set/test1'))
-        with fakestdout() as b:            
-            rosparam.yamlmain([cmd, 'set', "rosparam_set/test1", "2"])
-            self.assertEqual(2, ps.getParam('/rosparam_set/test1'))
-            
+            rosparam.yamlmain([cmd, "set", "-v", "/rosparam_set/test1", "1"])
+            self.assertEqual(1, ps.getParam("/rosparam_set/test1"))
+        with fakestdout() as b:
+            rosparam.yamlmain([cmd, "set", "rosparam_set/test1", "2"])
+            self.assertEqual(2, ps.getParam("/rosparam_set/test1"))
+
         with fakestdout() as b:
             # - floats
-            rosparam.yamlmain([cmd, 'set', "/rosparam_set/test2", "1.0"])
-            self.assertEqual(1., ps.getParam('/rosparam_set/test2'))
+            rosparam.yamlmain([cmd, "set", "/rosparam_set/test2", "1.0"])
+            self.assertEqual(1.0, ps.getParam("/rosparam_set/test2"))
         with fakestdout() as b:
             # - floats
-            rosparam.yamlmain([cmd, 'set', "/rosparam_set/test2", "2.0"])
-            self.assertEqual(2., ps.getParam('/rosparam_set/test2'))
-        with fakestdout() as b:            
+            rosparam.yamlmain([cmd, "set", "/rosparam_set/test2", "2.0"])
+            self.assertEqual(2.0, ps.getParam("/rosparam_set/test2"))
+        with fakestdout() as b:
             # - booleans
-            rosparam.yamlmain([cmd, 'set', "/rosparam_set/testbool", "true"])
-            self.assertEqual(True, ps.getParam('/rosparam_set/testbool'))
-        with fakestdout() as b:            
+            rosparam.yamlmain([cmd, "set", "/rosparam_set/testbool", "true"])
+            self.assertEqual(True, ps.getParam("/rosparam_set/testbool"))
+        with fakestdout() as b:
             # - strings
-            rosparam.yamlmain([cmd, 'set', "/rosparam_set/teststr", "hi"])
-            self.assertEqual("hi", ps.getParam('/rosparam_set/teststr'))
-        with fakestdout() as b: 
+            rosparam.yamlmain([cmd, "set", "/rosparam_set/teststr", "hi"])
+            self.assertEqual("hi", ps.getParam("/rosparam_set/teststr"))
+        with fakestdout() as b:
             # - list
-            rosparam.yamlmain([cmd, 'set', "/rosparam_set/testlist", "[1, 2, 3]"])
-            self.assertEqual([1, 2, 3], ps.getParam('/rosparam_set/testlist'))
-        with fakestdout() as b: 
+            rosparam.yamlmain([cmd, "set", "/rosparam_set/testlist", "[1, 2, 3]"])
+            self.assertEqual([1, 2, 3], ps.getParam("/rosparam_set/testlist"))
+        with fakestdout() as b:
             # - dictionary
-            rosparam.yamlmain([cmd, 'set', "/rosparam_set/testdict", "{a: b, c: d}"])
-            self.assertEqual('b', ps.getParam('/rosparam_set/testdict/a'))
-            self.assertEqual('d', ps.getParam('/rosparam_set/testdict/c'))
-        with fakestdout() as b:             
+            rosparam.yamlmain([cmd, "set", "/rosparam_set/testdict", "{a: b, c: d}"])
+            self.assertEqual("b", ps.getParam("/rosparam_set/testdict/a"))
+            self.assertEqual("d", ps.getParam("/rosparam_set/testdict/c"))
+        with fakestdout() as b:
             #   - empty dictionary should be a noop
-            rosparam.yamlmain([cmd, 'set', "set/testdict", "{}"])
-            self.assertEqual('b', ps.getParam('/rosparam_set/testdict/a'))
-            self.assertEqual('d', ps.getParam('/rosparam_set/testdict/c'))
-        with fakestdout() as b:                         
+            rosparam.yamlmain([cmd, "set", "set/testdict", "{}"])
+            self.assertEqual("b", ps.getParam("/rosparam_set/testdict/a"))
+            self.assertEqual("d", ps.getParam("/rosparam_set/testdict/c"))
+        with fakestdout() as b:
             #   - this should be an update
-            rosparam.yamlmain([cmd, 'set', "/rosparam_set/testdict", "{e: f, g: h}"])
-            self.assertEqual('b', ps.getParam('/rosparam_set/testdict/a'))
-            self.assertEqual('d', ps.getParam('/rosparam_set/testdict/c'))
-            self.assertEqual('f', ps.getParam('/rosparam_set/testdict/e'))
-            self.assertEqual('h', ps.getParam('/rosparam_set/testdict/g'))
-        with fakestdout() as b:                                     
+            rosparam.yamlmain([cmd, "set", "/rosparam_set/testdict", "{e: f, g: h}"])
+            self.assertEqual("b", ps.getParam("/rosparam_set/testdict/a"))
+            self.assertEqual("d", ps.getParam("/rosparam_set/testdict/c"))
+            self.assertEqual("f", ps.getParam("/rosparam_set/testdict/e"))
+            self.assertEqual("h", ps.getParam("/rosparam_set/testdict/g"))
+        with fakestdout() as b:
             # -- verbose
-            rosparam.yamlmain([cmd, 'set', '-v', "/rosparam_set/testdictverbose", "{e: f, g: h}"])
-            self.assertEqual('f', ps.getParam('/rosparam_set/testdictverbose/e'))
-            self.assertEqual('h', ps.getParam('/rosparam_set/testdictverbose/g'))
+            rosparam.yamlmain(
+                [cmd, "set", "-v", "/rosparam_set/testdictverbose", "{e: f, g: h}"]
+            )
+            self.assertEqual("f", ps.getParam("/rosparam_set/testdictverbose/e"))
+            self.assertEqual("h", ps.getParam("/rosparam_set/testdictverbose/g"))
 
     def test_rosparam_delete(self):
         import rosparam
-        cmd = 'rosparam'
+
+        cmd = "rosparam"
         ps = get_param_server()
 
         try:
-            rosparam.yamlmain([cmd, 'delete'])
+            rosparam.yamlmain([cmd, "delete"])
         except SystemExit as e:
             self.assertNotEqual(0, e.code)
         try:
-            rosparam.yamlmain([cmd, 'delete', 'one', 'two'])
+            rosparam.yamlmain([cmd, "delete", "one", "two"])
         except SystemExit as e:
             self.assertNotEqual(0, e.code)
 
         # delete
-        ps.setParam('/delete/me', True)
-        self.assertTrue(ps.hasParam('/delete/me'))
-        rosparam.yamlmain([cmd, 'delete', "/delete/me"])
-        self.assertFalse(ps.hasParam('/delete/me'))
+        ps.setParam("/delete/me", True)
+        self.assertTrue(ps.hasParam("/delete/me"))
+        rosparam.yamlmain([cmd, "delete", "/delete/me"])
+        self.assertFalse(ps.hasParam("/delete/me"))
 
-        ps.setParam('/delete/me2', True)
-        self.assertTrue(ps.hasParam('/delete/me2'))
-        rosparam.yamlmain([cmd, 'delete', '-v', "/delete/me2"])
-        self.assertFalse(ps.hasParam('/delete/me2'))
+        ps.setParam("/delete/me2", True)
+        self.assertTrue(ps.hasParam("/delete/me2"))
+        rosparam.yamlmain([cmd, "delete", "-v", "/delete/me2"])
+        self.assertFalse(ps.hasParam("/delete/me2"))
 
     def test_rosparam_dump(self):
         import rosparam
-        f = os.path.join(get_test_path(), 'test.yaml')
-        f_out = os.path.join(get_test_path(), 'test_dump.yaml')
-        
-        cmd = 'rosparam'
+
+        f = os.path.join(get_test_path(), "test.yaml")
+        f_out = os.path.join(get_test_path(), "test_dump.yaml")
+
+        cmd = "rosparam"
         ps = get_param_server()
 
         try:
-            rosparam.yamlmain([cmd, 'dump'])
+            rosparam.yamlmain([cmd, "dump"])
         except SystemExit as e:
             self.assertNotEqual(0, e.code)
         try:
-            rosparam.yamlmain([cmd, 'dump', f_out, 'rosparam_dump', 'rosparam_dump2'])
+            rosparam.yamlmain([cmd, "dump", f_out, "rosparam_dump", "rosparam_dump2"])
         except SystemExit as e:
             self.assertNotEqual(0, e.code)
 
-        rosparam.yamlmain([cmd, 'load', f, 'rosparam_dump'])
-        self.assertEqual('bar', ps.getParam('rosparam_dump/foo'))
-        
-        rosparam.yamlmain([cmd, 'dump', f_out, 'rosparam_dump'])
+        rosparam.yamlmain([cmd, "load", f, "rosparam_dump"])
+        self.assertEqual("bar", ps.getParam("rosparam_dump/foo"))
+
+        rosparam.yamlmain([cmd, "dump", f_out, "rosparam_dump"])
         # yaml files should be equal
         import yaml
+
         with open(f_out) as b:
             with open(f) as b2:
                 self.assertEqual(yaml.safe_load(b.read()), yaml.safe_load(b2.read()))
 
-        rosparam.yamlmain([cmd, 'dump', '-v', f_out, 'rosparam_dump'])                
+        rosparam.yamlmain([cmd, "dump", "-v", f_out, "rosparam_dump"])
         with open(f_out) as b:
             with open(f) as b2:
                 self.assertEqual(yaml.safe_load(b.read()), yaml.safe_load(b2.read()))
 
         # yaml file and std_out should be the same
         with fakestdout() as b:
-            rosparam.yamlmain([cmd, 'dump'])
+            rosparam.yamlmain([cmd, "dump"])
             with open(f) as b2:
-                self.assertEqual(yaml.safe_load(b.getvalue())['rosparam_dump'], yaml.safe_load(b2.read()))
+                self.assertEqual(
+                    yaml.safe_load(b.getvalue())["rosparam_dump"],
+                    yaml.safe_load(b2.read()),
+                )
 
     def test_fullusage(self):
         import rosparam
+
         try:
             rosparam._fullusage()
-        except SystemExit: pass
+        except SystemExit:
+            pass
         try:
-            rosparam.yamlmain(['rosparam'])
-        except SystemExit: pass
+            rosparam.yamlmain(["rosparam"])
+        except SystemExit:
+            pass
         try:
-            rosparam.yamlmain(['rosparam', 'invalid'])        
-        except SystemExit: pass
+            rosparam.yamlmain(["rosparam", "invalid"])
+        except SystemExit:
+            pass
 
-PKG = 'test_rosparam'
-NAME = 'test_rosparam_command_line_online'
-if __name__ == '__main__':
-    rostest.unitrun(PKG, NAME, TestRosparam, sys.argv, coverage_packages=['rosparam'])
+
+PKG = "test_rosparam"
+NAME = "test_rosparam_command_line_online"
+if __name__ == "__main__":
+    rostest.unitrun(PKG, NAME, TestRosparam, sys.argv, coverage_packages=["rosparam"])

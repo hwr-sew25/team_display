@@ -57,22 +57,37 @@ try:
 except NameError:  # Python 3
     from importlib import reload
 
-if sys.version > '3':
+if sys.version > "3":
     long = int
 
 try:
     import numpy as np
-    _valid_float_types = [float, int, long, np.float32, np.float64, np.int8, np.int16, np.int32, np.int64, np.uint8,
-                          np.uint16, np.uint32, np.uint64]
+
+    _valid_float_types = [
+        float,
+        int,
+        long,
+        np.float32,
+        np.float64,
+        np.int8,
+        np.int16,
+        np.int32,
+        np.int64,
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint64,
+    ]
 except ImportError:
     _valid_float_types = [float, int, long]
 
 # common struct pattern singletons for msgs to use. Although this
 # would better placed in a generator-specific module, we don't want to
 # add another import to messages (which incurs higher import cost)
-struct_I = struct.Struct('<I')
+struct_I = struct.Struct("<I")
 
 _warned_decoding_error = set()
+
 
 # Notify the user while not crashing in the face of errors attempting
 # to decode non-unicode data within a ROS message.
@@ -86,11 +101,18 @@ class RosMsgUnicodeErrors:
             _warned_decoding_error.add(self.msg_type)
             # Lazy import to avoid this cost in the non-error case.
             import logging
-            logger = logging.getLogger('rosout')
+
+            logger = logging.getLogger("rosout")
             extra = "message %s" % self.msg_type if self.msg_type else "unknown message"
-            logger.error("Characters replaced when decoding %s (will print only once): %s", extra, err)
+            logger.error(
+                "Characters replaced when decoding %s (will print only once): %s",
+                extra,
+                err,
+            )
         return codecs.replace_errors(err)
-codecs.register_error('rosmsg', RosMsgUnicodeErrors())
+
+
+codecs.register_error("rosmsg", RosMsgUnicodeErrors())
 
 
 def isstring(s):
@@ -121,7 +143,15 @@ class SerializationError(MessageException):
 
 # we expose the generic message-strify routine for fn-oriented code like rostopic
 
-def strify_message(val, indent='', time_offset=None, current_time=None, field_filter=None, fixed_numeric_width=None):
+
+def strify_message(
+    val,
+    indent="",
+    time_offset=None,
+    current_time=None,
+    field_filter=None,
+    fixed_numeric_width=None,
+):
     """
     Convert value to string representation.
 
@@ -139,52 +169,79 @@ def strify_message(val, indent='', time_offset=None, current_time=None, field_fi
     type_ = type(val)
     if type_ in (int, long, float) and fixed_numeric_width is not None:
         if type_ is float:
-            num_str = ('%.' + str(fixed_numeric_width) + 'f') % val
-            return num_str[:max(num_str.find('.'), fixed_numeric_width)]
+            num_str = ("%." + str(fixed_numeric_width) + "f") % val
+            return num_str[: max(num_str.find("."), fixed_numeric_width)]
         else:
-            return ('%' + str(fixed_numeric_width) + 'd') % val
+            return ("%" + str(fixed_numeric_width) + "d") % val
     elif type_ in (int, long, float, bool):
         return str(val)
     elif isstring(val):
         if not val:
             return "''"
         # escape strings for use in yaml file using yaml dump with default style to avoid trailing "...\n"
-        return yaml.dump(val, default_style='"').rstrip('\n')
+        return yaml.dump(val, default_style='"').rstrip("\n")
     elif isinstance(val, TVal):
-
         if time_offset is not None and isinstance(val, Time):
-            val = val-time_offset
+            val = val - time_offset
 
         if fixed_numeric_width is not None:
-            format_str = '%' + str(fixed_numeric_width) + 'd'
-            sec_str = '\n%ssecs: ' % indent + (format_str % val.secs)
-            nsec_str = '\n%snsecs: ' % indent + (format_str % val.nsecs)
+            format_str = "%" + str(fixed_numeric_width) + "d"
+            sec_str = "\n%ssecs: " % indent + (format_str % val.secs)
+            nsec_str = "\n%snsecs: " % indent + (format_str % val.nsecs)
             return sec_str + nsec_str
         else:
-            return '\n%ssecs: %s\n%snsecs: %9d' % (indent, val.secs, indent, val.nsecs)
+            return "\n%ssecs: %s\n%snsecs: %9d" % (indent, val.secs, indent, val.nsecs)
 
     elif type_ in (list, tuple):
         if len(val) == 0:
-            return '[]'
+            return "[]"
         val0 = val[0]
         if type(val0) in (int, float) and fixed_numeric_width is not None:
-            list_str = '[' + ''.join(strify_message(v, indent, time_offset, current_time, field_filter, fixed_numeric_width) + ', ' for v in val).rstrip(', ') + ']'
+            list_str = (
+                "["
+                + "".join(
+                    strify_message(
+                        v,
+                        indent,
+                        time_offset,
+                        current_time,
+                        field_filter,
+                        fixed_numeric_width,
+                    )
+                    + ", "
+                    for v in val
+                ).rstrip(", ")
+                + "]"
+            )
             return list_str
         elif isstring(val0):
             # escape list of strings for use in yaml file using yaml dump
-            yaml_str = yaml.dump(val).rstrip('\n')
+            yaml_str = yaml.dump(val).rstrip("\n")
             # earlier versions of PyYAML return: ['', '']\n
             # newer versions of PyYaml return: - ''\n- ''\n
-            assert yaml_str[0] in ('[', '-')
-            if yaml_str[0] == '[':
+            assert yaml_str[0] in ("[", "-")
+            if yaml_str[0] == "[":
                 return yaml_str
-            return '\n' + '\n'.join(indent + line for line in yaml_str.splitlines())
+            return "\n" + "\n".join(indent + line for line in yaml_str.splitlines())
         elif type(val0) in (int, float, bool):
             return str(list(val))
         else:
-            pref = indent + '- '
-            indent = indent + '  '
-            return '\n'+'\n'.join([pref+strify_message(v, indent, time_offset, current_time, field_filter, fixed_numeric_width) for v in val])
+            pref = indent + "- "
+            indent = indent + "  "
+            return "\n" + "\n".join(
+                [
+                    pref
+                    + strify_message(
+                        v,
+                        indent,
+                        time_offset,
+                        current_time,
+                        field_filter,
+                        fixed_numeric_width,
+                    )
+                    for v in val
+                ]
+            )
     elif isinstance(val, Message):
         # allow caller to select which fields of message are strified
         if field_filter is not None:
@@ -192,18 +249,48 @@ def strify_message(val, indent='', time_offset=None, current_time=None, field_fi
         else:
             fields = val.__slots__
 
-        p = '%s%%s: %%s' % (indent)
-        ni = '  '+indent
+        p = "%s%%s: %%s" % (indent)
+        ni = "  " + indent
         if sys.hexversion > 0x03000000:  # Python3
-            vals = '\n'.join([
-                p % (f, strify_message(_convert_getattr(val, f, t), ni, time_offset, current_time, field_filter, fixed_numeric_width))
-                for f, t in zip(val.__slots__, val._slot_types) if f in fields])
+            vals = "\n".join(
+                [
+                    p
+                    % (
+                        f,
+                        strify_message(
+                            _convert_getattr(val, f, t),
+                            ni,
+                            time_offset,
+                            current_time,
+                            field_filter,
+                            fixed_numeric_width,
+                        ),
+                    )
+                    for f, t in zip(val.__slots__, val._slot_types)
+                    if f in fields
+                ]
+            )
         else:  # Python2
-            vals = '\n'.join([
-                p % (f, strify_message(_convert_getattr(val, f, t), ni, time_offset, current_time, field_filter, fixed_numeric_width))
-                for f, t in itertools.izip(val.__slots__, val._slot_types) if f in fields])
+            vals = "\n".join(
+                [
+                    p
+                    % (
+                        f,
+                        strify_message(
+                            _convert_getattr(val, f, t),
+                            ni,
+                            time_offset,
+                            current_time,
+                            field_filter,
+                            fixed_numeric_width,
+                        ),
+                    )
+                    for f, t in itertools.izip(val.__slots__, val._slot_types)
+                    if f in fields
+                ]
+            )
         if indent:
-            return '\n'+vals
+            return "\n" + vals
         else:
             return vals
 
@@ -218,9 +305,9 @@ def _convert_getattr(val, f, t):
     This is mainly to convert uint8[] fields back to an array type.
     """
     attr = getattr(val, f)
-    if isstring(attr) and 'uint8[' in t:
+    if isstring(attr) and "uint8[" in t:
         return [ord(x) for x in attr]
-    elif isinstance(attr, bytes) and 'uint8[' in t:
+    elif isinstance(attr, bytes) and "uint8[" in t:
         return list(attr)
     else:
         return attr
@@ -233,10 +320,16 @@ def _convert_getattr(val, f, t):
 # width/signed checks.
 
 _widths = {
-    'byte': 8, 'char': 8, 'int8': 8, 'uint8': 8,
-    'int16': 16, 'uint16': 16,
-    'int32': 32, 'uint32': 32,
-    'int64': 64, 'uint64': 64,
+    "byte": 8,
+    "char": 8,
+    "int8": 8,
+    "uint8": 8,
+    "int16": 16,
+    "uint16": 16,
+    "int32": 32,
+    "uint32": 32,
+    "int64": 64,
+    "uint64": 64,
 }
 
 
@@ -255,52 +348,70 @@ def check_type(field_name, field_type, field_val):
     """
     if is_simple(field_type):
         # check sign and width
-        if field_type in ['byte', 'int8', 'int16', 'int32', 'int64']:
+        if field_type in ["byte", "int8", "int16", "int32", "int64"]:
             if type(field_val) not in [long, int]:
-                raise SerializationError('field %s must be an integer type' % field_name)
-            maxval = int(math.pow(2, _widths[field_type]-1))
+                raise SerializationError(
+                    "field %s must be an integer type" % field_name
+                )
+            maxval = int(math.pow(2, _widths[field_type] - 1))
             if field_val >= maxval or field_val < -maxval:
-                raise SerializationError('field %s exceeds specified width [%s]' % (field_name, field_type))
-        elif field_type in ['char', 'uint8', 'uint16', 'uint32', 'uint64']:
+                raise SerializationError(
+                    "field %s exceeds specified width [%s]" % (field_name, field_type)
+                )
+        elif field_type in ["char", "uint8", "uint16", "uint32", "uint64"]:
             if type(field_val) not in [long, int] or field_val < 0:
-                raise SerializationError('field %s must be unsigned integer type' % field_name)
+                raise SerializationError(
+                    "field %s must be unsigned integer type" % field_name
+                )
             maxval = int(math.pow(2, _widths[field_type]))
             if field_val >= maxval:
-                raise SerializationError('field %s exceeds specified width [%s]' % (field_name, field_type))
-        elif field_type in ['float32', 'float64']:
+                raise SerializationError(
+                    "field %s exceeds specified width [%s]" % (field_name, field_type)
+                )
+        elif field_type in ["float32", "float64"]:
             if type(field_val) not in _valid_float_types:
-                raise SerializationError('field %s must be float type' % field_name)
-        elif field_type == 'bool':
+                raise SerializationError("field %s must be float type" % field_name)
+        elif field_type == "bool":
             if field_val not in [True, False, 0, 1]:
-                raise SerializationError('field %s is not a bool' % (field_name))
-    elif field_type == 'string':
+                raise SerializationError("field %s is not a bool" % (field_name))
+    elif field_type == "string":
         if sys.hexversion > 0x03000000:
             if type(field_val) == str:
                 try:
-                    field_val.encode('ascii')
+                    field_val.encode("ascii")
                 except UnicodeEncodeError:
-                    raise SerializationError('field %s is a non-ascii string' % field_name)
+                    raise SerializationError(
+                        "field %s is a non-ascii string" % field_name
+                    )
             elif not type(field_val) == bytes:
-                raise SerializationError('field %s must be of type bytes or an ascii string' % field_name)
+                raise SerializationError(
+                    "field %s must be of type bytes or an ascii string" % field_name
+                )
         else:
             if type(field_val) == unicode:  # noqa: F821
-                raise SerializationError('field %s is a unicode string instead of an ascii string' % field_name)
+                raise SerializationError(
+                    "field %s is a unicode string instead of an ascii string"
+                    % field_name
+                )
             elif not isstring(field_val):
-                raise SerializationError('field %s must be of type str' % field_name)
-    elif field_type == 'time':
+                raise SerializationError("field %s must be of type str" % field_name)
+    elif field_type == "time":
         if not isinstance(field_val, Time):
-            raise SerializationError('field %s must be of type Time' % field_name)
-    elif field_type == 'duration':
+            raise SerializationError("field %s must be of type Time" % field_name)
+    elif field_type == "duration":
         if not isinstance(field_val, Duration):
-            raise SerializationError('field %s must be of type Duration' % field_name)
+            raise SerializationError("field %s must be of type Duration" % field_name)
 
-    elif field_type.endswith(']'):  # array type
+    elif field_type.endswith("]"):  # array type
         # use index to generate error if '[' not present
-        base_type = field_type[:field_type.index('[')]
+        base_type = field_type[: field_type.index("[")]
 
         if type(field_val) in (bytes, str):
-            if base_type not in ['char', 'uint8']:
-                raise SerializationError('field %s must be a list or tuple type. Only uint8[] can be a string' % field_name)
+            if base_type not in ["char", "uint8"]:
+                raise SerializationError(
+                    "field %s must be a list or tuple type. Only uint8[] can be a string"
+                    % field_name
+                )
             else:
                 # It's a string so its already in byte format and we
                 # don't need to check the individual bytes in the
@@ -308,21 +419,31 @@ def check_type(field_name, field_type, field_val):
                 return
 
         if not type(field_val) in [list, tuple]:
-            raise SerializationError('field %s must be a list or tuple type' % field_name)
+            raise SerializationError(
+                "field %s must be a list or tuple type" % field_name
+            )
         for v in field_val:
-            check_type(field_name + '[]', base_type, v)
+            check_type(field_name + "[]", base_type, v)
     else:
         if isinstance(field_val, Message):
             # roslib/Header is the old location of Header. We check it for backwards compat
-            if field_val._type in ['std_msgs/Header', 'roslib/Header']:
-                if field_type not in ['Header', 'std_msgs/Header', 'roslib/Header']:
-                    raise SerializationError('field %s must be a Header instead of a %s' % (field_name, field_val._type))
+            if field_val._type in ["std_msgs/Header", "roslib/Header"]:
+                if field_type not in ["Header", "std_msgs/Header", "roslib/Header"]:
+                    raise SerializationError(
+                        "field %s must be a Header instead of a %s"
+                        % (field_name, field_val._type)
+                    )
             elif field_val._type != field_type:
-                raise SerializationError('field %s must be of type %s instead of %s' % (field_name, field_type, field_val._type))
+                raise SerializationError(
+                    "field %s must be of type %s instead of %s"
+                    % (field_name, field_type, field_val._type)
+                )
             for n, t in zip(field_val.__slots__, field_val._get_types()):
-                check_type('%s.%s' % (field_name, n), t, getattr(field_val, n))
+                check_type("%s.%s" % (field_name, n), t, getattr(field_val, n))
         else:
-            raise SerializationError('field %s must be of type [%s]' % (field_name, field_type))
+            raise SerializationError(
+                "field %s must be of type [%s]" % (field_name, field_type)
+            )
 
         # TODO: dynamically load message class and do instance compare
 
@@ -335,7 +456,7 @@ class Message(object):
     # mapping between __slots__ and message fields. In terms of
     # performance, explicitly settings slots eliminates dictionary for
     # new-style object.
-    __slots__ = ['_connection_header']
+    __slots__ = ["_connection_header"]
 
     def __init__(self, *args, **kwds):
         """
@@ -347,17 +468,26 @@ class Message(object):
         initialize named field and leave the rest with default values.
         """
         if args and kwds:
-            raise TypeError('Message constructor may only use args OR keywords, not both')
+            raise TypeError(
+                "Message constructor may only use args OR keywords, not both"
+            )
         if args:
             if len(args) != len(self.__slots__):
-                raise TypeError('Invalid number of arguments, args should be %s' % str(self.__slots__) + ' args are' + str(args))
+                raise TypeError(
+                    "Invalid number of arguments, args should be %s"
+                    % str(self.__slots__)
+                    + " args are"
+                    + str(args)
+                )
             for i, k in enumerate(self.__slots__):
                 setattr(self, k, args[i])
         else:
             # validate kwds
             for k, v in kwds.items():
                 if k not in self.__slots__:
-                    raise AttributeError('%s is not an attribute of %s' % (k, self.__class__.__name__))
+                    raise AttributeError(
+                        "%s is not an attribute of %s" % (k, self.__class__.__name__)
+                    )
             # iterate through slots so all fields are initialized.
             # this is important so that subclasses don't reference an
             # uninitialized field and raise an AttributeError.
@@ -377,7 +507,7 @@ class Message(object):
             setattr(self, x, val)
 
     def _get_types(self):
-        raise Exception('must be overriden')
+        raise Exception("must be overriden")
 
     def _check_types(self, exc=None):
         """
@@ -437,7 +567,7 @@ class Message(object):
         return not self == other
 
 
-def get_printable_message_args(msg, buff=None, prefix=''):
+def get_printable_message_args(msg, buff=None, prefix=""):
     """
     Get string representation of msg arguments.
 
@@ -454,9 +584,11 @@ def get_printable_message_args(msg, buff=None, prefix=''):
         buff = StringIO()
     for f in msg.__slots__:
         if isinstance(getattr(msg, f), Message):
-            get_printable_message_args(getattr(msg, f), buff=buff, prefix=(prefix+f+'.'))
+            get_printable_message_args(
+                getattr(msg, f), buff=buff, prefix=(prefix + f + ".")
+            )
         else:
-            buff.write(prefix+f+' ')
+            buff.write(prefix + f + " ")
     return buff.getvalue().rstrip()
 
 
@@ -471,7 +603,7 @@ def _fill_val(msg, f, v, keys, prefix):
     :raises: exc:`MessageException`
     """
     if f not in msg.__slots__:
-        raise MessageException('No field name [%s%s]' % (prefix, f))
+        raise MessageException("No field name [%s%s]" % (prefix, f))
     def_val = getattr(msg, f)
     if isinstance(def_val, Message) or isinstance(def_val, TVal):
         # check for substitution key, e.g. 'now'
@@ -479,21 +611,26 @@ def _fill_val(msg, f, v, keys, prefix):
             if v in keys:
                 setattr(msg, f, keys[v])
             else:
-                raise MessageException('No key named [%s]' % (v))
+                raise MessageException("No key named [%s]" % (v))
         elif isinstance(def_val, TVal) and type(v) in (int, long):
             # special case to handle time value represented as a single number
             # TODO: this is a lossy conversion
             if isinstance(def_val, Time):
-                setattr(msg, f, Time.from_sec(v/1e9))
+                setattr(msg, f, Time.from_sec(v / 1e9))
             elif isinstance(def_val, Duration):
-                setattr(msg, f, Duration.from_sec(v/1e9))
+                setattr(msg, f, Duration.from_sec(v / 1e9))
             else:
-                raise MessageException('Cannot create time values of type [%s]' % (type(def_val)))
+                raise MessageException(
+                    "Cannot create time values of type [%s]" % (type(def_val))
+                )
         else:
-            _fill_message_args(def_val, v, keys, prefix=(prefix+f+'.'))
+            _fill_message_args(def_val, v, keys, prefix=(prefix + f + "."))
     elif type(def_val) == list:
         if not type(v) in [list, tuple]:
-            raise MessageException('Field [%s%s] must be a list or tuple instead of: %s' % (prefix, f, type(v).__name__))
+            raise MessageException(
+                "Field [%s%s] must be a list or tuple instead of: %s"
+                % (prefix, f, type(v).__name__)
+            )
         # determine base_type of field by looking at _slot_types
         idx = msg.__slots__.index(f)
         t = msg._slot_types[idx]
@@ -503,17 +640,26 @@ def _fill_val(msg, f, v, keys, prefix):
         if base_type in genmsg.msgs.PRIMITIVE_TYPES:
             # 3785
             if length is not None and len(v) != length:
-                raise MessageException('Field [%s%s] has incorrect number of elements: %s != %s' % (prefix, f, len(v), length))
+                raise MessageException(
+                    "Field [%s%s] has incorrect number of elements: %s != %s"
+                    % (prefix, f, len(v), length)
+                )
             setattr(msg, f, v)
 
         # - for complex types, we have to iteratively append to def_val
         else:
             # 3785
             if length is not None and len(v) != length:
-                raise MessageException('Field [%s%s] has incorrect number of elements: %s != %s' % (prefix, f, len(v), length))
+                raise MessageException(
+                    "Field [%s%s] has incorrect number of elements: %s != %s"
+                    % (prefix, f, len(v), length)
+                )
             list_msg_class = get_message_class(base_type)
             if list_msg_class is None:
-                raise MessageException('Cannot instantiate messages for field [%s%s] : cannot load class %s' % (prefix, f, base_type))
+                raise MessageException(
+                    "Cannot instantiate messages for field [%s%s] : cannot load class %s"
+                    % (prefix, f, base_type)
+                )
             del def_val[:]
             for el in v:
                 inner_msg = list_msg_class()
@@ -521,11 +667,13 @@ def _fill_val(msg, f, v, keys, prefix):
                     # special case to handle time value represented as a single number
                     # TODO: this is a lossy conversion
                     if isinstance(inner_msg, Time):
-                        inner_msg = Time.from_sec(el/1e9)
+                        inner_msg = Time.from_sec(el / 1e9)
                     elif isinstance(inner_msg, Duration):
-                        inner_msg = Duration.from_sec(el/1e9)
+                        inner_msg = Duration.from_sec(el / 1e9)
                     else:
-                        raise MessageException('Cannot create time values of type [%s]' % (type(inner_msg)))
+                        raise MessageException(
+                            "Cannot create time values of type [%s]" % (type(inner_msg))
+                        )
                 else:
                     _fill_message_args(inner_msg, el, keys, prefix)
                 def_val.append(inner_msg)
@@ -533,7 +681,7 @@ def _fill_val(msg, f, v, keys, prefix):
         setattr(msg, f, v)
 
 
-def _fill_message_args(msg, msg_args, keys, prefix=''):
+def _fill_message_args(msg, msg_args, keys, prefix=""):
     """
     Populate message with specified args.
 
@@ -546,32 +694,36 @@ def _fill_message_args(msg, msg_args, keys, prefix=''):
     :raises: :exc:`ValueError` If msg or msg_args is not of correct type
     """
     if not isinstance(msg, (Message, TVal)):
-        raise ValueError('msg must be a Message instance: %s' % msg)
+        raise ValueError("msg must be a Message instance: %s" % msg)
 
     if type(msg_args) == dict:
-
         # print "DICT ARGS", msg_args
         # print "ACTIVE SLOTS",msg.__slots__
 
         for f, v in msg_args.items():
             # assume that an empty key is actually an empty string
             if v is None:
-                v = ''
+                v = ""
             _fill_val(msg, f, v, keys, prefix)
     elif type(msg_args) == list:
-
         # print "LIST ARGS", msg_args
         # print "ACTIVE SLOTS",msg.__slots__
 
         if len(msg_args) > len(msg.__slots__):
-            raise MessageException('Too many arguments:\n * Given: %s\n * Expected: %s' % (msg_args, msg.__slots__))
+            raise MessageException(
+                "Too many arguments:\n * Given: %s\n * Expected: %s"
+                % (msg_args, msg.__slots__)
+            )
         elif len(msg_args) < len(msg.__slots__):
-            raise MessageException('Not enough arguments:\n * Given: %s\n * Expected: %s' % (msg_args, msg.__slots__))
+            raise MessageException(
+                "Not enough arguments:\n * Given: %s\n * Expected: %s"
+                % (msg_args, msg.__slots__)
+            )
 
         for f, v in zip(msg.__slots__, msg_args):
             _fill_val(msg, f, v, keys, prefix)
     else:
-        raise ValueError('invalid msg_args type: %s' % str(msg_args))
+        raise ValueError("invalid msg_args type: %s" % str(msg_args))
 
 
 def fill_message_args(msg, msg_args, keys={}):
@@ -612,9 +764,9 @@ def fill_message_args(msg, msg_args, keys={}):
     if len(msg_args) == 1 and type(msg_args[0]) == dict:
         # according to spec, if we only get one msg_arg and it's a dictionary, we
         # use it directly
-        _fill_message_args(msg, msg_args[0], keys, '')
+        _fill_message_args(msg, msg_args[0], keys, "")
     else:
-        _fill_message_args(msg, msg_args, keys, '')
+        _fill_message_args(msg, msg_args, keys, "")
 
 
 def _get_message_or_service_class(type_str, message_type, reload_on_error=False):
@@ -627,30 +779,33 @@ def _get_message_or_service_class(type_str, message_type, reload_on_error=False)
     :returns: Message/Service  for message/service type or None, ``class``
     :raises: :exc:`ValueError` If message_type is invalidly specified
     """
-    if message_type == 'time':
+    if message_type == "time":
         return Time
-    if message_type == 'duration':
+    if message_type == "duration":
         return Duration
     # parse package and local type name for import
     package, base_type = genmsg.package_resource_name(message_type)
     if not package:
-        if base_type == 'Header':
-            package = 'std_msgs'
+        if base_type == "Header":
+            package = "std_msgs"
         else:
-            raise ValueError('message type is missing package name: %s' % str(message_type))
+            raise ValueError(
+                "message type is missing package name: %s" % str(message_type)
+            )
     pypkg = val = None
     try:
         # import the package
-        pypkg = __import__('%s.%s' % (package, type_str))
+        pypkg = __import__("%s.%s" % (package, type_str))
     except ImportError:
         # try importing from dry package if available
         try:
             from roslib import load_manifest
             from rospkg import ResourceNotFound
+
             try:
                 load_manifest(package)
                 try:
-                    pypkg = __import__('%s.%s' % (package, type_str))
+                    pypkg = __import__("%s.%s" % (package, type_str))
                 except ImportError:
                     pass
             except ResourceNotFound:
@@ -694,7 +849,9 @@ def get_message_class(message_type, reload_on_error=False):
     """
     if message_type in _message_class_cache:
         return _message_class_cache[message_type]
-    cls = _get_message_or_service_class('msg', message_type, reload_on_error=reload_on_error)
+    cls = _get_message_or_service_class(
+        "msg", message_type, reload_on_error=reload_on_error
+    )
     if cls:
         _message_class_cache[message_type] = cls
     return cls
@@ -719,6 +876,8 @@ def get_service_class(service_type, reload_on_error=False):
     """
     if service_type in _service_class_cache:
         return _service_class_cache[service_type]
-    cls = _get_message_or_service_class('srv', service_type, reload_on_error=reload_on_error)
+    cls = _get_message_or_service_class(
+        "srv", service_type, reload_on_error=reload_on_error
+    )
     _service_class_cache[service_type] = cls
     return cls

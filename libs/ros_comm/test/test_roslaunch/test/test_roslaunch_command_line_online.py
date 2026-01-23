@@ -33,11 +33,11 @@
 #
 # Revision $Id: test_roslaunch_command_line_online.py 6411 2009-10-02 21:32:01Z kwc $
 
-PKG = 'roslaunch'
-NAME = 'test_roslaunch_command_line_online'
+PKG = "roslaunch"
+NAME = "test_roslaunch_command_line_online"
 
 import os
-import sys 
+import sys
 import time
 import unittest
 import yaml
@@ -46,23 +46,24 @@ import rostest
 
 from subprocess import Popen, PIPE, check_call, call
 
-class TestRoslaunchOnline(unittest.TestCase):
 
+class TestRoslaunchOnline(unittest.TestCase):
     def setUp(self):
         self.vals = set()
         self.msgs = {}
 
     def test_roslaunch(self):
         # network is initialized
-        cmd = 'roslaunch'
+        cmd = "roslaunch"
 
         # regression test for #1994
         # --wait
         # master is already running, noop only sets params, so this should return
-        check_call([cmd, '--wait', 'test_roslaunch', 'noop.launch'])
+        check_call([cmd, "--wait", "test_roslaunch", "noop.launch"])
 
         # tripwire test for #2370, not really possible to validate output on this
-        check_call([cmd, '--screen', 'test_roslaunch', 'noop.launch'])
+        check_call([cmd, "--screen", "test_roslaunch", "noop.launch"])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     rostest.run(PKG, NAME, TestRoslaunchOnline, sys.argv)

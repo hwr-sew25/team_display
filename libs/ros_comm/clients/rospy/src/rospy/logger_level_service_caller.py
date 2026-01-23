@@ -37,14 +37,12 @@ import rosservice
 
 
 class ROSConsoleException(Exception):
-
     """Base exception class of rosconsole-related errors."""
 
     pass
 
 
 class LoggerLevelServiceCaller(object):
-
     """
     Handles service calls for getting lists of nodes and loggers.
 
@@ -57,7 +55,7 @@ class LoggerLevelServiceCaller(object):
     def get_levels(self):
         # Declare level names lower-case, because that's how they are returned
         # from the service call.
-        return ['debug', 'info', 'warn', 'error', 'fatal']
+        return ["debug", "info", "warn", "error", "fatal"]
 
     def get_loggers(self, node):
         self._refresh_loggers(node)
@@ -73,7 +71,7 @@ class LoggerLevelServiceCaller(object):
         nodes = rosnode.get_node_names()
         for name in sorted(nodes):
             for service in rosservice.get_service_list(name):
-                if service == name + '/set_logger_level':
+                if service == name + "/set_logger_level":
                     set_logger_level_nodes.append(name)
         return set_logger_level_nodes
 
@@ -89,15 +87,18 @@ class LoggerLevelServiceCaller(object):
         # Construct the service name, taking into account our namespace
         servicename = rosgraph.names.ns_join(
             rosgraph.names.ns_join(rosgraph.names.get_ros_namespace(), node),
-            'get_loggers')
+            "get_loggers",
+        )
         # Construct the service name, taking into account our namespace
         servicename = rosgraph.names.resolve_name(
-            servicename, rosgraph.names.get_ros_namespace())
+            servicename, rosgraph.names.get_ros_namespace()
+        )
         try:
             service = rosservice.get_service_class_by_name(servicename)
         except rosservice.ROSServiceException as e:
             raise ROSConsoleException(
-                "node '%s' doesn't exist or doesn't support query: %s" % (node, e))
+                "node '%s' doesn't exist or doesn't support query: %s" % (node, e)
+            )
 
         request = service._request_class()
         proxy = rospy.ServiceProxy(str(servicename), service)
@@ -106,7 +107,7 @@ class LoggerLevelServiceCaller(object):
         except rospy.ServiceException as e:
             raise ROSConsoleException("node '%s' logger request failed: %s" % (node, e))
 
-        if response._slot_types[0] == 'roscpp/Logger[]':
+        if response._slot_types[0] == "roscpp/Logger[]":
             for logger in getattr(response, response.__slots__[0]):
                 self._current_loggers.append(logger.name)
                 self._current_levels[logger.name] = logger.level
@@ -126,10 +127,12 @@ class LoggerLevelServiceCaller(object):
         # Construct the service name, taking into account our namespace
         servicename = rosgraph.names.ns_join(
             rosgraph.names.ns_join(rosgraph.names.get_ros_namespace(), node),
-            'set_logger_level')
+            "set_logger_level",
+        )
         # Construct the service name, taking into account our namespace
         servicename = rosgraph.names.resolve_name(
-            servicename, rosgraph.names.get_ros_namespace())
+            servicename, rosgraph.names.get_ros_namespace()
+        )
         if self._current_levels[logger] == level:
             return False
 

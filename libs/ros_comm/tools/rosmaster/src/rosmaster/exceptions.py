@@ -36,4 +36,6 @@
 Exceptions for rosmaster package.
 """
 
-class InternalException(Exception): pass
+
+class InternalException(Exception):
+    pass

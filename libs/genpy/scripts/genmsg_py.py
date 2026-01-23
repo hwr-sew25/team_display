@@ -38,10 +38,11 @@ ROS message source code generation for Python.
 
 Converts ROS .msg files in a package into Python source code implementations.
 """
+
 import sys
 
 import genpy.generator
 import genpy.genpy_main
 
-if __name__ == '__main__':
-    genpy.genpy_main.genmain(sys.argv, 'genmsg_py.py', genpy.generator.MsgGenerator())
+if __name__ == "__main__":
+    genpy.genpy_main.genmain(sys.argv, "genmsg_py.py", genpy.generator.MsgGenerator())

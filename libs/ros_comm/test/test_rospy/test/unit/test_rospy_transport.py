@@ -37,27 +37,28 @@ import struct
 import unittest
 import time
 
-class TestRospyTransport(unittest.TestCase):
 
+class TestRospyTransport(unittest.TestCase):
     def test_Transport(self):
         from rospy.impl.transport import Transport, INBOUND, OUTBOUND, BIDIRECTIONAL
+
         ids = []
         for d in [INBOUND, OUTBOUND, BIDIRECTIONAL]:
             t = Transport(d)
             self.assertEqual(d, t.direction)
-            self.assertEqual("UNKNOWN", t.transport_type)            
+            self.assertEqual("UNKNOWN", t.transport_type)
             self.assertFalse(t.done)
             self.assertEqual(None, t.cleanup_cb)
-            self.assertEqual('', t.endpoint_id)            
-            self.assertEqual('unnamed', t.name)
-            self.assertEqual(0, t.stat_bytes)            
-            self.assertEqual(0, t.stat_num_msg)            
+            self.assertEqual("", t.endpoint_id)
+            self.assertEqual("unnamed", t.name)
+            self.assertEqual(0, t.stat_bytes)
+            self.assertEqual(0, t.stat_num_msg)
             self.assertFalse(t.id in ids)
             ids.append(t.id)
 
-            t = Transport(d, 'a name')
+            t = Transport(d, "a name")
             self.assertEqual(d, t.direction)
-            self.assertEqual('a name', t.name)
+            self.assertEqual("a name", t.name)
 
         # test cleanup with and without a callback
         t = Transport(INBOUND)
@@ -66,6 +67,7 @@ class TestRospyTransport(unittest.TestCase):
         t = Transport(INBOUND)
 
         self.cleanup_obj = None
+
         def cleanup(obj):
             self.cleanup_obj = obj
 
@@ -77,59 +79,74 @@ class TestRospyTransport(unittest.TestCase):
 
         t = Transport(OUTBOUND)
         import traceback
+
         try:
-            t.send_message('msg', 1)
+            t.send_message("msg", 1)
             self.fail("send_message() should be abstract")
-        except: pass
+        except:
+            pass
         try:
-            t.write_data('data')
+            t.write_data("data")
             self.fail("write_data() should be abstract")
-        except: pass
+        except:
+            pass
         t = Transport(INBOUND)
         try:
             t.receive_once()
             self.fail("receive_once() should be abstract")
-        except: pass
+        except:
+            pass
         t = Transport(INBOUND)
         try:
             t.receive_loop()
             self.fail("receive_loop() should be abstract")
-        except: pass
-        
+        except:
+            pass
+
     def test_DeadTransport(self):
-        from rospy.impl.transport import Transport, DeadTransport, INBOUND, OUTBOUND, BIDIRECTIONAL
-        t = Transport(INBOUND, 'foo')
+        from rospy.impl.transport import (
+            Transport,
+            DeadTransport,
+            INBOUND,
+            OUTBOUND,
+            BIDIRECTIONAL,
+        )
+
+        t = Transport(INBOUND, "foo")
         t.stat_bytes = 1234
         t.stat_num_msg = 5678
         dead = DeadTransport(t)
         self.assertEqual(INBOUND, dead.direction)
-        self.assertEqual('foo', dead.name)
+        self.assertEqual("foo", dead.name)
         self.assertEqual(1234, dead.stat_bytes)
-        self.assertEqual(5678, dead.stat_num_msg)        
+        self.assertEqual(5678, dead.stat_num_msg)
         self.assertEqual(True, dead.done)
-        self.assertEqual('', dead.endpoint_id)
+        self.assertEqual("", dead.endpoint_id)
 
-        t = Transport(OUTBOUND, 'bar')
-        t.endpoint_id = 'blah blah'
+        t = Transport(OUTBOUND, "bar")
+        t.endpoint_id = "blah blah"
         t.close()
         dead = DeadTransport(t)
         self.assertEqual(OUTBOUND, dead.direction)
-        self.assertEqual('bar', dead.name)
+        self.assertEqual("bar", dead.name)
         self.assertEqual(True, dead.done)
         self.assertEqual(t.endpoint_id, dead.endpoint_id)
-        
+
     def test_ProtocolHandler(self):
         # tripwire tests
         from rospy.impl.transport import ProtocolHandler
+
         h = ProtocolHandler()
-        self.assertFalse(h.supports('TCPROS'))
+        self.assertFalse(h.supports("TCPROS"))
         self.assertEqual([], h.get_supported())
         try:
-            h.create_connection("/topic", 'http://localhost:1234', ['TCPROS'])
+            h.create_connection("/topic", "http://localhost:1234", ["TCPROS"])
             self.fail("create_connection should raise an exception")
-        except: pass
+        except:
+            pass
         try:
-            h.init_publisher("/topic", 'TCPROS')
+            h.init_publisher("/topic", "TCPROS")
             self.fail("init_publisher raise an exception")
-        except: pass
+        except:
+            pass
         h.shutdown()

@@ -60,7 +60,7 @@ def compute_struct_pattern(types):
     if not types:  # important to filter None and empty first
         return None
     try:
-        return ''.join([SIMPLE_TYPES_DICT[t] for t in types])
+        return "".join([SIMPLE_TYPES_DICT[t] for t in types])
     except Exception:
         return None
 
@@ -72,11 +72,11 @@ def reduce_pattern(pattern):
     :param pattern: struct pattern, ``str``
     :returns: optimized struct pattern, ``str``
     """
-    if not pattern or len(pattern) == 1 or '%' in pattern:
+    if not pattern or len(pattern) == 1 or "%" in pattern:
         return pattern
     prev = pattern[0]
     count = 1
-    new_pattern = ''
+    new_pattern = ""
     nums = [str(i) for i in range(10)]
     for c in pattern[1:]:
         if c == prev and c not in nums:
@@ -102,7 +102,7 @@ def serialize(expr):
     :param expr str: string python expression that is evaluated for serialization
     :returns str: python call to write value returned by expr to serialization buffer
     """
-    return 'buff.write(%s)' % expr
+    return "buff.write(%s)" % expr
 
 
 # int32 is very common due to length serialization, so it is special cased
@@ -113,7 +113,7 @@ def int32_pack(var):
     :param var: variable name, ``str``
     :returns: struct packing code for an int32
     """
-    return serialize('_struct_I.pack(%s)' % var)
+    return serialize("_struct_I.pack(%s)" % var)
 
 
 # int32 is very common due to length serialization, so it is special cased
@@ -124,7 +124,7 @@ def int32_unpack(var, buff):
     :param var: variable name, ``str``
     :returns: struct unpacking code for an int32
     """
-    return '(%s,) = _struct_I.unpack(%s)' % (var, buff)
+    return "(%s,) = _struct_I.unpack(%s)" % (var, buff)
 
 
 # NOTE: '<' = little endian
@@ -138,7 +138,7 @@ def pack(pattern, vars_):
     # - store pattern in context
     pattern = reduce_pattern(pattern)
     add_pattern(pattern)
-    return serialize('_get_struct_%s().pack(%s)' % (pattern, vars_))
+    return serialize("_get_struct_%s().pack(%s)" % (pattern, vars_))
 
 
 def pack2(pattern, vars_):
@@ -148,7 +148,7 @@ def pack2(pattern, vars_):
     :param pattern: name of variable storing string pattern, ``struct``
     :param vars_: name of variables to pack, ``str``
     """
-    return serialize('struct.Struct(%s).pack(%s)' % (pattern, vars_))
+    return serialize("struct.Struct(%s).pack(%s)" % (pattern, vars_))
 
 
 def unpack(var, pattern, buff):
@@ -162,7 +162,7 @@ def unpack(var, pattern, buff):
     # - store pattern in context
     pattern = reduce_pattern(pattern)
     add_pattern(pattern)
-    return var + ' = _get_struct_%s().unpack(%s)' % (pattern, buff)
+    return var + " = _get_struct_%s().unpack(%s)" % (pattern, buff)
 
 
 def unpack2(var, pattern, buff):
@@ -173,7 +173,7 @@ def unpack2(var, pattern, buff):
     :param pattern: name of variable that unpack will read from, ``str``
     :param buff: buffer that the unpack reads from, ``StringIO``
     """
-    return '%s = struct.unpack(%s, %s)' % (var, pattern, buff)
+    return "%s = struct.unpack(%s, %s)" % (var, pattern, buff)
 
 
 def unpack3(var, struct_var, buff):
@@ -185,4 +185,4 @@ def unpack3(var, struct_var, buff):
     :param str struct_var: name of the struct variable used to unpack ``buff``
     :param buff: buffer that the unpack reads from, ``StringIO``
     """
-    return '%s = %s.unpack(%s)' % (var, struct_var, buff)
+    return "%s = %s.unpack(%s)" % (var, struct_var, buff)
