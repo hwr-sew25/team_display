@@ -1,5 +1,9 @@
 from flask import Flask, render_template, session, request, redirect, url_for
 import roslibpy
+import requests     
+import time  
+from threading import Thread
+
 
 app = Flask(__name__)
 
@@ -8,7 +12,12 @@ app.config.from_mapping(
     BOOTSTRAP_BOOTSWATCH_THEME = 'pulse'
 )
 
+latest_directions = None
+
 client = roslibpy.Ros(host='localhost', port=9090)
+
+DIRECTIONS_API = "http://10.20.228.19:5001"
+
 
 def connect_ros():
     try:
@@ -25,6 +34,33 @@ language_pub = roslibpy.Topic(client, '/language', 'std_msgs/String')
 start_pub = roslibpy.Topic(client, '/display/start_druecken', 'std_msgs/Bool')
 stop_pub = roslibpy.Topic(client, '/display/stop_druecken', 'std_msgs/Bool')
 #poi_pub = roslibpy.Topic(client, '/display/poi', 'std_msgs/String')
+
+def directions_listener():
+    global latest_directions
+
+    while True:
+        try:
+            response = requests.get(f"{DIRECTIONS_API}/api/display/steps")
+
+            if response.status_code == 200:
+                data = response.json()
+
+                if data.get("room_id"):
+                    print("\nNeue Wegbeschreibung erhalten!")
+                    print(f"Raum: {data['room_id']}")
+                    print(f"Wing: {data['wing']}")
+                    print(f"Floor: {data['floor']}")
+                    print(f"Side: {data['side']}")
+                    print(f"Steps: {data['steps']}")
+                    print(f"Additional Info: {data['additional_info']}")
+                    print(f"Timestamp: {data['timestamp']}")
+
+                    latest_directions = data 
+
+        except Exception as e:
+            print(f"Fehler im Directions Listener: {e}")
+
+        time.sleep(1)
 
 def publish_screen(screen_name: str):
     try:
@@ -101,20 +137,17 @@ def get_arrow_direction(side: str) -> str:
     # fallback fehlt
     
     
-def get_map(floor: str, wing: str) -> str:
-    floor = floor.upper()      
-    wing = wing.lower()        
+def get_map(floor: str, wing: int) -> str:
+    floor = floor.upper()              
 
-    if wing == "ost":
+    if wing == 1:
         wing = "links"
-    elif wing == "west":
+    elif wing == 2:
         wing = "rechts"
 
     if floor == "EG":
         filename = f"EG_{wing}.svg" 
     else:   filename = f"{floor}OG_{wing}.svg"
-
-    # fallback fehlt
 
     return f"images/karten/{filename}"
 
@@ -135,15 +168,26 @@ def raumwahl():
 def karte():
     publish_screen("karte")
 
-    # später Werte von Directions
-    floor = "3"
-    wing = "Ost"
-    side = "Mittelgang"
-    room = " 1.29"
+    global latest_directions
+
+    floor = latest_directions["floor"]
+    wing = latest_directions["wing"]
+    side = latest_directions["side"]
+    room = latest_directions["room_id"]
+    steps = latest_directions["steps"]
 
     map_file = get_map(floor, wing)
     direction = get_arrow_direction(side)
-    return render_template("karte.html", direction=direction, map_file=map_file, floor=floor, side=side, room=room)
+
+    return render_template(
+        "karte.html",
+        direction=direction,
+        map_file=map_file,
+        floor=floor,
+        side=side,
+        room=room,
+        steps=steps
+    )
 
 @app.route("/set_language/<lang>")
 def set_language(lang):
@@ -208,4 +252,7 @@ def error_tec():
     return render_template("error_tec.html")
 
 if __name__ == "__main__":
+    listener_thread = Thread(target=directions_listener, daemon=True)
+    listener_thread.start()
+
     app.run(debug=True)
