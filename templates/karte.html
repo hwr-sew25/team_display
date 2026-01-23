@@ -43,69 +43,40 @@
     </div>
 
 
-    <!-- Anweisungen -->
     <div class="map-info">
+    <!-- Etage -->
         <h1>
-        <!--Übersetzungen-->
-        {% if session.lang == 'en' %}
-            {% if floor == "EG" %}
-                Ground Floor
+            {% if session.lang == 'en' %}
+                {% if floor == "EG" %}
+                    Ground Floor
+                {% else %}
+                    {{ floor }}. Floor
+                {% endif %}
             {% else %}
-                {{ floor }}. Floor
+                {% if floor == "EG" %}
+                    EG
+                {% else %}
+                    {{ floor }}. OG
+                {% endif %}
             {% endif %}
-        {% else %}
-            {% if floor == "EG" %}
-                EG
-            {% else %}
-                {{ floor }}. OG
-            {% endif %}
-        {% endif %}
         </h1>
-
+        <!-- Raum -->
         <h1>
-        {% if session.lang == 'en' %}
-            Room B{{ room }}
-        {% else %}
-            Raum B{{ room }}
-        {% endif %}
+            {% if session.lang == 'en' %}
+                Room B{{ room }}
+            {% else %}
+                Raum B{{ room }}
+            {% endif %}
         </h1>
-
-        <p>
-        • {% if session.lang == 'en' %}
-            {% if floor == "EG" %}
-                Go to the ground floor
-            {% else %}
-                Go to the {{ floor }}. floor
-            {% endif %}
-        {% else %}
-            {% if floor == "EG" %}
-                Gehen Sie in den EG
-            {% else %}
-                Gehen Sie in den {{ floor }}. OG
-            {% endif %}
-        {% endif %}
-        </p>
-
-        <p>
-        • {% if session.lang == 'en' %}
-            {% if side|lower == "mittelgang" %}
-                Go to the main corridor
-            {% elif side|lower == "links" %}
-                Turn left
-            {% elif side|lower == "rechts" %}
-                Turn right
-            {% else %}
-                Continue straight ahead
-            {% endif %}
-        {% else %}
-            {% if side|lower == "mittelgang" %}
-                Gehen Sie in den Mittelgang
-            {% else %}
-                Biegen Sie {{ side }} ab
-            {% endif %}
-        {% endif %}
-        </p>
-
+        <!-- Dynamische Wegbeschreibung -->
+        <div class="steps-list">
+            <ul>
+                {% for step in steps %}
+                    <li>{{ step }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <!-- Stopp-Button -->
         <form action="{{ url_for('stop_action') }}" method="POST">
             <button type="submit" class="stop-btn" id="stop-btn">
                 {% if session.lang == 'en' %}
@@ -115,7 +86,8 @@
                 {% endif %}
             </button>
         </form>
-    </div>
+</div>
+
 
 </div>
 

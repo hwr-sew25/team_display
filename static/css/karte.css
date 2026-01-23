@@ -109,3 +109,14 @@
     from { width: 100%; }
     to { width: 0%; }
 }
+
+.steps-list ul {
+  padding-left: 20px;
+  font-size: 28px;
+  margin-top: 20px;
+}
+
+.steps-list li {
+  margin-bottom: 20px;
+}
+
