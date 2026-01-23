@@ -1,0 +1,7 @@
+std_msgs/Header header
+string period
+uint32 total_interactions
+DestinationStat[] top_destinations
+float32 speech_recognition_rate
+float32 average_interaction_time
+float32 distance_traveled

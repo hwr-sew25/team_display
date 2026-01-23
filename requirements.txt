@@ -23,6 +23,8 @@ pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.23
 pyOpenSSL==25.3.0
+PyYAML==6.0.3
+rospkg==1.6.0
 roslibpy==2.0.0
 service-identity==24.2.0
 Twisted==25.5.0
