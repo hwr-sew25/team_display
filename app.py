@@ -27,13 +27,14 @@ def connect_ros():
         print(f"Failed to connect to ROS: {e}")
 
 connect_ros()
+client.node_name = "/display_ui_node"
 
 # Verwendete Topics
 screen_pub = roslibpy.Topic(client, '/current_screen', 'std_msgs/String')
 language_pub = roslibpy.Topic(client, '/language', 'std_msgs/String')
-start_pub = roslibpy.Topic(client, '/display/start_druecken', 'std_msgs/Bool')
-stop_pub = roslibpy.Topic(client, '/display/stop_druecken', 'std_msgs/Bool')
-#poi_pub = roslibpy.Topic(client, '/display/poi', 'std_msgs/String')
+start_pub = roslibpy.Topic(client, '/start_druecken', 'std_msgs/Bool')
+stop_pub = roslibpy.Topic(client, '/stop_druecken', 'std_msgs/Bool')
+#poi_pub = roslibpy.Topic(client, '/poi', 'std_msgs/String')
 
 def directions_listener():
     global latest_directions
