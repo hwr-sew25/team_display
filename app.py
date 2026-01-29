@@ -16,7 +16,7 @@ latest_directions = None
 
 client = roslibpy.Ros(host='localhost', port=9090)
 
-DIRECTIONS_API = "http://10.20.228.19:5001"
+DIRECTIONS_API = "http://192.168.50.2:5001"
 
 
 def connect_ros():
